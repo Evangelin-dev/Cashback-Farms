@@ -1,9 +1,13 @@
-
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { NAV_LINKS } from '../../constants';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  onAuthClick: () => void;
+}
+
+
+const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -21,23 +25,29 @@ const Navbar: React.FC = () => {
                 <NavLink
                   key={link.name}
                   to={link.path}
-                  className={({ isActive }) =>
-                    `px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive
-                        ? 'bg-green-600 text-white'
-                        : 'text-gray-700 hover:bg-green-500 hover:text-white'
-                    }`
-                  }
+                 className={({ isActive }) =>
+  `px-3 py-2 rounded-md text-sm font-medium ${
+    isActive
+      ? 'bg-green-600 text-white'
+      : 'text-gray-700 hover:bg-green-500 hover:text-white'
+  }`
+}
                 >
                   {link.name}
                 </NavLink>
               ))}
             </div>
           </div>
+          <NavLink to="/dashboard" className="...">
+  Dashboard
+</NavLink>
           <div className="hidden md:block">
-             <button className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                Login / Sign Up
-              </button>
+              <button
+          onClick={onAuthClick}
+          className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          Login / Sign Up
+        </button>
           </div>
           <div className="-mr-2 flex md:hidden">
             <button
@@ -70,13 +80,13 @@ const Navbar: React.FC = () => {
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive
-                      ? 'bg-green-600 text-white'
-                      : 'text-gray-700 hover:bg-green-500 hover:text-white'
-                  }`
-                }
+               className={({ isActive }) =>
+  `px-3 py-2 rounded-md text-sm font-medium ${
+    isActive
+      ? 'bg-green-600 text-white'
+      : 'text-gray-700 hover:bg-green-500 hover:text-white'
+  }`
+}
               >
                 {link.name}
               </NavLink>
@@ -92,4 +102,3 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
-    
