@@ -9,19 +9,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [showForgot, setShowForgot] = useState(false);
 
-  // Login state
+  
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Signup state
+
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirm, setSignupConfirm] = useState('');
   const [signupError, setSignupError] = useState('');
 
-  // Forgot password state
+ 
   const [forgotEmail, setForgotEmail] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
@@ -29,14 +29,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [forgotError, setForgotError] = useState('');
   const [forgotSuccess, setForgotSuccess] = useState('');
 
+
   // Helper: email validation
   const validateEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  // Simulate OTP generation
-  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+  // Helper: name validation (alphabets only, no numbers)
+  const validateName = (name: string) =>
+    /^[A-Za-z\s]+$/.test(name);
 
-  // Handle login
+  // Helper: password validation (min 8 chars, at least 1 letter and 1 number)
+  const validatePassword = (password: string) =>
+    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password);
+
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
@@ -44,17 +50,16 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setLoginError('Invalid email address.');
       return;
     }
-    if (!loginPassword) {
-      setLoginError('Password is required.');
+    if (!validatePassword(loginPassword)) {
+      setLoginError('Password must be at least 8 characters and contain both letters and numbers.');
       return;
     }
-    // Simulate login success/failure
-    // ...replace with real logic...
-    setLoginError(''); // Clear error on success
+  
+    setLoginError(''); 
     onClose();
   };
 
-  // Handle signup
+
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError('');
@@ -62,25 +67,31 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setSignupError('Name is required.');
       return;
     }
+    if (!validateName(signupName.trim())) {
+      setSignupError('Name should only contain alphabets and spaces.');
+      return;
+    }
     if (!validateEmail(signupEmail)) {
       setSignupError('Invalid email address.');
       return;
     }
-    if (signupPassword.length < 6) {
-      setSignupError('Password must be at least 6 characters.');
+    if (!validatePassword(signupPassword)) {
+      setSignupError('Password must be at least 8 characters and contain both letters and numbers.');
       return;
     }
     if (signupPassword !== signupConfirm) {
       setSignupError('Passwords do not match.');
       return;
     }
-    // Simulate signup success/failure
-    // ...replace with real logic...
+  
     setSignupError('');
     onClose();
   };
 
-  // Handle forgot password (send OTP)
+
+  // Helper: OTP generation
+  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
@@ -89,14 +100,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setForgotError('Enter a valid email.');
       return;
     }
-    // Simulate sending OTP
+
     const newOtp = generateOtp();
     setOtp(newOtp);
     setOtpSent(true);
     setForgotSuccess(`OTP sent to ${forgotEmail} (demo: ${newOtp})`);
   };
 
-  // Handle OTP verification
+
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setForgotError('');
@@ -106,7 +117,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       return;
     }
     setForgotSuccess('OTP verified! You can now reset your password.');
-    // ...show reset password fields if needed...
+   
   };
 
   if (!isOpen) return null;
@@ -114,7 +125,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-        {/* Header */}
+       
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-green-600">
             {showForgot
@@ -128,7 +139,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Tabs */}
+   
         {!showForgot && (
           <div className="flex mb-4 border-b border-gray-200">
             <button
@@ -154,7 +165,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {/* Forms */}
+       
         {!showForgot && activeTab === 'login' && (
           <form className="space-y-4" onSubmit={handleLogin}>
             <input
@@ -201,7 +212,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               placeholder="Full Name"
               className="w-full px-3 py-2 border rounded"
               value={signupName}
-              onChange={e => setSignupName(e.target.value)}
+              onChange={e => {
+                // Only allow alphabets and spaces while typing
+                const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+                setSignupName(value);
+              }}
             />
             <input
               type="email"
@@ -231,7 +246,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </form>
         )}
 
-        {/* Forgot Password Flow */}
+        
         {showForgot && (
           <div>
             {!otpSent ? (
