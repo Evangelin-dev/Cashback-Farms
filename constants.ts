@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plot, PlotType, MaterialCategory, Material, Professional, ServiceType, BookMySqftPlotInfo, SqftUnit } from './types';
+import { BookMySqftPlotInfo, Material, MaterialCategory, Plot, PlotType, Professional, ServiceType, SqftUnit } from './types';
 
 export const MOCK_PLOTS: Plot[] = [
   {
@@ -69,11 +69,46 @@ export const MOCK_MATERIALS: Material[] = [
   { id: 'mat5', name: 'TMT Steel Bars Fe500D', category: 'Steel & TMT Bars', price: 65, moq: 500, shippingTime: '3-5 days', vendor: 'StrongHold Steel Corp.', imageUrl: 'https://picsum.photos/seed/mat5/300/200', description: 'High-strength TMT steel bars for reinforced concrete structures. Price per kg.' },
 ];
 
+export enum ServiceType {
+  ARCHITECT = "Architect",
+  INTERIOR_DESIGNER = "Interior Designer",
+  BUY_SERVICE = "Buy Service",
+  SELL_SERVICE = "Sell Service",
+  COMMERCIAL_SERVICE = "Commercial Service",
+}
+
+export enum ExtendedServiceType {
+  BUY_SERVICE = "Buy Service",
+  SELL_SERVICE = "Sell Service",
+  COMMERCIAL_SERVICE = "Commercial Service",
+}
+
 export const MOCK_PROFESSIONALS: Professional[] = [
   { id: 'prof1', name: 'Ar. Priya Sharma', service: ServiceType.ARCHITECT, rating: 4.8, rate: '₹3000/consultation', imageUrl: 'https://picsum.photos/seed/prof1/300/300', specialization: 'Residential & Sustainable Design', bio: 'Experienced architect focusing on eco-friendly and modern homes.' },
   { id: 'prof2', name: 'ID. Rahul Verma', service: ServiceType.INTERIOR_DESIGNER, rating: 4.9, rate: '₹200/sqft', imageUrl: 'https://picsum.photos/seed/prof2/300/300', specialization: 'Modern & Minimalist Interiors', bio: 'Transforming spaces with creativity and functionality. Specializes in luxury apartments.' },
   { id: 'prof3', name: 'Ar. Anjali Reddy', service: ServiceType.ARCHITECT, rating: 4.5, rate: 'Project-based', imageUrl: 'https://picsum.photos/seed/prof3/300/300', specialization: 'Commercial & Office Spaces', bio: 'Innovative architectural solutions for businesses. Proven track record of delivering projects on time.'},
   { id: 'prof4', name: 'ID. Sameer Khan', service: ServiceType.INTERIOR_DESIGNER, rating: 4.7, rate: '₹2500/consultation + project', imageUrl: 'https://picsum.photos/seed/prof4/300/300', specialization: 'Bohemian & Eclectic Styles', bio: 'Creating unique and personalized interiors that reflect your personality.'},
+  // Buy Services
+  { id: 'buy1', name: 'Builder Projects', service: ExtendedServiceType.BUY_SERVICE, rating: 4.6, rate: '₹5000/project', imageUrl: 'https://picsum.photos/seed/buy1/300/300', specialization: 'Residential & Commercial', bio: 'Expert in builder projects for homes and offices.' },
+  { id: 'buy2', name: 'Construction Materials', service: ExtendedServiceType.BUY_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/buy2/300/300', specialization: 'All construction materials', bio: 'Supplier of quality construction materials.' },
+  { id: 'buy3', name: 'Property Legal Services', service: ExtendedServiceType.BUY_SERVICE, rating: 4.7, rate: '₹2000/case', imageUrl: 'https://picsum.photos/seed/buy3/300/300', specialization: 'Legal documentation', bio: 'Legal expert for property matters.' },
+  { id: 'buy4', name: 'Home Interiors', service: ExtendedServiceType.BUY_SERVICE, rating: 4.8, rate: '₹300/sqft', imageUrl: 'https://picsum.photos/seed/buy4/300/300', specialization: 'Modern interiors', bio: 'Interior design for homes and apartments.' },
+  { id: 'buy5', name: 'Plot Maintenance', service: ExtendedServiceType.BUY_SERVICE, rating: 4.4, rate: '₹1500/month', imageUrl: 'https://picsum.photos/seed/buy5/300/300', specialization: 'Plot cleaning & maintenance', bio: 'Reliable plot maintenance services.' },
+
+  // Sell Services
+  { id: 'sell1', name: 'Property Listing', service: ExtendedServiceType.SELL_SERVICE, rating: 4.5, rate: '₹2000/listing', imageUrl: 'https://picsum.photos/seed/sell1/300/300', specialization: 'Online & offline listing', bio: 'Get your property listed for sale.' },
+  { id: 'sell2', name: 'Brokerage Services', service: ExtendedServiceType.SELL_SERVICE, rating: 4.3, rate: '2% commission', imageUrl: 'https://picsum.photos/seed/sell2/300/300', specialization: 'Brokerage', bio: 'Professional brokerage for property sales.' },
+  { id: 'sell3', name: 'Resale Assistance', service: ExtendedServiceType.SELL_SERVICE, rating: 4.6, rate: '₹3000/transaction', imageUrl: 'https://picsum.photos/seed/sell3/300/300', specialization: 'Resale', bio: 'Assistance with property resale.' },
+  { id: 'sell4', name: 'Land Sale', service: ExtendedServiceType.SELL_SERVICE, rating: 4.7, rate: '₹5000/acre', imageUrl: 'https://picsum.photos/seed/sell4/300/300', specialization: 'Land sales', bio: 'Expert in land sales and documentation.' },
+  { id: 'sell5', name: 'Commercial Property Sale', service: ExtendedServiceType.SELL_SERVICE, rating: 4.5, rate: '₹10000/property', imageUrl: 'https://picsum.photos/seed/sell5/300/300', specialization: 'Commercial property', bio: 'Sell your commercial property with ease.' },
+
+  // Commercial Services
+  { id: 'comm1', name: 'Packers and Movers', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.6, rate: '₹5000/move', imageUrl: 'https://picsum.photos/seed/comm1/300/300', specialization: 'Relocation', bio: 'Professional packers and movers for homes and offices.' },
+  { id: 'comm2', name: 'Building Materials', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm2/300/300', specialization: 'All building materials', bio: 'Supplier of commercial building materials.' },
+  { id: 'comm3', name: 'Home Cleaning', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.7, rate: '₹1500/cleaning', imageUrl: 'https://picsum.photos/seed/comm3/300/300', specialization: 'Deep cleaning', bio: 'Home and office cleaning services.' },
+  { id: 'comm4', name: 'Sanitary Kitchen Electric Shop', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.4, rate: '₹500/visit', imageUrl: 'https://picsum.photos/seed/comm4/300/300', specialization: 'Sanitary & kitchen', bio: 'Sanitary, kitchen, and electric shop solutions.' },
+  { id: 'comm5', name: 'Building Planner', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.8, rate: '₹8000/project', imageUrl: 'https://picsum.photos/seed/comm5/300/300', specialization: 'Planning', bio: 'Building planning and consulting.' },
+  { id: 'comm6', name: 'Construction Materials', service: ExtendedServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm6/300/300', specialization: 'Materials', bio: 'Commercial construction material supplier.' },
 ];
 
 const generateSqftGrid = (rows: number, cols: number, bookedUnits?: {row: number, col: number}[]): SqftUnit[][] => {

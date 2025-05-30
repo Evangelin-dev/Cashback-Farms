@@ -1,19 +1,19 @@
-
 import React, { useState } from 'react';
 
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/layout/Navbar';
-import Footer from './components/layout/Footer';
-import HomePage from './pages/HomePage';
-import PlotMarketplacePage from './pages/PlotMarketplacePage';
-import BookMySqftPage from './pages/BookMySqftPage';
-import MaterialsStorePage from './pages/MaterialsStorePage';
-import ServicesHubPage from './pages/ServicesHubPage';
-import { PlotDetailPage, MaterialDetailPage, ProfessionalDetailPage } from './pages/DetailPagePlaceholders';
-import NotFoundPage from './pages/NotFoundPage';
-import { MOCK_BMS_PLOT_INFO } from './constants';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
+import PlansPage from './components/assistedplans/plans'; // Import the PlansPage component
 import AuthModal from './components/auth/authmodel';
 import Dashboard from './components/dashboard/dashboard';
+import Footer from './components/layout/Footer';
+import Navbar from './components/layout/Navbar';
+import { MOCK_BMS_PLOT_INFO } from './constants';
+import BookMySqftPage from './pages/BookMySqftPage';
+import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/DetailPagePlaceholders';
+import HomePage from './pages/HomePage';
+import MaterialsStorePage from './pages/MaterialsStorePage';
+import NotFoundPage from './pages/NotFoundPage';
+import PlotMarketplacePage from './pages/PlotMarketplacePage';
+import ServicesHubPage from './pages/ServicesHubPage';
 
 const App: React.FC = () => {
   const [showModal, setShowModal] = useState(false); // ← Modal state
@@ -34,6 +34,7 @@ const App: React.FC = () => {
             <Route path="/materials/:id" element={<MaterialDetailPage />} />
             <Route path="/services" element={<ServicesHubPage />} />
             <Route path="/services/:id" element={<ProfessionalDetailPage />} />
+            <Route path="/plans" element={<PlansPage />} /> {/* Add this route */}
             <Route path="*" element={<NotFoundPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>

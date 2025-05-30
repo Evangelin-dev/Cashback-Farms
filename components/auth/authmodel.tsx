@@ -108,7 +108,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl flex flex-col md:flex-row">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-xl min-h-[500px] flex flex-col md:flex-row">
         {/* Image and bullet points */}
         <div className="flex flex-col items-center justify-center bg-green-50 p-8 md:w-1/3 w-full border-b md:border-b-0 md:border-r border-green-200">
           <img
@@ -138,7 +138,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           </ul>
         </div>
         {/* Form section */}
-        <div className="flex-1 p-12 flex flex-col justify-center items-center">
+        <div className="flex-1 p-8 flex flex-col justify-center items-center relative">
           {/* Header */}
           <div className="flex justify-between items-center mb-4 w-full">
             <h2 className="text-lg font-bold text-green-600 mx-auto">
@@ -172,7 +172,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             </button>
           </div>
           {/* Mobile login/signup form */}
-          <div className="w-full flex flex-col items-center">
+          <div className="w-full flex flex-col items-center flex-1">
             {!otpSent ? (
               <form className="space-y-4 w-full flex flex-col items-center" onSubmit={handleSendOtp}>
                 <div className="w-full flex items-center mb-2">
@@ -216,6 +216,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 </button>
               </form>
             )}
+          </div>
+          {/* Terms and Conditions at the bottom */}
+          <div className="absolute left-0 right-0 bottom-6 text-xs text-center text-gray-500 w-full">
+            by continuing, you agree to our{' '}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-green-600 underline hover:text-green-700 font-semibold"
+            >
+              Terms and Conditions
+            </a>
           </div>
         </div>
       </div>

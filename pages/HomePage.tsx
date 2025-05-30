@@ -1,12 +1,10 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_PLOTS, MOCK_MATERIAL_CATEGORIES, MOCK_PROFESSIONALS } from '../constants';
-import PlotCard from '../components/plot/PlotCard';
-import MaterialCard from '../components/material/MaterialCard'; // Placeholder, using category card instead
-import ProfessionalCard from '../components/service/ProfessionalCard';
+import AssistedPlans from '../components/assistedplans/assistedplans';
 import Button from '../components/common/Button';
-import CardShell from '../components/common/CardShell';
+import PlotCard from '../components/plot/PlotCard';
+import ProfessionalCard from '../components/service/ProfessionalCard';
+import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../constants';
 
 const HomePage: React.FC = () => {
   const featuredPlots = MOCK_PLOTS.slice(0, 3);
@@ -15,8 +13,141 @@ const HomePage: React.FC = () => {
     p.service === "Architect" || p.service === "Interior Designer"
   ).slice(0,3);
 
+  // Search section state
+  const [searchType, setSearchType] = useState<'buy' | 'sell' | 'commercial'>('buy');
+  const [searchInput, setSearchInput] = useState('');
+  const [currentLocation, setCurrentLocation] = useState<string>('Detecting...');
+
+  // Get current location (city) on mount
+  React.useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            // Use a free reverse geocoding API (OpenStreetMap Nominatim)
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+            );
+            const data = await res.json();
+            setCurrentLocation(data.address?.city || data.address?.town || data.address?.village || 'Your Location');
+          } catch {
+            setCurrentLocation('Location Unavailable');
+          }
+        },
+        () => setCurrentLocation('Location Unavailable')
+      );
+    } else {
+      setCurrentLocation('Location Unavailable');
+    }
+  }, []);
+
+  // Home services cards for each search type
+  const buyServices = [
+    { title: 'Builder Projects', desc: 'Explore top builder projects', icon: '🏗️', link: '/services/buy' },
+    { title: 'Construction materials', desc: 'Get quality materials for your home', icon: '🧱', link: '/services/buy' },
+    { title: 'Property Legal Services', desc: 'Legal help for your property', icon: '⚖️', link: '/services/buy' },
+    { title: 'Home Interiors', desc: 'Design your dream home', icon: '🛋️', link: '/services/buy' },
+    { title: 'Plot Maintenance', desc: 'Keep your plot in top shape', icon: '🌱', link: '/services/buy' },
+  ];
+  const sellServices = [
+    { title: 'Free Property Listing', desc: 'List your property for free', icon: '📝', link: '/services/sell' },
+    { title: 'Professional Photography', desc: 'Attract buyers with great photos', icon: '📸', link: '/services/sell' },
+    { title: 'Seller Support', desc: 'Get help from our team', icon: '🤝', link: '/services/sell' },
+  ];
+  const commercialServices = [
+    { title: 'Packers & Movers', desc: 'Hassle-free shifting for your business', icon: '🚚', link: '/services/commercial' },
+    { title: 'Building Materials', desc: 'All materials for your commercial needs', icon: '🏢', link: '/services/commercial' },
+    { title: 'Home Cleaning', desc: 'Professional cleaning for your premises', icon: '🧹', link: '/services/commercial' },
+    { title: 'Sanitary Kitchen Electric Shop', desc: 'Sanitary, kitchen, and electrical supplies', icon: '🔌', link: '/services/commercial' },
+    { title: 'Building Planner', desc: 'Plan your commercial building efficiently', icon: '📐', link: '/services/commercial' },
+    { title: 'Construction Materials', desc: 'Quality construction materials', icon: '🧱', link: '/services/commercial' },
+    { title: 'Carpenter Labour', desc: 'Skilled carpenters for your project', icon: '🪚', link: '/services/commercial' },
+    { title: 'Bathroom Cleaning', desc: 'Deep cleaning for bathrooms', icon: '🛁', link: '/services/commercial' },
+    { title: 'Vehichle shifting', desc: 'Move your vehicles safely', icon: '🚗', link: '/services/commercial' },
+  ];
+
+  // Render search bar input(s) based on type
+  const renderSearchInput = () => {
+    if (searchType === 'buy') {
+      return (
+        <input
+          type="text"
+          className="w-full border rounded px-4 py-2 text-sm"
+          placeholder="Search by locality or landmark"
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+        />
+      );
+    }
+    if (searchType === 'sell') {
+      return (
+        <input
+          type="text"
+          className="w-full border rounded px-4 py-2 text-sm"
+          placeholder="Sell by location"
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+        />
+      );
+    }
+    // commercial: single input, comma separated
+    return (
+      <input
+        type="text"
+        className="w-full border rounded px-4 py-2 text-sm"
+        placeholder="Search up to 3 localities or landmarks (comma separated)"
+        value={searchInput}
+        onChange={e => setSearchInput(e.target.value)}
+      />
+    );
+  };
+
+  // Render home service cards based on search type, with heading and navigation
+  const renderHomeServices = () => {
+    let services, heading, link;
+    if (searchType === 'buy') {
+      services = buyServices;
+      heading = 'Home Services for Buyers';
+      link = '/services/buy';
+    } else if (searchType === 'sell') {
+      services = sellServices;
+      heading = 'Home Services for Sellers';
+      link = '/services/sell';
+    } else {
+      services = commercialServices;
+      heading = 'Commercial Services';
+      link = '/services/commercial';
+    }
+    // Show only first 3 cards
+    const visibleServices = services.slice(0, 3);
+    return (
+      <div className="mt-8">
+        <div className="text-lg font-semibold text-green-700 mb-3 text-center">{heading}</div>
+        <div className="flex flex-row justify-center gap-4">
+          {visibleServices.map(s => (
+            <Link
+              key={s.title}
+              to={link}
+              className="bg-white rounded shadow p-4 flex flex-col items-center border border-green-100 hover:shadow-lg transition w-64"
+            >
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <div className="font-semibold text-green-700">{s.title}</div>
+              <div className="text-xs text-gray-500 text-center">{s.desc}</div>
+            </Link>
+          ))}
+        </div>
+        <div className="text-center mt-4">
+          <Link to={link}>
+            <Button variant="outline">View All Services</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-12">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <section className="bg-green-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -33,6 +164,85 @@ const HomePage: React.FC = () => {
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Search Section */}
+      <section className="bg-white py-8 shadow-sm border-b border-green-100">
+        <div className="max-w-3xl mx-auto px-4">
+          {/* Selection buttons */}
+          <div className="flex justify-center mb-4 gap-2">
+            <button
+              className={`px-4 py-2 rounded-l font-medium border border-green-600 ${
+                searchType === 'buy'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 hover:bg-green-50'
+              }`}
+              onClick={() => {
+                setSearchType('buy');
+                setSearchInput('');
+              }}
+            >
+              Buy
+            </button>
+            <button
+              className={`px-4 py-2 font-medium border-t border-b border-green-600 ${
+                searchType === 'sell'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 hover:bg-green-50'
+              }`}
+              onClick={() => {
+                setSearchType('sell');
+                setSearchInput('');
+              }}
+            >
+              Sell
+            </button>
+            <button
+              className={`px-4 py-2 rounded-r font-medium border border-green-600 ${
+                searchType === 'commercial'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-white text-green-700 hover:bg-green-50'
+              }`}
+              onClick={() => {
+                setSearchType('commercial');
+                setSearchInput('');
+              }}
+            >
+              Commercial
+            </button>
+          </div>
+          {/* Current location display */}
+          <div className="flex items-center justify-center mb-3 text-sm text-gray-600">
+            <span className="mr-2">📍</span>
+            <span>
+              Current Location: <span className="font-semibold text-green-700">{currentLocation}</span>
+            </span>
+          </div>
+          {/* Search bar */}
+          <div className="flex flex-col items-center gap-2">
+            <form
+              className="w-full flex flex-col gap-2"
+              onSubmit={e => {
+                e.preventDefault();
+                // Implement search logic as needed
+              }}
+            >
+              {renderSearchInput()}
+              <button
+                type="submit"
+                className="w-full mt-2 bg-green-600 text-white rounded px-4 py-2 font-semibold hover:bg-green-700"
+              >
+                {searchType === 'buy'
+                  ? 'Search Plots'
+                  : searchType === 'sell'
+                  ? 'Sell Property'
+                  : 'Search Commercial'}
+              </button>
+            </form>
+          </div>
+          {/* Home services cards with heading and navigation */}
+          {renderHomeServices()}
         </div>
       </section>
 
@@ -63,23 +273,11 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Popular Material Categories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-semibold text-gray-800 mb-6">Shop Construction Materials</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {featuredCategories.map(category => (
-            <Link key={category.id} to="/materials"> {/* Simplified: links to main material page */}
-              <CardShell className="text-center p-4 hover:shadow-xl transition-shadow">
-                <img src={category.imageUrl} alt={category.name} className="w-20 h-20 mx-auto mb-2 rounded-full object-cover"/>
-                <h3 className="font-medium text-gray-700">{category.name}</h3>
-              </CardShell>
-            </Link>
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <Link to="/materials">
-            <Button variant="outline">Browse All Materials</Button>
-          </Link>
+      {/* Assisted Plans Section */}
+      <section className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Add AssistedPlans component here */}
+          <AssistedPlans />
         </div>
       </section>
 
@@ -102,4 +300,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-    
