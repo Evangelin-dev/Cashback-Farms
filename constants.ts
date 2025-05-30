@@ -115,6 +115,7 @@ export const NAV_LINKS = [
   { name: 'Book My SqFt', path: `/book-my-sqft/${MOCK_BMS_PLOT_INFO.id}` },
   { name: 'Materials Store', path: '/materials' },
   { name: 'Professional Services', path: '/services' },
+  { name: 'Dash Board', path: '/dashboard' },
 ];
 
 // SVG Icons (Heroicons)

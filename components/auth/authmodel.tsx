@@ -1,147 +1,155 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onAuthSuccess?: (user: {
+    mobile: string;
+    mobileVerified: boolean;
+  }) => void;
+  onEditProfile?: (user: {
+    mobile: string;
+    mobileVerified: boolean;
+  }) => void;
 }
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [showForgot, setShowForgot] = useState(false);
 
-  
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-
-
-  const [signupName, setSignupName] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupConfirm, setSignupConfirm] = useState('');
-  const [signupError, setSignupError] = useState('');
-
- 
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
+  // Mobile login/signup state
+  const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
-  const [enteredOtp, setEnteredOtp] = useState('');
-  const [forgotError, setForgotError] = useState('');
-  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [mobileVerified, setMobileVerified] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
+  // Country code state and options from API
+  const [countryCode, setCountryCode] = useState('+91');
+  const [countryOptions, setCountryOptions] = useState<{ code: string; label: string }[]>([
+    { code: '+91', label: '🇮🇳 +91' }
+  ]);
 
-  // Helper: email validation
-  const validateEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  useEffect(() => {
+    // Example API: https://restcountries.com/v3.1/all
+    // We'll fetch country calling codes and flags
+    fetch('https://restcountries.com/v3.1/all')
+      .then(res => res.json())
+      .then(data => {
+        const options = data
+          .map((c: any) => {
+            const code = c.idd?.root && c.idd?.suffixes?.[0]
+              ? `${c.idd.root}${c.idd.suffixes[0]}`
+              : null;
+            if (!code) return null;
+            // Use emoji flag if available, else country code
+            const flag = c.flag || '';
+            return {
+              code,
+              label: `${flag} ${code}`
+            };
+          })
+          .filter(Boolean)
+          // Remove duplicates and sort by code
+          .filter((v: any, i: number, arr: any[]) => arr.findIndex(x => x.code === v.code) === i)
+          .sort((a: any, b: any) => a.code.localeCompare(b.code));
+        setCountryOptions(options.length ? options : [{ code: '+91', label: '🇮🇳 +91' }]);
+      })
+      .catch(() => {
+        setCountryOptions([{ code: '+91', label: '🇮🇳 +91' }]);
+      });
+  }, []);
 
-  // Helper: name validation (alphabets only, no numbers)
-  const validateName = (name: string) =>
-    /^[A-Za-z\s]+$/.test(name);
-
-  // Helper: password validation (min 8 chars, at least 1 letter and 1 number)
-  const validatePassword = (password: string) =>
-    /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password);
-
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    if (!validateEmail(loginEmail)) {
-      setLoginError('Invalid email address.');
-      return;
-    }
-    if (!validatePassword(loginPassword)) {
-      setLoginError('Password must be at least 8 characters and contain both letters and numbers.');
-      return;
-    }
-  
-    setLoginError(''); 
-    onClose();
-  };
-
-
-  const handleSignup = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSignupError('');
-    if (!signupName.trim()) {
-      setSignupError('Name is required.');
-      return;
-    }
-    if (!validateName(signupName.trim())) {
-      setSignupError('Name should only contain alphabets and spaces.');
-      return;
-    }
-    if (!validateEmail(signupEmail)) {
-      setSignupError('Invalid email address.');
-      return;
-    }
-    if (!validatePassword(signupPassword)) {
-      setSignupError('Password must be at least 8 characters and contain both letters and numbers.');
-      return;
-    }
-    if (signupPassword !== signupConfirm) {
-      setSignupError('Passwords do not match.');
-      return;
-    }
-  
-    setSignupError('');
-    onClose();
-  };
-
+  // Helper: mobile validation (10 digits, Indian format)
+  const validateMobile = (mobile: string) =>
+    /^[6-9]\d{9}$/.test(mobile);
 
   // Helper: OTP generation
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+  // Send OTP
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    setForgotError('');
-    setForgotSuccess('');
-    if (!validateEmail(forgotEmail)) {
-      setForgotError('Enter a valid email.');
+    setError('');
+    setSuccess('');
+    if (!validateMobile(mobile)) {
+      setError('Enter a valid 10-digit mobile number.');
       return;
     }
-
     const newOtp = generateOtp();
     setOtp(newOtp);
     setOtpSent(true);
-    setForgotSuccess(`OTP sent to ${forgotEmail} (demo: ${newOtp})`);
+    setSuccess(`OTP sent to ${countryCode} ${mobile} (demo: ${newOtp})`);
   };
 
-
+  // Verify OTP
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    setForgotError('');
-    setForgotSuccess('');
-    if (enteredOtp !== otp) {
-      setForgotError('Invalid OTP.');
+    setError('');
+    setSuccess('');
+    if (otpInput !== otp) {
+      setError('Invalid OTP.');
       return;
     }
-    setForgotSuccess('OTP verified! You can now reset your password.');
-   
+    setMobileVerified(true);
+    setSuccess('Mobile number verified!');
+    if (onAuthSuccess) {
+      onAuthSuccess({
+        mobile,
+        mobileVerified: true,
+      });
+    }
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-       
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-green-600">
-            {showForgot
-              ? 'Forgot Password'
-              : activeTab === 'login'
-              ? 'Login'
-              : 'Sign Up'}
-          </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-red-600 text-xl">
-            ×
-          </button>
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl flex flex-col md:flex-row">
+        {/* Image and bullet points */}
+        <div className="flex flex-col items-center justify-center bg-green-50 p-8 md:w-1/3 w-full border-b md:border-b-0 md:border-r border-green-200">
+          <img
+            src="https://www.gravatar.com/avatar/?d=mp&s=80"
+            alt="Auth"
+            className="w-16 h-16 rounded-full mb-2"
+          />
+          <ul className="mt-2 space-y-1 text-left w-full">
+            <li className="flex items-center text-green-700 text-xs">
+              <svg className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Secure authentication
+            </li>
+            <li className="flex items-center text-green-700 text-xs">
+              <svg className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              OTP verification for mobile
+            </li>
+            <li className="flex items-center text-green-700 text-xs">
+              <svg className="w-4 h-4 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Edit profile anytime
+            </li>
+          </ul>
         </div>
-
-   
-        {!showForgot && (
-          <div className="flex mb-4 border-b border-gray-200">
+        {/* Form section */}
+        <div className="flex-1 p-12 flex flex-col justify-center items-center">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4 w-full">
+            <h2 className="text-lg font-bold text-green-600 mx-auto">
+              {activeTab === 'login' ? 'Login' : 'Sign Up'}
+            </h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-red-600 text-xl absolute right-8 md:static">
+              ×
+            </button>
+          </div>
+          {/* Tabs */}
+          <div className="w-full flex mb-4 border-b border-gray-200 justify-center">
             <button
               onClick={() => setActiveTab('login')}
               className={`w-1/2 py-2 text-sm font-medium ${
@@ -163,139 +171,53 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               Sign Up
             </button>
           </div>
-        )}
-
-       
-        {!showForgot && activeTab === 'login' && (
-          <form className="space-y-4" onSubmit={handleLogin}>
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full px-3 py-2 border rounded"
-              value={loginEmail}
-              onChange={e => setLoginEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full px-3 py-2 border rounded"
-              value={loginPassword}
-              onChange={e => setLoginPassword(e.target.value)}
-            />
-            {loginError && <div className="text-red-500 text-sm">{loginError}</div>}
-            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-              Login
-            </button>
-            <div className="text-right">
-              <button
-                type="button"
-                className="text-sm text-blue-600 hover:underline"
-                onClick={() => {
-                  setShowForgot(true);
-                  setForgotEmail('');
-                  setOtpSent(false);
-                  setForgotError('');
-                  setForgotSuccess('');
-                  setEnteredOtp('');
-                }}
-              >
-                Forgot Password?
-              </button>
-            </div>
-          </form>
-        )}
-
-        {!showForgot && activeTab === 'signup' && (
-          <form className="space-y-4" onSubmit={handleSignup}>
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="w-full px-3 py-2 border rounded"
-              value={signupName}
-              onChange={e => {
-                // Only allow alphabets and spaces while typing
-                const value = e.target.value.replace(/[^A-Za-z\s]/g, '');
-                setSignupName(value);
-              }}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              className="w-full px-3 py-2 border rounded"
-              value={signupEmail}
-              onChange={e => setSignupEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="w-full px-3 py-2 border rounded"
-              value={signupPassword}
-              onChange={e => setSignupPassword(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              className="w-full px-3 py-2 border rounded"
-              value={signupConfirm}
-              onChange={e => setSignupConfirm(e.target.value)}
-            />
-            {signupError && <div className="text-red-500 text-sm">{signupError}</div>}
-            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-              Sign Up
-            </button>
-          </form>
-        )}
-
-        
-        {showForgot && (
-          <div>
+          {/* Mobile login/signup form */}
+          <div className="w-full flex flex-col items-center">
             {!otpSent ? (
-              <form className="space-y-4" onSubmit={handleSendOtp}>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-3 py-2 border rounded"
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                />
-                {forgotError && <div className="text-red-500 text-sm">{forgotError}</div>}
-                {forgotSuccess && <div className="text-green-600 text-sm">{forgotSuccess}</div>}
-                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+              <form className="space-y-4 w-full flex flex-col items-center" onSubmit={handleSendOtp}>
+                <div className="w-full flex items-center mb-2">
+                  <select
+                    className="border rounded-l px-2 py-2 text-sm bg-gray-50"
+                    value={countryCode}
+                    onChange={e => setCountryCode(e.target.value)}
+                  >
+                    {countryOptions.map(opt => (
+                      <option key={opt.code} value={opt.code}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Mobile Number"
+                    className="flex-1 px-3 py-2 border-t border-b border-r rounded-r text-sm text-center"
+                    value={mobile}
+                    maxLength={10}
+                    onChange={e => setMobile(e.target.value.replace(/[^0-9]/g, ''))}
+                  />
+                </div>
+                {error && <div className="text-red-500 text-xs mb-2">{error}</div>}
+                {success && <div className="text-green-600 text-xs mb-2">{success}</div>}
+                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 text-sm">
                   Send OTP
-                </button>
-                <button
-                  type="button"
-                  className="w-full text-gray-600 mt-2"
-                  onClick={() => setShowForgot(false)}
-                >
-                  Back to Login
                 </button>
               </form>
             ) : (
-              <form className="space-y-4" onSubmit={handleVerifyOtp}>
+              <form className="space-y-4 w-full flex flex-col items-center" onSubmit={handleVerifyOtp}>
                 <input
                   type="text"
                   placeholder="Enter OTP"
-                  className="w-full px-3 py-2 border rounded"
-                  value={enteredOtp}
-                  onChange={e => setEnteredOtp(e.target.value)}
+                  className="w-full px-3 py-2 border rounded mb-2 text-sm text-center"
+                  value={otpInput}
+                  onChange={e => setOtpInput(e.target.value)}
                 />
-                {forgotError && <div className="text-red-500 text-sm">{forgotError}</div>}
-                {forgotSuccess && <div className="text-green-600 text-sm">{forgotSuccess}</div>}
-                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                {error && <div className="text-red-500 text-xs mb-2">{error}</div>}
+                {success && <div className="text-green-600 text-xs mb-2">{success}</div>}
+                <button type="submit" className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 text-sm">
                   Verify OTP
-                </button>
-                <button
-                  type="button"
-                  className="w-full text-gray-600 mt-2"
-                  onClick={() => setShowForgot(false)}
-                >
-                  Back to Login
                 </button>
               </form>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

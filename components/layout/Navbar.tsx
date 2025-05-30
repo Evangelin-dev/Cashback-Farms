@@ -38,9 +38,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
               ))}
             </div>
           </div>
-          <NavLink to="/dashboard" className="...">
-  Dashboard
-</NavLink>
+         
           <div className="hidden md:block">
               <button
           onClick={onAuthClick}
