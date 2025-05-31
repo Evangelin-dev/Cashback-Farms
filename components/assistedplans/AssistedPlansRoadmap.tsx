@@ -19,9 +19,9 @@ const AssistedplansRoadmap: React.FC = () => {
               M 120 100
               Q 400 120, 680 170
               Q 400 220, 120 320
-              Q 400 420, 680 370
+              Q 400 340, 680 420
               Q 400 520, 120 600
-              Q 400 700, 400 700
+              Q 400 700
             "
             stroke="#a3e635"
             strokeWidth="6"

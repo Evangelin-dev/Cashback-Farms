@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const paymentOptions = [
   {
@@ -28,6 +29,7 @@ const paymentOptions = [
 ];
 
 const Payments: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="max-w-5xl mx-auto py-12 px-4">
       <h1 className="text-3xl font-bold text-green-700 mb-6 text-center">Payments</h1>
@@ -48,6 +50,7 @@ const Payments: React.FC = () => {
               w-64 min-h-[300px] max-w-[270px] h-[300px]
             `}
             style={{ animationDelay: `${idx * 0.1}s` } as React.CSSProperties}
+            onClick={() => navigate('/paymentvai')}
           >
             <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 w-32 h-32 bg-green-200 opacity-30 rounded-full blur-2xl z-0"></div>
             <img

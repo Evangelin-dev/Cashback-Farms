@@ -6,6 +6,7 @@ import AuthModal from './components/auth/authmodel';
 import Dashboard from './components/dashboard/dashboard';
 import Footer from './components/layout/Footer';
 import Navbar from './components/layout/Navbar';
+import PaymentVai from './components/payments/paymentVai';
 import { MOCK_BMS_PLOT_INFO } from './constants';
 import BookMySqftPage from './pages/BookMySqftPage';
 import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/DetailPagePlaceholders';
@@ -35,7 +36,9 @@ const App: React.FC = () => {
             <Route path="/services" element={<ServicesHubPage />} />
             <Route path="/services/:id" element={<ProfessionalDetailPage />} />
             <Route path="/plans" element={<PlansPage />} /> {/* Add this route */}
+            <Route path="/paymentvai" element={<PaymentVai />} /> {/* PaymentVai route */}
             <Route path="*" element={<NotFoundPage />} />
+            
             <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </main>

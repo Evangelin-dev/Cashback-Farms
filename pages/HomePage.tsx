@@ -27,12 +27,20 @@ const HomePage: React.FC = () => {
         async pos => {
           try {
             const { latitude, longitude } = pos.coords;
-            // Use BigDataCloud reverse geocoding API (higher free tier)
+            // Use Nominatim OpenStreetMap API (no key required, reliable for most locations)
             const res = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
             );
             const data = await res.json();
-            setCurrentLocation(data.city || data.locality || data.principalSubdivision || 'Your Location');
+            setCurrentLocation(
+              data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              data.address?.state ||
+              data.address?.county ||
+              data.display_name?.split(',')[0] ||
+              'Location Unavailable'
+            );
           } catch {
             setCurrentLocation('Location Unavailable');
           }
