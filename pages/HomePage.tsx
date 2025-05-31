@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AssistedPlans from '../components/assistedplans/assistedplans';
 import Button from '../components/common/Button';
+import FinancialServices from '../components/financialservices/financialservices';
+import Payments from '../components/payments/payments';
 import PlotCard from '../components/plot/PlotCard';
 import ProfessionalCard from '../components/service/ProfessionalCard';
 import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../constants';
@@ -25,12 +27,12 @@ const HomePage: React.FC = () => {
         async pos => {
           try {
             const { latitude, longitude } = pos.coords;
-            // Use a free reverse geocoding API (OpenStreetMap Nominatim)
+            // Use BigDataCloud reverse geocoding API (higher free tier)
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
             );
             const data = await res.json();
-            setCurrentLocation(data.address?.city || data.address?.town || data.address?.village || 'Your Location');
+            setCurrentLocation(data.city || data.locality || data.principalSubdivision || 'Your Location');
           } catch {
             setCurrentLocation('Location Unavailable');
           }
@@ -276,9 +278,18 @@ const HomePage: React.FC = () => {
       {/* Assisted Plans Section */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Add AssistedPlans component here */}
           <AssistedPlans />
         </div>
+      </section>
+
+      {/* Payments Section */}
+      <section className="py-12 bg-white">
+        <Payments />
+      </section>
+
+      {/* Financial Services Section */}
+      <section className="py-12 bg-white">
+        <FinancialServices />
       </section>
 
       {/* Featured Professionals Section */}
