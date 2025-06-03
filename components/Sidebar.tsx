@@ -33,6 +33,7 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    navigate('/'); // Redirect to home after logout
     // Navigation to login will be handled by ProtectedRoute
   };
 

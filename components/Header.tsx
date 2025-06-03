@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IconChevronDown, IconLogout, IconUserCircle } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
+import MyProfile from './myprofile/myprofile';
 
 interface HeaderProps {
   pageTitle?: string;
@@ -38,10 +39,19 @@ const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
           {userMenuOpen && (
             <div 
               id="user-menu"
-              className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-neutral-200 animate-fadeIn"
+              className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50 border border-neutral-200 animate-fadeIn"
               role="menu"
-              onMouseLeave={() => setUserMenuOpen(false)} // Close on mouse leave
+              onMouseLeave={() => setUserMenuOpen(false)}
             >
+              {/* Creative Profile Card */}
+              <div className="px-4 pt-4 pb-2 border-b border-neutral-100 mb-1">
+                <MyProfile
+                  name={currentUser.name || 'No Name'}
+                  mobile={currentUser.mobile}
+                  role={currentUser.role}
+                />
+              </div>
+              {/* Profile/Settings Link */}
               <Link 
                 to={currentUser.role === 'Admin' ? "/admin/settings" : "/profile"} 
                 role="menuitem" 
@@ -50,6 +60,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
               >
                 {currentUser.role === 'Admin' ? 'Settings' : 'Profile'}
               </Link>
+              {/* Logout Button */}
               <button 
                 onClick={() => { handleLogout(); setUserMenuOpen(false); }} 
                 role="menuitem" 

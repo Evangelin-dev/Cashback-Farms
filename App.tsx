@@ -1,37 +1,44 @@
 import React from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 
 // Layouts
-import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
+import UserLayout from './layouts/UserLayout';
 
 // Pages
 import HomePage from './pages/HomePage';
 import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
 
+import HelpAndSupport from './components/helpandsupport/helpandsupport';
+import KnowledgeBase from './components/knowledgebase/knowledgebase';
+import LandingPage from './components/landingpage/landingpage';
+import MyBooking from './components/mybooking/mybooking';
+import HomeProfile from './components/myprofile/homeprofile';
+import ReferAndEarn from './components/referandearn/referandearn';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
-import ManagePlotsPage from './pages/admin/ManagePlotsPage';
-import ManageCommercialPage from './pages/admin/ManageCommercialPage';
-import ManageBookingsPage from './pages/admin/ManageBookingsPage';
-import ManagePaymentsPage from './pages/admin/ManagePaymentsPage';
-import ManageUsersPage from './pages/admin/ManageUsersPage';
-import ManageSitePage from './pages/admin/ManageSitePage';
-import ManageMaterialsPage from './pages/admin/ManageMaterialsPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import ManageBookingsPage from './pages/admin/ManageBookingsPage';
+import ManageCommercialPage from './pages/admin/ManageCommercialPage';
+import ManageMaterialsPage from './pages/admin/ManageMaterialsPage';
+import ManagePaymentsPage from './pages/admin/ManagePaymentsPage';
+import ManagePlotsPage from './pages/admin/ManagePlotsPage';
+import ManageSitePage from './pages/admin/ManageSitePage';
+import ManageUsersPage from './pages/admin/ManageUsersPage';
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* User Routes */}
       <Route element={<UserLayout />}>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
-        <Route path="/profile" element={<div className="p-6 text-neutral-700">User Profile Page (Placeholder)</div>} />
-        <Route path="/my-bookings" element={<div className="p-6 text-neutral-700">My Bookings Page (Placeholder)</div>} />
-        <Route path="/refer-earn" element={<div className="p-6 text-neutral-700">Refer & Earn Page (Placeholder)</div>} />
-        <Route path="/knowledge-base" element={<div className="p-6 text-neutral-700">Knowledge Base (Placeholder)</div>} />
-        <Route path="/help-support" element={<div className="p-6 text-neutral-700">Help & Support Page (Placeholder)</div>} />
+        <Route path="/profile" element={<HomeProfile/>} />
+        <Route path="/my-bookings" element={<MyBooking/>} />
+        <Route path="/refer-earn" element={<ReferAndEarn/>} />
+        <Route path="/knowledge-base" element={<KnowledgeBase/>} />
+        <Route path="/help-support" element={<HelpAndSupport/>} />
       </Route>
 
       {/* Admin Routes */}
