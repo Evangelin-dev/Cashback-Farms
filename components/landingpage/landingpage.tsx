@@ -6,17 +6,10 @@ import FinancialServices from '../landingpage/landingpagecomponents/financialser
 import Payments from '../landingpage/landingpagecomponents/payments/payments';
 import ProfessionalCard from '../landingpage/landingpagecomponents/service/ProfessionalCard.tsx';
 import Button from '../Button.tsx';
+import PlotCard from './landingpagecomponents/plot/PlotCard.tsx';
 
 // Replace PlotCard placeholder with a real card using MOCK_PLOTS data
-const PlotCard: React.FC<{ plot: typeof MOCK_PLOTS[0] }> = ({ plot }) => (
-  <div className="bg-white rounded shadow p-6 flex flex-col items-start border border-green-100 hover:shadow-lg transition">
-    <img src={plot.imageUrl} alt={plot.title} className="w-full h-40 object-cover rounded mb-4" />
-    <div className="font-bold text-lg text-green-700 mb-1">{plot.title}</div>
-    <div className="text-sm text-gray-500 mb-2">{plot.location}</div>
-    <div className="text-xs text-gray-400 mb-2">{plot.description}</div>
-    <div className="text-sm font-semibold text-green-800 mt-auto">₹{plot.price?.toLocaleString() || plot.sqftPrice + " /sqft"}</div>
-  </div>
-);
+
 
 // Mock data placeholders
 
