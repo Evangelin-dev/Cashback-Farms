@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants.tsx';
+import AssistedPlans from '../landingpage/landingpagecomponents/assistedplans/assistedplans';
+import FinancialServices from '../landingpage/landingpagecomponents/financialservices/financialservices';
+import Payments from '../landingpage/landingpagecomponents/payments/payments';
+import ProfessionalCard from '../landingpage/landingpagecomponents/service/ProfessionalCard.tsx';
+import Button from '../Button.tsx';
 
-// Placeholder components for now
-const AssistedPlans = () => <div className="bg-gray-100 rounded p-8 text-center text-gray-400">[AssistedPlans Placeholder]</div>;
-const Button = (props: any) => <button {...props} className={`px-4 py-2 rounded ${props.className || ''}`}>{props.children}</button>;
-const FinancialServices = () => <div className="bg-gray-100 rounded p-8 text-center text-gray-400">[FinancialServices Placeholder]</div>;
-const Payments = () => <div className="bg-gray-100 rounded p-8 text-center text-gray-400">[Payments Placeholder]</div>;
-const PlotCard = () => <div className="bg-gray-100 rounded p-8 text-center text-gray-400">[PlotCard Placeholder]</div>;
-const ProfessionalCard = () => <div className="bg-gray-100 rounded p-8 text-center text-gray-400">[ProfessionalCard Placeholder]</div>;
+// Replace PlotCard placeholder with a real card using MOCK_PLOTS data
+const PlotCard: React.FC<{ plot: typeof MOCK_PLOTS[0] }> = ({ plot }) => (
+  <div className="bg-white rounded shadow p-6 flex flex-col items-start border border-green-100 hover:shadow-lg transition">
+    <img src={plot.imageUrl} alt={plot.title} className="w-full h-40 object-cover rounded mb-4" />
+    <div className="font-bold text-lg text-green-700 mb-1">{plot.title}</div>
+    <div className="text-sm text-gray-500 mb-2">{plot.location}</div>
+    <div className="text-xs text-gray-400 mb-2">{plot.description}</div>
+    <div className="text-sm font-semibold text-green-800 mt-auto">₹{plot.price?.toLocaleString() || plot.sqftPrice + " /sqft"}</div>
+  </div>
+);
 
 // Mock data placeholders
-const MOCK_MATERIAL_CATEGORIES = [{}, {}, {}, {}];
-const MOCK_PLOTS = [{ id: 1 }, { id: 2 }, { id: 3 }];
-const MOCK_PROFESSIONALS = [
-  { id: 1, service: "Architect" },
-  { id: 2, service: "Interior Designer" },
-  { id: 3, service: "Architect" }
-];
+
 
 const LandingPage: React.FC = () => {
   const featuredPlots = MOCK_PLOTS.slice(0, 3);
@@ -269,7 +272,7 @@ const LandingPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-semibold text-gray-800 mb-6">Featured Plots</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredPlots.map((plot, idx) => <PlotCard key={idx} />)}
+          {featuredPlots.map((plot, idx) => <PlotCard key={plot.id || idx} plot={plot} />)}
         </div>
         <div className="text-center mt-8">
           <Link to="/plots">
@@ -314,7 +317,7 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Hire Top Professionals</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProfessionals.map((prof, idx) => <ProfessionalCard key={idx} />)}
+            {featuredProfessionals.map(prof => <ProfessionalCard key={prof.id} professional={prof} />)}
             </div>
             <div className="text-center mt-8">
             <Link to="/services">

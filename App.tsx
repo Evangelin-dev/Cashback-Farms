@@ -39,6 +39,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/refer-earn" element={<ReferAndEarn/>} />
         <Route path="/knowledge-base" element={<KnowledgeBase/>} />
         <Route path="/help-support" element={<HelpAndSupport/>} />
+        
       </Route>
 
       {/* Admin Routes */}

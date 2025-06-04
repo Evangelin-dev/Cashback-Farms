@@ -1,10 +1,12 @@
 
 import React, { useState } from 'react';
-import { MOCK_PROPERTY_LISTINGS, IconSearch } from '../constants';
+
 import { ListingType, PropertyListing, PropertyCategory, ResidentialPropertyType, CommercialPropertyType } from '../types';
 import PropertyListingCard from '../components/PropertyListingCard';
 import Button from '../components/Button';
 import Card from '../components/Card'; // Added missing import
+import { IconSearch } from '../constants';
+import { MOCK_PROPERTY_LISTINGS } from '../constants';
 
 const HomePage: React.FC = () => {
   const [activeListingType, setActiveListingType] = useState<ListingType>(ListingType.BUY);
@@ -13,7 +15,7 @@ const HomePage: React.FC = () => {
   const [propertyType, setPropertyType] = useState<string>(''); // ResidentialPropertyType or CommercialPropertyType as string
 
   // Filter properties based on search criteria (simplified for now)
-  const filteredProperties = MOCK_PROPERTY_LISTINGS.filter(prop => {
+  const filteredProperties = MOCK_PROPERTY_LISTINGS.filter((prop: { listingType: ListingType; location: { city: string; locality: string; }; title: string; propertyCategory: PropertyCategory; residentialType: string; commercialType: string; }) => {
     const matchesListingType = prop.listingType === activeListingType;
     const matchesCity = prop.location.city.toLowerCase().includes(city.toLowerCase());
     const matchesSearchTerm = searchTerm === '' || 
@@ -113,7 +115,7 @@ const HomePage: React.FC = () => {
 
         {filteredProperties.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredProperties.map(listing => (
+            {filteredProperties.map((listing: PropertyListing) => (
                 <PropertyListingCard key={listing.id} listing={listing} />
             ))}
             </div>

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { IconDashboard, IconUserCircle, IconBuildingOffice, IconCollection, IconInformationCircle, IconLogout, IconMapPin, IconKey } from '../constants';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import { IconBuildingOffice, IconCollection, IconDashboard, IconInformationCircle, IconLogout, IconMapPin, IconUserCircle } from '../constants';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NavItemProps {
   to: string;
@@ -18,8 +17,8 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, exact = false }) => 
   return (
     <Link
       to={to}
-      className={`flex items-center px-4 py-3 text-sm hover:bg-primary-dark hover:text-white transition-colors duration-150 rounded-md
-                  ${isActive ? 'bg-primary text-white font-semibold shadow-md' : 'text-neutral-200 hover:bg-primary-dark'}`}
+      className={`flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
+                  ${isActive ? 'bg-primary text-white font-semibold shadow-md' : 'text-black hover:bg-primary hover:text-white'}`}
     >
       <span className="mr-3 w-5 h-5">{icon}</span>
       {label}
@@ -38,9 +37,9 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-neutral-800 text-white flex flex-col p-4 space-y-2">
+    <div className="w-64 bg-white text-black flex flex-col p-4 space-y-2">
       <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-700">
-        Cashback<span className="text-white">Homes</span>
+        Cashback<span className="text-black">Homes</span>
       </div>
       <nav className="flex-grow space-y-1">
         <NavItem to="/" icon={<IconDashboard className="w-5 h-5" />} label="Home / Search" exact={true} />
@@ -51,15 +50,15 @@ const Sidebar: React.FC = () => {
         <NavItem to="/knowledge-base" icon={<IconInformationCircle className="w-5 h-5" />} label="Knowledge Base" />
         <NavItem to="/help-support" icon={<IconInformationCircle className="w-5 h-5" />} label="Help & Support" />
         <div className="my-2 border-t border-neutral-700"></div>
-        {/* Link to /admin; ProtectedRoute will manage access to login or dashboard */}
-        <NavItem to="/admin" icon={<IconKey className="w-5 h-5" />} label="Admin Panel" />
+        {/* Removed Admin Panel NavItem */}
       </nav>
       <div className="mt-auto">
          <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm text-neutral-200 hover:bg-red-700 hover:text-white transition-colors duration-150 rounded-md"
+            className="flex items-center w-full px-4 py-3 text-sm text-black hover:bg-red-700 hover:text-white transition-colors duration-150 rounded-md"
           >
-            <span className="mr-3 w-5 h-5"><IconLogout className="w-5 h-5" /></span>
+            {/* Removed the above line */}
+            <IconLogout className="w-5 h-5 mr-3" />
             Logout
           </button>
       </div>

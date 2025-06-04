@@ -1,12 +1,29 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { IconChevronDown, IconLogout, IconUserCircle } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 import MyProfile from './myprofile/myprofile';
 
 interface HeaderProps {
   pageTitle?: string;
 }
+
+// Inline SVG icon components
+const IconChevronDown = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+const IconLogout = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
+  </svg>
+);
+const IconUserCircle = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg {...props} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 20v-2a4 4 0 014-4h0a4 4 0 014 4v2" />
+  </svg>
+);
 
 const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);

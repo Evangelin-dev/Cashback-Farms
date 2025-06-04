@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlotInfo, User, Booking, PaymentInstallment, SiteDetails, MaterialDetail, PaymentStatus, UserRole, BookingStatus, PaymentType, InvestmentDetails, PropertyListing, ListingType, PropertyCategory, ResidentialPropertyType, CommercialPropertyType, PropertyLocation, CommercialPropertyInfo } from './types';
+import { Plot, User, Booking, MaterialCategory, PaymentInstallment, Professional, SiteDetails, MaterialDetail, PaymentStatus, UserRole, BookingStatus, PaymentType, InvestmentDetails, PropertyListing, ListingType, PropertyCategory, ResidentialPropertyType, CommercialPropertyType, PropertyLocation, CommercialPropertyInfo, PlotType, ServiceType } from './types';
 
 export const IconDashboard = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -121,11 +121,66 @@ export const IconSearch = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 // --- Mock Data ---
-export let MOCK_PLOTS: PlotInfo[] = [
-  { id: 'AG-P1-A101', projectName: 'Alpha Greens', phase: 'Phase 1', plotNo: 'A-101', sqFt: 1200, ratePerSqFt: 500, plotValue: 600000, isAvailable: false, plotImageUrl: 'https://picsum.photos/seed/plot101/300/200' },
-  { id: 'AG-P1-A102', projectName: 'Alpha Greens', phase: 'Phase 1', plotNo: 'A-102', sqFt: 1500, ratePerSqFt: 520, plotValue: 780000, isAvailable: true, plotImageUrl: 'https://picsum.photos/seed/plot102/300/200' },
-  { id: 'BV-P2-B205', projectName: 'Bay View', phase: 'Phase 2', plotNo: 'B-205', sqFt: 2000, ratePerSqFt: 600, plotValue: 1200000, isAvailable: true, plotImageUrl: 'https://picsum.photos/seed/plot205/300/200' },
+export const MOCK_PLOTS: Plot[] = [
+  {
+    id: 'plot1',
+    title: 'Serene Valley Plot',
+    location: 'Greenfield Estates, Bangalore',
+    price: 5000000,
+    area: 2400,
+    imageUrl: 'https://picsum.photos/seed/plot1/400/300',
+    type: PlotType.PUBLIC,
+    description: 'A beautiful plot in a rapidly developing area, perfect for your dream home. North-facing with good road access.',
+    amenities: ['Water Connection', 'Electricity', 'Gated Community'],
+    sqftPrice: 2000,
+  },
+  {
+    id: 'plot2',
+    title: 'Greenheap Prime Location',
+    location: 'Orchard Avenue, Pune',
+    price: 7500000,
+    area: 3000,
+    imageUrl: 'https://picsum.photos/seed/plot2/400/300',
+    type: PlotType.VERIFIED,
+    description: 'A Greenheap verified plot with all legal checks complete. Ready for immediate construction. Close to schools and hospitals.',
+    isFlagship: true,
+    amenities: ['24/7 Security', 'Clubhouse Access', 'Paved Roads', 'Park'],
+    sqftPrice: 2500,
+  },
+  {
+    id: 'plot3',
+    title: 'Riverside Retreat',
+    location: 'Willow Creek, Chennai',
+    price: 6000000,
+    area: 2000,
+    imageUrl: 'https://picsum.photos/seed/plot3/400/300',
+    type: PlotType.PUBLIC,
+    description: 'Peaceful plot located near the river, offering scenic views. Ideal for a weekend getaway home or investment.',
+    sqftPrice: 3000,
+  },
+   {
+    id: 'plot4-bms',
+    title: 'Book My SqFt Special Plot',
+    location: 'Tech Park Extension, Hyderabad',
+    price: 0, // Price determined by sqft selection
+    area: 5000, // Total area available for sqft booking
+    imageUrl: 'https://picsum.photos/seed/plot4/400/300',
+    type: PlotType.VERIFIED,
+    description: 'Exclusive Greenheap plot available for "Book My SqFt". Choose your desired area and build your future.',
+    sqftPrice: 1800,
+    isFlagship: true,
+  },
 ];
+
+export const MOCK_MATERIAL_CATEGORIES: MaterialCategory[] = [
+  { id: 'cat1', name: 'Cement', imageUrl: 'https://picsum.photos/seed/cement/100/100' },
+  { id: 'cat2', name: 'Bricks & Blocks', imageUrl: 'https://picsum.photos/seed/bricks/100/100' },
+  { id: 'cat3', name: 'Sand & Aggregates', imageUrl: 'https://picsum.photos/seed/sand/100/100' },
+  { id: 'cat4', name: 'Tiles & Flooring', imageUrl: 'https://picsum.photos/seed/tiles/100/100' },
+  { id: 'cat5', name: 'Steel & TMT Bars', imageUrl: 'https://picsum.photos/seed/steel/100/100' },
+  { id: 'cat6', name: 'Paints & Finishes', imageUrl: 'https://picsum.photos/seed/paints/100/100' },
+];
+
 
 export let MOCK_USERS: User[] = [
   { id: 'user-001', name: 'Alice Wonderland', email: 'alice@example.com', role: UserRole.USER, createdAt: '2023-01-10' },
@@ -188,7 +243,7 @@ export let MOCK_MATERIALS: MaterialDetail[] = [
 
 // Helper function to get booking details for user view (similar to old MOCK_BOOKING_DETAILS)
 export const getExtendedBookingDetailsById = (bookingId: string): (Omit<Booking, 'paymentIds'> & {
-  plotInfo: PlotInfo | undefined;
+  plotInfo: Plot | undefined;
   user: User | undefined;
   payments: PaymentInstallment[];
   siteDetails: SiteDetails;
@@ -368,4 +423,33 @@ export let MOCK_COMMERCIAL_PROPERTIES: CommercialPropertyInfo[] = [
     contactNumber: '9000011111',
     addedDate: '2023-12-01',
   }
+];
+
+
+export const MOCK_PROFESSIONALS: Professional[] = [
+  { id: 'prof1', name: 'Ar. Priya Sharma', service: ServiceType.ARCHITECT, rating: 4.8, rate: '₹3000/consultation', imageUrl: 'https://picsum.photos/seed/prof1/300/300', specialization: 'Residential & Sustainable Design', bio: 'Experienced architect focusing on eco-friendly and modern homes.' },
+  { id: 'prof2', name: 'ID. Rahul Verma', service: ServiceType.INTERIOR_DESIGNER, rating: 4.9, rate: '₹200/sqft', imageUrl: 'https://picsum.photos/seed/prof2/300/300', specialization: 'Modern & Minimalist Interiors', bio: 'Transforming spaces with creativity and functionality. Specializes in luxury apartments.' },
+  { id: 'prof3', name: 'Ar. Anjali Reddy', service: ServiceType.ARCHITECT, rating: 4.5, rate: 'Project-based', imageUrl: 'https://picsum.photos/seed/prof3/300/300', specialization: 'Commercial & Office Spaces', bio: 'Innovative architectural solutions for businesses. Proven track record of delivering projects on time.'},
+  { id: 'prof4', name: 'ID. Sameer Khan', service: ServiceType.INTERIOR_DESIGNER, rating: 4.7, rate: '₹2500/consultation + project', imageUrl: 'https://picsum.photos/seed/prof4/300/300', specialization: 'Bohemian & Eclectic Styles', bio: 'Creating unique and personalized interiors that reflect your personality.'},
+  // Buy Services
+  { id: 'buy1', name: 'Builder Projects', service: ServiceType.BUY_SERVICE, rating: 4.6, rate: '₹5000/project', imageUrl: 'https://picsum.photos/seed/buy1/300/300', specialization: 'Residential & Commercial', bio: 'Expert in builder projects for homes and offices.' },
+  { id: 'buy2', name: 'Construction Materials', service: ServiceType.BUY_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/buy2/300/300', specialization: 'All construction materials', bio: 'Supplier of quality construction materials.' },
+  { id: 'buy3', name: 'Property Legal Services', service: ServiceType.BUY_SERVICE, rating: 4.7, rate: '₹2000/case', imageUrl: 'https://picsum.photos/seed/buy3/300/300', specialization: 'Legal documentation', bio: 'Legal expert for property matters.' },
+  { id: 'buy4', name: 'Home Interiors', service: ServiceType.BUY_SERVICE, rating: 4.8, rate: '₹300/sqft', imageUrl: 'https://picsum.photos/seed/buy4/300/300', specialization: 'Modern interiors', bio: 'Interior design for homes and apartments.' },
+  { id: 'buy5', name: 'Plot Maintenance', service: ServiceType.BUY_SERVICE, rating: 4.4, rate: '₹1500/month', imageUrl: 'https://picsum.photos/seed/buy5/300/300', specialization: 'Plot cleaning & maintenance', bio: 'Reliable plot maintenance services.' },
+
+  // Sell Services
+  { id: 'sell1', name: 'Property Listing', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹2000/listing', imageUrl: 'https://picsum.photos/seed/sell1/300/300', specialization: 'Online & offline listing', bio: 'Get your property listed for sale.' },
+  { id: 'sell2', name: 'Brokerage Services', service: ServiceType.SELL_SERVICE, rating: 4.3, rate: '2% commission', imageUrl: 'https://picsum.photos/seed/sell2/300/300', specialization: 'Brokerage', bio: 'Professional brokerage for property sales.' },
+  { id: 'sell3', name: 'Resale Assistance', service: ServiceType.SELL_SERVICE, rating: 4.6, rate: '₹3000/transaction', imageUrl: 'https://picsum.photos/seed/sell3/300/300', specialization: 'Resale', bio: 'Assistance with property resale.' },
+  { id: 'sell4', name: 'Land Sale', service: ServiceType.SELL_SERVICE, rating: 4.7, rate: '₹5000/acre', imageUrl: 'https://picsum.photos/seed/sell4/300/300', specialization: 'Land sales', bio: 'Expert in land sales and documentation.' },
+  { id: 'sell5', name: 'Commercial Property Sale', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹10000/property', imageUrl: 'https://picsum.photos/seed/sell5/300/300', specialization: 'Commercial property', bio: 'Sell your commercial property with ease.' },
+
+  // Commercial Services
+  { id: 'comm1', name: 'Packers and Movers', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.6, rate: '₹5000/move', imageUrl: 'https://picsum.photos/seed/comm1/300/300', specialization: 'Relocation', bio: 'Professional packers and movers for homes and offices.' },
+  { id: 'comm2', name: 'Building Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm2/300/300', specialization: 'All building materials', bio: 'Supplier of commercial building materials.' },
+  { id: 'comm3', name: 'Home Cleaning', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.7, rate: '₹1500/cleaning', imageUrl: 'https://picsum.photos/seed/comm3/300/300', specialization: 'Deep cleaning', bio: 'Home and office cleaning services.' },
+  { id: 'comm4', name: 'Sanitary Kitchen Electric Shop', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.4, rate: '₹500/visit', imageUrl: 'https://picsum.photos/seed/comm4/300/300', specialization: 'Sanitary & kitchen', bio: 'Sanitary, kitchen, and electric shop solutions.' },
+  { id: 'comm5', name: 'Building Planner', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.8, rate: '₹8000/project', imageUrl: 'https://picsum.photos/seed/comm5/300/300', specialization: 'Planning', bio: 'Building planning and consulting.' },
+  { id: 'comm6', name: 'Construction Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm6/300/300', specialization: 'Materials', bio: 'Commercial construction material supplier.' },
 ];
