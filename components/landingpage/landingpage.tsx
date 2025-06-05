@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants.tsx';
+import Button from '../Button.tsx';
 import AssistedPlans from '../landingpage/landingpagecomponents/assistedplans/assistedplans';
 import FinancialServices from '../landingpage/landingpagecomponents/financialservices/financialservices';
 import Payments from '../landingpage/landingpagecomponents/payments/payments';
 import ProfessionalCard from '../landingpage/landingpagecomponents/service/ProfessionalCard.tsx';
-import Button from '../Button.tsx';
 import PlotCard from './landingpagecomponents/plot/PlotCard.tsx';
-
-// Replace PlotCard placeholder with a real card using MOCK_PLOTS data
-
-
-// Mock data placeholders
 
 
 const LandingPage: React.FC = () => {
@@ -120,19 +115,22 @@ const LandingPage: React.FC = () => {
 
   // Render home service cards based on search type, with heading and navigation
   const renderHomeServices = () => {
-    let services, heading, link;
+    let services, heading, link, section;
     if (searchType === 'buy') {
       services = buyServices;
       heading = 'Home Services for Buyers';
-      link = '/services/buy';
+      link = '/services';
+      section = 'buy';
     } else if (searchType === 'sell') {
       services = sellServices;
       heading = 'Home Services for Sellers';
-      link = '/services/sell';
+      link = '/services';
+      section = 'sell';
     } else {
       services = commercialServices;
       heading = 'Commercial Services';
-      link = '/services/commercial';
+      link = '/services';
+      section = 'commercial';
     }
     // Show only first 3 cards
     const visibleServices = services.slice(0, 3);
@@ -143,7 +141,7 @@ const LandingPage: React.FC = () => {
           {visibleServices.map(s => (
             <Link
               key={s.title}
-              to={link}
+              to={`${link}/${encodeURIComponent(s.title.replace(/\s+/g, '-').toLowerCase())}`}
               className="bg-white rounded shadow p-4 flex flex-col items-center border border-green-100 hover:shadow-lg transition w-64"
             >
               <div className="text-3xl mb-2">{s.icon}</div>
@@ -153,7 +151,7 @@ const LandingPage: React.FC = () => {
           ))}
         </div>
         <div className="text-center mt-4">
-          <Link to={link}>
+          <Link to={`${link}#${section}`}>
             <Button variant="outline">View All Services</Button>
           </Link>
         </div>

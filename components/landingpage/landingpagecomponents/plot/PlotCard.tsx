@@ -2,15 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Plot, PlotType } from '../../../../types';
 // FIX: Icons are functional components and should be used as JSX tags.
-import { LocationMarkerIcon, CheckBadgeIcon, AreaIcon, RupeeIcon } from '../../../../constants.tsx';
-import CardShell from '../../../common/CardShell';
+import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../../../constants.tsx';
 import Button from '../../..//common/Button';
+import CardShell from '../../../common/CardShell';
 
 interface PlotCardProps {
   plot: Plot;
+  showViewDetailButton?: boolean; // Add this prop for conditional rendering
 }
 
-const PlotCard: React.FC<PlotCardProps> = ({ plot }) => {
+const PlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
   return (
     <CardShell className="flex flex-col">
       <img src={plot.imageUrl} alt={plot.title} className="w-full h-48 object-cover"/>
@@ -23,7 +24,7 @@ const PlotCard: React.FC<PlotCardProps> = ({ plot }) => {
             {plot.isFlagship && <span className="ml-1 font-bold">(Flagship)</span>}
           </span>
         )}
-         {plot.type === PlotType.PUBLIC && (
+        {plot.type === PlotType.PUBLIC && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2 self-start">
             Public Listing
           </span>
@@ -47,12 +48,16 @@ const PlotCard: React.FC<PlotCardProps> = ({ plot }) => {
             {plot.description.substring(0,100)}{plot.description.length > 100 ? '...' : ''}
         </p>
         <div className="mt-auto">
-          {plot.id === 'plot4-bms' || (plot.sqftPrice && plot.title.toLowerCase().includes("book my sqft")) ? (
+          {showViewDetailButton ? (
+            <Link to={`/book-my-sqft/${plot.id}`}>
+              <Button variant="outline" className="w-full">View Details</Button>
+            </Link>
+          ) : plot.id === 'plot4-bms' || (plot.sqftPrice && plot.title.toLowerCase().includes("book my sqft")) ? (
              <Link to={`/book-my-sqft/bms-plot-alpha`}>
                <Button variant="primary" className="w-full">Book My SqFt</Button>
              </Link>
           ) : (
-             <Link to={`/plots/${plot.id}`}>
+             <Link to={`/book-my-sqft/${plot.id}`}>
                <Button variant="outline" className="w-full">View Details</Button>
              </Link>
           )}

@@ -1,9 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
-import { MOCK_PLOTS } from '../constants';
-import PlotCard from '../components/plot/PlotCard';
-import { Plot, PlotType } from '../types';
-import Button from '../components/common/Button';
+import { MOCK_PLOTS } from '../../constants';
+import PlotCard from '../../components/landingpage/landingpagecomponents/plot/PlotCard';
+import { Plot, PlotType } from '../../types';
+import Button from '../../components/common/Button.tsx';
 
 const PlotMarketplacePage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | PlotType>( 'all');

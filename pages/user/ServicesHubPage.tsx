@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import ProfessionalCard from '../components/service/ProfessionalCard';
-import { ExtendedServiceType, MOCK_PROFESSIONALS } from '../constants';
-import { ServiceType } from '../types';
+import ProfessionalCard from '../../components/landingpage/landingpagecomponents/service/ProfessionalCard.tsx';
+import { ExtendedServiceType, MOCK_PROFESSIONALS } from '../../constants';
+import { ServiceType } from '../../types';
 
 const ServicesHubPage: React.FC = () => {
   const [selectedService, setSelectedService] = useState<string | null>(null);

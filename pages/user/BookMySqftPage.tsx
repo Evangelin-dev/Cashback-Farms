@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_BMS_PLOT_INFO } from '../constants';
-import { BookMySqftPlotInfo, SqftUnit } from '../types';
-import SqftGrid from '../components/plot/SqftGrid';
-import Button from '../components/common/Button';
+import { MOCK_BMS_PLOT_INFO } from '../../constants';
+import { BookMySqftPlotInfo, SqftUnit } from '../../types';
+import SqftGrid from '../../components/landingpage/landingpagecomponents/plot/SqftGrid';
+import Button from '../../components/common/Button';
 
 const BookMySqftPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();

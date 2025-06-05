@@ -294,4 +294,22 @@ export interface BookMySqftPlotInfo {
   emiOptions: string[];
   initialGrid: SqftUnit[][]; 
 }
-    
+export interface SqftUnit {
+  id: string; 
+  row: number;
+  col: number;
+  isAvailable: boolean;
+  isSelected: boolean;
+  isBooked: boolean;
+}    
+export interface Material {
+  id:string;
+  name: string;
+  category: string;
+  price: number;
+  moq: number; 
+  shippingTime: string;
+  vendor: string;
+  imageUrl:string;
+  description: string;
+}

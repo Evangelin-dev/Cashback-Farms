@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useState } from 'react';
-import { BookMySqftPlotInfo, PlotType, SqftUnit } from '../../types';
+import { BookMySqftPlotInfo, PlotType, SqftUnit } from '../../../../types';
 import PlotCard from '../plot/PlotCard';
 import SqftGrid from '../plot/SqftGrid';
 

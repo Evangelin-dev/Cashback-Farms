@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Material } from '../../types';
-import CardShell from '../common/CardShell';
-import Button from '../common/Button';
+import { Material } from '../../../../types';
+import CardShell from '../../../common/CardShell';
+import Button from '../../../common/Button';
 
 interface MaterialCardProps {
   material: Material;

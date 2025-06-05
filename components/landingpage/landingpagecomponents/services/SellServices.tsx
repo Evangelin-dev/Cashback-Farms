@@ -1,5 +1,5 @@
 import React from 'react';
-import { MOCK_PROFESSIONALS } from '../../constants';
+import { MOCK_PROFESSIONALS } from '../../../../constants';
 import ProfessionalCard from '../service/ProfessionalCard';
 
 const sellServicesList = [

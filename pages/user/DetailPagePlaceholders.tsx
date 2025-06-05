@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MOCK_PLOTS, MOCK_MATERIALS, MOCK_PROFESSIONALS } from '../constants';
-import Button from '../components/common/Button';
+import { MOCK_PLOTS, MOCK_MATERIALS, MOCK_PROFESSIONALS } from '../../constants';
+import Button from '../../components/common/Button';
 
 const DetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

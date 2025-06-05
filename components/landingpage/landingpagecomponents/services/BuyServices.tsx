@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_PROFESSIONALS } from '../../constants';
+import { MOCK_PROFESSIONALS } from '../../../../constants';
 import ProfessionalCard from '../service/ProfessionalCard';
 
 const buyServicesList = [

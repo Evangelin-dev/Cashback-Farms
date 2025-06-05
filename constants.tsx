@@ -1,6 +1,25 @@
-
 import React from 'react';
-import { Plot, User, Booking, MaterialCategory, PaymentInstallment, Professional, SiteDetails, MaterialDetail, PaymentStatus, UserRole, BookingStatus, PaymentType, InvestmentDetails, PropertyListing, ListingType, PropertyCategory, ResidentialPropertyType, CommercialPropertyType, PropertyLocation, CommercialPropertyInfo, PlotType, ServiceType } from './types';
+import { Booking, BookingStatus, BookMySqftPlotInfo, CommercialPropertyInfo, CommercialPropertyType, InvestmentDetails, ListingType, Material, MaterialCategory, PaymentInstallment, PaymentStatus, PaymentType, Plot, PlotType, Professional, PropertyCategory, PropertyListing, ResidentialPropertyType, ServiceType, SiteDetails, SqftUnit, User, UserRole } from './types';
+
+const generateSqftGrid = (rows: number, cols: number, bookedUnits?: {row: number, col: number}[]): SqftUnit[][] => {
+  const grid: SqftUnit[][] = [];
+  for (let i = 0; i < rows; i++) {
+    const row: SqftUnit[] = [];
+    for (let j = 0; j < cols; j++) {
+      const isBooked = bookedUnits?.some(unit => unit.row === i && unit.col === j) || false;
+      row.push({
+        id: `R${i}C${j}`,
+        row: i,
+        col: j,
+        isAvailable: !isBooked,
+        isSelected: false,
+        isBooked: isBooked,
+      });
+    }
+    grid.push(row);
+  }
+  return grid;
+};
 
 export const IconDashboard = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -120,6 +139,20 @@ export const IconSearch = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
+// Rupee icon
+export const IconRupee = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M6 4h7a1 1 0 100-2H6a1 1 0 100 2zm0 4h7a1 1 0 100-2H6a1 1 0 100 2zm0 4h4a1 1 0 100-2H6a1 1 0 100 2zm0 4h4a1 1 0 100-2H6a1 1 0 100 2zm-2 2a1 1 0 100-2h12a1 1 0 100 2H4z" />
+  </svg>
+);
+
+// Wallet icon
+export const IconWallet = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm10 3a1 1 0 110 2 1 1 0 010-2z" />
+  </svg>
+);
+
 // --- Mock Data ---
 export const MOCK_PLOTS: Plot[] = [
   {
@@ -234,11 +267,12 @@ export let MOCK_SITE_DETAILS: SiteDetails = {
   sitePlanImageUrl: 'https://picsum.photos/seed/siteplan/800/500',
 };
 
-export let MOCK_MATERIALS: MaterialDetail[] = [
-  { id: 'mat1', name: 'Eco-friendly Bricks', description: 'Locally sourced, high-compression strength bricks with low environmental impact.', qualityStandard: 'IS 1077', supplier: 'GreenBuild Co.', imageUrl: 'https://picsum.photos/seed/bricks/100/100' },
-  { id: 'mat2', name: 'Premium Cement', description: 'OPC 53 Grade cement ensuring high durability and strength for all structures.', qualityStandard: 'IS 269', supplier: 'UltraRock Cement', imageUrl: 'https://picsum.photos/seed/cement/100/100' },
-  { id: 'mat3', name: 'TMT Steel Bars', description: 'Fe500D TMT bars for superior earthquake resistance and structural integrity.', qualityStandard: 'IS 1786', supplier: 'StrongSteel Inc.', imageUrl: 'https://picsum.photos/seed/steel/100/100' },
-  { id: 'mat4', name: 'Vitrified Tiles', description: 'Double-charged vitrified tiles for flooring, offering durability and aesthetic appeal.', qualityStandard: 'IS 15622', supplier: 'DecorTiles Ltd.', imageUrl: 'https://picsum.photos/seed/tiles/100/100' },
+export const MOCK_MATERIALS: Material[] = [
+  { id: 'mat1', name: 'UltraTech Cement PPC', category: 'Cement', price: 380, moq: 50, shippingTime: '2-3 days', vendor: 'Reliable Builders Inc.', imageUrl: 'https://picsum.photos/seed/mat1/300/200', description: 'Portland Pozzolana Cement, ideal for all types of construction.' },
+  { id: 'mat2', name: 'Red Clay Bricks (Class A)', category: 'Bricks & Blocks', price: 8, moq: 1000, shippingTime: '3-5 days', vendor: 'Heritage Bricks Co.', imageUrl: 'https://picsum.photos/seed/mat2/300/200', description: 'High-quality red clay bricks, perfect for strong and durable walls.' },
+  { id: 'mat3', name: 'River Sand (Fine Grade)', category: 'Sand & Aggregates', price: 2000, moq: 1, shippingTime: '1-2 days', vendor: 'EarthMovers Ltd.', imageUrl: 'https://picsum.photos/seed/mat3/300/200', description: 'Fine grade river sand suitable for plastering and concrete work. Price per cubic meter.' },
+  { id: 'mat4', name: 'Vitrified Floor Tiles (600x600mm)', category: 'Tiles & Flooring', price: 45, moq: 100, shippingTime: '4-6 days', vendor: 'Elegant Tiles Emporium', imageUrl: 'https://picsum.photos/seed/mat4/300/200', description: 'Glossy finish vitrified tiles for modern interiors. Price per sq. ft.' },
+  { id: 'mat5', name: 'TMT Steel Bars Fe500D', category: 'Steel & TMT Bars', price: 65, moq: 500, shippingTime: '3-5 days', vendor: 'StrongHold Steel Corp.', imageUrl: 'https://picsum.photos/seed/mat5/300/200', description: 'High-strength TMT steel bars for reinforced concrete structures. Price per kg.' },
 ];
 
 // Helper function to get booking details for user view (similar to old MOCK_BOOKING_DETAILS)
@@ -247,14 +281,21 @@ export const getExtendedBookingDetailsById = (bookingId: string): (Omit<Booking,
   user: User | undefined;
   payments: PaymentInstallment[];
   siteDetails: SiteDetails;
-  materials: MaterialDetail[];
+  materials: Material[];
   investmentDetails: InvestmentDetails | undefined;
   paymentSummary: { totalPaid: number; totalDue: number; balance: number; totalValue: number };
 }) | undefined => {
   const booking = MOCK_BOOKINGS.find(b => b.id === bookingId);
   if (!booking) return undefined;
 
-  const plotInfo = MOCK_PLOTS.find(p => p.id === booking.plotId);
+  // Fix: Use plotId from booking to find the plot in MOCK_PLOTS (type Plot[])
+  // Try both Plot.id and Plot.plotNo for compatibility with both plot data shapes
+  let plotInfo = MOCK_PLOTS.find(p => p.id === booking.plotId);
+  if (!plotInfo) {
+    // fallback: try to match by plotNo if id doesn't match
+    plotInfo = MOCK_PLOTS.find(p => (p as any).plotNo === booking.plotId);
+  }
+
   const user = MOCK_USERS.find(u => u.id === booking.userId);
   const payments = MOCK_PAYMENTS.filter(p => p.bookingId === booking.id);
 
@@ -264,9 +305,9 @@ export const getExtendedBookingDetailsById = (bookingId: string): (Omit<Booking,
     if (p.status === PaymentStatus.PAID) totalPaid += p.amount;
     if (p.status === PaymentStatus.DUE || p.status === PaymentStatus.OVERDUE || p.status === PaymentStatus.PENDING) totalDue += p.amount;
   });
-  const totalValue = plotInfo?.plotValue || 0;
+  // Use plotInfo.price or plotInfo.plotValue if available, else 0
+  const totalValue = plotInfo?.price ?? (plotInfo as any)?.plotValue ?? 0;
   const balance = totalValue - totalPaid;
-
 
   const { paymentIds, ...restOfBooking } = booking; // Exclude paymentIds from top level of returned booking
 
@@ -277,7 +318,7 @@ export const getExtendedBookingDetailsById = (bookingId: string): (Omit<Booking,
       payments,
       siteDetails: MOCK_SITE_DETAILS,
       materials: MOCK_MATERIALS,
-      investmentDetails: booking.investmentDetails, // Use the one from MOCK_BOOKINGS
+      investmentDetails: booking.investmentDetails,
       paymentSummary: { totalPaid, totalDue, balance, totalValue }
   };
 };
@@ -488,3 +529,30 @@ export const RupeeIcon: React.FC = () => (
     })
   )
 );
+export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
+  id: 'bms-plot-alpha',
+  name: 'Alpha Square - Book My SqFt',
+  location: 'Central Business District, Gurgaon',
+  totalUnits: 100, // 10x10 grid
+  unitsWide: 10,
+  unitsTall: 10,
+  sqftPricePerUnit: 25000, // Assuming each unit is e.g. 10 sqft, so price per unit
+  emiOptions: ['3 months @ 5% interest', '6 months @ 7% interest', '12 months @ 10% interest'],
+  initialGrid: generateSqftGrid(10, 10, [{row: 2, col: 3}, {row: 5, col: 7}, {row: 0, col:0}]),
+};
+
+export const NAV_LINKS = [
+  { name: 'Home', path: '/' },
+  { name: 'Plot Marketplace', path: '/plots' },
+  { name: 'Book My SqFt', path: `/book-my-sqft/${MOCK_BMS_PLOT_INFO.id}` },
+  { name: 'Materials Store', path: '/materials' },
+  { name: 'Professional Services', path: '/services' },
+  { name: 'Dash Board', path: '/dashboard' },
+];
+
+
+export enum ExtendedServiceType {
+  BUY_SERVICE = "Buy Service",
+  SELL_SERVICE = "Sell Service",
+  COMMERCIAL_SERVICE = "Commercial Service",
+}

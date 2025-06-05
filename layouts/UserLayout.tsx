@@ -14,7 +14,7 @@ const UserLayout: React.FC = () => {
     if (bookingId) {
       const details = getExtendedBookingDetailsById(bookingId);
       if (details && details.plotInfo) {
-        pageTitle = `Plot: ${details.plotInfo.projectName} - ${details.plotInfo.plotNo}`;
+        pageTitle = `Plot: ${details.plotInfo.title} - ${details.plotInfo.id}`;
       } else {
         pageTitle = "Plot Booking Details";
       }
@@ -25,6 +25,19 @@ const UserLayout: React.FC = () => {
       pageTitle = "My Profile";
   } else if (location.pathname === '/my-bookings') {
       pageTitle = "My Bookings & Properties";
+  }
+  else if (location.pathname === '/plots') {
+      pageTitle = "Plot Marketplace";
+  } else if (location.pathname === '/materials') {
+      pageTitle = "Materials Store";
+  } else if (location.pathname === '/services') {
+      pageTitle = "Professional Services";
+  } else if (location.pathname === '/refer-earn') {
+      pageTitle = "Refer & Earn";
+  } else if (location.pathname === '/knowledge-base') {
+      pageTitle = "Knowledge Base";
+  } else if (location.pathname === '/help-support') {
+      pageTitle = "Help & Support";
   }
   // Could add more dynamic titles for other user pages if needed
 
