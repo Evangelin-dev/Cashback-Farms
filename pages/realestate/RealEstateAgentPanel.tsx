@@ -1,54 +1,39 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
-  IconCollection,
-  IconLogout,
-  IconMapPin,
-  IconRupee,
-  IconUsers,
-  IconWallet
+    IconCollection,
+    IconLogout,
+    IconMapPin,
+    IconRupee,
+    IconUsers,
 } from "../../constants.tsx";
 import { useAuth } from "../../contexts/AuthContext";
 
 const menuItems = [
   {
-    key: "/b2b/products",
-    icon: <IconCollection className="w-5 h-5" />,
-    label: "Manage Products",
-  },
-  {
-    key: "/b2b/orders",
+    key: "/realestate/post-plots",
     icon: <IconMapPin className="w-5 h-5" />,
-    label: "Product Orders",
+    label: "Post Plots",
   },
   {
-    key: "/b2b/pricing",
-    icon: <IconRupee className="w-5 h-5" />,
-    label: "Pricing & Offers",
-  },
-  {
-    key: "/b2b/customers",
+    key: "/realestate/leads",
     icon: <IconUsers className="w-5 h-5" />,
-    label: "Customers",
+    label: "Plot Inquiries & Leads",
   },
   {
-    key: "/b2b/wallet",
-    icon: <IconWallet className="w-5 h-5" />,
-    label: "Wallet / Settlement",
+    key: "/realestate/commission",
+    icon: <IconRupee className="w-5 h-5" />,
+    label: "Commission Dashboard",
+  },
+  {
+    key: "/realestate/lead-management",
+    icon: <IconCollection className="w-5 h-5" />,
+    label: "Lead Management",
   },
 ];
 
-const pageTitles: Record<string, string> = {
-  "/b2b/products": "Manage Products",
-  "/b2b/orders": "Product Orders",
-  "/b2b/pricing": "Pricing & Offers",
-  "/b2b/customers": "Customers",
-  "/b2b/wallet": "Wallet / Settlement",
-};
-
-const B2BMain: React.FC = () => {
+const RealEstateAgentPanel: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -56,14 +41,6 @@ const B2BMain: React.FC = () => {
     logout();
     navigate("/");
   };
-
-  // Find the current page title based on the path
-  const currentTitle =
-    pageTitles[
-      Object.keys(pageTitles).find((key) =>
-        location.pathname.startsWith(key)
-      ) || ""
-    ] || "B2B Vendor Panel";
 
   return (
     <div className="flex min-h-screen bg-neutral-100">
@@ -73,8 +50,18 @@ const B2BMain: React.FC = () => {
         onClick={() => setSidebarOpen((open) => !open)}
         aria-label="Open sidebar"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
       {/* Sidebar as drawer on mobile, static on desktop */}
@@ -88,7 +75,7 @@ const B2BMain: React.FC = () => {
         style={{ minWidth: "16rem" }}
       >
         <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
-          B2B<span className="text-black"> Vendor</span>
+          RealEstate<span className="text-black"> Agent</span>
         </div>
         <nav className="flex-grow space-y-1">
           {menuItems.map((item) => (
@@ -123,18 +110,8 @@ const B2BMain: React.FC = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      <main className="flex-1 p-2 sm:p-4 md:p-8 bg-neutral-100 min-w-0">
-        {/* Responsive header with page title */}
-        <header
-          className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 px-2 md:px-0 gap-2"
-          style={{ paddingLeft: "100px" }}
-        >
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-light tracking-wide">
-            {currentTitle}
-          </h1>
-          {/* If you use ProfileDropdown, keep it here */}
-        </header>
-        <div className="w-full max-w-6xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 bg-neutral-100 min-w-0">
+        <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
       </main>
@@ -142,4 +119,4 @@ const B2BMain: React.FC = () => {
   );
 };
 
-export default B2BMain;
+export default RealEstateAgentPanel;

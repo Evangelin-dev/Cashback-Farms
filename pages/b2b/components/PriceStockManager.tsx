@@ -3,8 +3,8 @@ import React, { useState } from "react";
 import Button from "../../../components/common/Button";
 
 const initialData = [
-  { key: 1, name: "Green Acres", price: 1500000, area: 2400, offer: 0 },
-  { key: 2, name: "Sunrise Meadows", price: 1200000, area: 1800, offer: 10 },
+  { key: 1, name: "UltraTech Cement", category: "Cement", price: 380, quantity: 100, offer: 0 },
+  { key: 2, name: "Red Clay Bricks", category: "Bricks", price: 8, quantity: 1000, offer: 10 },
 ];
 
 const PriceStockManager: React.FC = () => {
@@ -29,8 +29,8 @@ const PriceStockManager: React.FC = () => {
   };
 
   const columns = [
-    { title: "Plot Name", dataIndex: "name" },
-    { title: "Area (sqft)", dataIndex: "area" },
+    { title: "Product Name", dataIndex: "name" },
+    { title: "Category", dataIndex: "category" },
     {
       title: "Price",
       dataIndex: "price",
@@ -44,6 +44,21 @@ const PriceStockManager: React.FC = () => {
           />
         ) : (
           `₹${value.toLocaleString("en-IN")}`
+        )
+    },
+    {
+      title: "Quantity",
+      dataIndex: "quantity",
+      render: (value: number, record: any) =>
+        editingKey === record.key ? (
+          <InputNumber
+            min={1}
+            value={editCache.quantity}
+            onChange={val => handleChange("quantity", val)}
+            style={{ width: "100%" }}
+          />
+        ) : (
+          value
         )
     },
     {

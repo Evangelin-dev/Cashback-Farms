@@ -2,42 +2,41 @@ import { Card, Form, Input, InputNumber, Modal, Table } from "antd";
 import React, { useState } from "react";
 import Button from "../../../components/common/Button";
 
-const initialPlots = [
-  { key: 1, name: "Green Acres", price: 1500000, area: 2400, location: "Sector 21, Noida" },
-  { key: 2, name: "Sunrise Meadows", price: 1200000, area: 1800, location: "Yamuna Expressway" },
+const initialProducts = [
+  { key: 1, name: "UltraTech Cement", price: 380, quantity: 100, category: "Cement" },
+  { key: 2, name: "Red Clay Bricks", price: 8, quantity: 1000, category: "Bricks" },
 ];
 
 const ProductManager: React.FC = () => {
-  const [plots, setPlots] = useState(
-    initialPlots.map((p) => ({ ...p, status: "Active" }))
+  const [products, setProducts] = useState(
+    initialProducts.map((p) => ({ ...p, status: "Active" }))
   );
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
 
   const handleAdd = (values: any) => {
-    setPlots([
-      ...plots,
+    setProducts([
+      ...products,
       { key: Date.now(), ...values, status: "Active" }
     ]);
     setModalVisible(false);
     form.resetFields();
   };
 
-  // Move columns inside the component to access handleToggleStatus
   const handleToggleStatus = (key: number) => {
-    setPlots((prev) =>
-      prev.map((plot) =>
-        plot.key === key
-          ? { ...plot, status: plot.status === "Active" ? "Inactive" : "Active" }
-          : plot
+    setProducts((prev) =>
+      prev.map((product) =>
+        product.key === key
+          ? { ...product, status: product.status === "Active" ? "Inactive" : "Active" }
+          : product
       )
     );
   };
 
   const columns = [
-    { title: "Plot Name", dataIndex: "name" },
-    { title: "Location", dataIndex: "location" },
-    { title: "Area (sqft)", dataIndex: "area" },
+    { title: "Product Name", dataIndex: "name" },
+    { title: "Category", dataIndex: "category" },
+    { title: "Quantity", dataIndex: "quantity" },
     { title: "Price", dataIndex: "price", render: (v: number) => `₹${v.toLocaleString("en-IN")}` },
     {
       title: "Status",
@@ -75,25 +74,22 @@ const ProductManager: React.FC = () => {
 
   return (
     <Card
-      title="Manage Plots"
+      title="Manage Products"
       extra={
         <Button variant="primary" onClick={() => setModalVisible(true)}>
-          Add Plot
+          Add Product
         </Button>
       }
       style={{ marginBottom: 24, borderRadius: 8, boxShadow: "0 1px 4px #e5e7eb" }}
       bodyStyle={{ background: "#fff" }}
     >
-      <Table dataSource={plots} columns={columns} pagination={false} />
+      <Table dataSource={products} columns={columns} pagination={false} />
       <Modal
-        title="Add Plot"
+        title="Add Product"
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={[
-          <div
-            key="footer-actions"
-            style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}
-          >
+          <div key="footer-actions" style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <Button
               key="cancel"
               variant="outline"
@@ -108,23 +104,23 @@ const ProductManager: React.FC = () => {
               className="transition-colors duration-150 hover:bg-red-600 hover:text-white"
               onClick={() => form.submit()}
             >
-              Add Plot
+              Add Product
             </Button>
           </div>
         ]}
       >
         <Form form={form} layout="vertical" onFinish={handleAdd}>
-          <Form.Item name="name" label="Plot Name" rules={[{ required: true }]}>
+          <Form.Item name="name" label="Product Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="location" label="Location" rules={[{ required: true }]}>
+          <Form.Item name="category" label="Category" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="area" label="Area (sqft)" rules={[{ required: true }]}>
-            <InputNumber min={100} style={{ width: "100%" }} />
+          <Form.Item name="quantity" label="Quantity" rules={[{ required: true }]}>
+            <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="price" label="Price" rules={[{ required: true }]}>
-            <InputNumber min={10000} style={{ width: "100%" }} />
+            <InputNumber min={1} style={{ width: "100%" }} />
           </Form.Item>
         </Form>
       </Modal>

@@ -28,6 +28,7 @@ import ManagePlotsPage from './pages/admin/ManagePlotsPage';
 import ManageSitePage from './pages/admin/ManageSitePage';
 import ManageUsersPage from './pages/admin/ManageUsersPage';
 import B2BPanelRoutes from './pages/b2b';
+import RealEstateRoutes from './pages/realestate';
 import BookMySqftPage from './pages/user/BookMySqftPage';
 import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
 import MaterialsStorePage from './pages/user/MaterialsStorePage';
@@ -65,6 +66,9 @@ const AppRoutes: React.FC = () => {
 
       {/* B2B Vendor Panel Route */}
       <Route path="/b2b/*" element={<B2BPanelRoutes />} />
+
+      {/* RealEstate Agent Panel Route */}
+      <Route path="/realestate/*" element={<RealEstateRoutes />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>

@@ -1,10 +1,10 @@
 import { Button, Card, Table, Tag, message } from "antd";
 import React, { useState } from "react";
 
-// Use plot-related mock data instead of products
+// Use e-commerce product mock data
 const initialOrders = [
-  { key: 1, orderId: "ORD001", plotName: "Green Acres", location: "Sector 21, Noida", qty: 1, status: "Pending" },
-  { key: 2, orderId: "ORD002", plotName: "Sunrise Meadows", location: "Yamuna Expressway", qty: 1, status: "Pending" },
+  { key: 1, orderId: "ORD001", productName: "UltraTech Cement", category: "Cement", qty: 50, status: "Pending" },
+  { key: 2, orderId: "ORD002", productName: "Red Clay Bricks", category: "Bricks", qty: 500, status: "Pending" },
 ];
 
 const OrderManager: React.FC = () => {
@@ -21,8 +21,8 @@ const OrderManager: React.FC = () => {
 
   const columns = [
     { title: "Order ID", dataIndex: "orderId" },
-    { title: "Plot Name", dataIndex: "plotName" },
-    { title: "Location", dataIndex: "location" },
+    { title: "Product Name", dataIndex: "productName" },
+    { title: "Category", dataIndex: "category" },
     { title: "Quantity", dataIndex: "qty" },
     {
       title: "Status",
@@ -62,7 +62,7 @@ const OrderManager: React.FC = () => {
   ];
 
   return (
-    <Card title="Plot Orders" style={{ marginBottom: 24, borderRadius: 8, boxShadow: "0 1px 4px #e5e7eb" }} bodyStyle={{ background: "#fff" }}>
+    <Card title="Product Orders" style={{ marginBottom: 24, borderRadius: 8, boxShadow: "0 1px 4px #e5e7eb" }} bodyStyle={{ background: "#fff" }}>
       <Table dataSource={orders} columns={columns} pagination={false} />
     </Card>
   );

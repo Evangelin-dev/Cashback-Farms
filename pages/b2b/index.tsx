@@ -10,8 +10,8 @@ import WalletPanel from "./components/WalletPanel";
 const B2BPanelRoutes: React.FC = () => (
   <Routes>
     <Route path="/" element={<B2BMain />}>
-      <Route index element={<Navigate to="plots" replace />} />
-      <Route path="plots" element={<ProductManager />} />
+      <Route index element={<Navigate to="products" replace />} />
+      <Route path="products" element={<ProductManager />} />
       <Route path="orders" element={<OrderManager />} />
       <Route path="pricing" element={<PriceStockManager />} />
       <Route path="customers" element={<CustomersManager />} />
