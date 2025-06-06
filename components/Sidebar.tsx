@@ -42,7 +42,7 @@ const Sidebar: React.FC = () => {
     { to: "/profile", icon: <IconUserCircle className="w-5 h-5" />, label: "My Profile" },
     { to: "/my-bookings", icon: <IconCollection className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace " },
-    { to: "/book-my-sqft/bms-plot-alpha", icon: <IconBuildingOffice className="w-5 h-5" />, label: "Book My SqFt" },
+    { to: "/mysqft-listing", icon: <IconBuildingOffice className="w-5 h-5" />, label: "Book My SqFt" },
     { to: "/materials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
     { to: "/services", icon: <IconUsers className="w-5 h-5" />, label: "Professional Services" },
     { to: "/book-my-sqft/B001", icon: <IconMapPin className="w-5 h-5" />, label: "View Plot Details" },

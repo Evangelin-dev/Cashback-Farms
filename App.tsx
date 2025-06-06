@@ -35,6 +35,7 @@ import MaterialsStorePage from './pages/user/MaterialsStorePage';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
+import MySqftListing from './pages/user/MySqftListing';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -51,15 +52,16 @@ const AppRoutes: React.FC = () => {
         <Route path="/help-support" element={<HelpAndSupport/>} />
          <Route path="/plots" element={<PlotMarketplacePage />} />
             <Route path="/plots/:id" element={<PlotDetailPage />} />
-            <Route path="/book-my-sqft/:plotId" element={<BookMySqftPage />} />
+            <Route path="/book-my-sqft" element={<BookMySqftPage />} />
             {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-           <Route path="/book-my-sqft" element={<Navigate to={`/book-my-sqft/${MOCK_BMS_PLOT_INFO.id}`} replace />} />
+          
             <Route path="/materials" element={<MaterialsStorePage />} />
             <Route path="/materials/:id" element={<MaterialDetailPage />} />
             <Route path="/services" element={<ServicesHubPage />} />
             <Route path="/services/:id" element={<ProfessionalDetailPage />} />
             <Route path="/plans" element={<PlansPage />} /> {/* Add this route */}
             <Route path="/paymentvai" element={<PaymentVai />} /> {/* PaymentVai route */}
+            <Route path="/mysqft-listing" element={<MySqftListing />} />
             <Route path="*" element={<NotFoundPage />} />
         
       </Route>
