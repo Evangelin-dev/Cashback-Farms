@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { IconBuildingOffice, IconCog, IconCollection, IconDashboard, IconInformationCircle, IconLogout, IconMapPin, IconUserCircle, IconUsers } from '../constants';
+import {
+  IconCog,
+  IconCollection,
+  IconDashboard,
+  IconInformationCircle,
+  IconLogout,
+  IconMapPin,
+  IconPlus,
+  IconShieldCheck,
+  IconTableCells,
+  IconUserCircle,
+  IconUsers,
+  IconWallet
+} from '../constants';
 import { useAuth } from '../contexts/AuthContext';
 
 interface NavItemProps {
@@ -40,15 +53,15 @@ const Sidebar: React.FC = () => {
   const menuItems = [
     { to: "/", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
     { to: "/profile", icon: <IconUserCircle className="w-5 h-5" />, label: "My Profile" },
-    { to: "/my-bookings", icon: <IconCollection className="w-5 h-5" />, label: "My Bookings / Properties" },
-    { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace " },
-    { to: "/mysqft-listing", icon: <IconBuildingOffice className="w-5 h-5" />, label: "Book My SqFt" },
+    { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
+    { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
+    { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Book My SqFt" },
     { to: "/materials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
     { to: "/services", icon: <IconUsers className="w-5 h-5" />, label: "Professional Services" },
-    { to: "/book-my-sqft/B001", icon: <IconMapPin className="w-5 h-5" />, label: "View Plot Details" },
-    { to: "/refer-earn", icon: <IconBuildingOffice className="w-5 h-5" />, label: "Refer & Earn" },
-    { to: "/knowledge-base", icon: <IconCog className="w-5 h-5" />, label: "Knowledge Base" },
-    { to: "/help-support", icon: <IconInformationCircle className="w-5 h-5" />, label: "Help & Support" },
+    { to: "/book-my-sqft/B001", icon: <IconShieldCheck className="w-5 h-5" />, label: "View Plot Details" },
+    { to: "/refer-earn", icon: <IconPlus className="w-5 h-5" />, label: "Refer & Earn" },
+    { to: "/knowledge-base", icon: <IconInformationCircle className="w-5 h-5" />, label: "Knowledge Base" },
+    { to: "/help-support", icon: <IconCog className="w-5 h-5" />, label: "Help & Support" },
   ];
 
   return (
@@ -84,16 +97,16 @@ const Sidebar: React.FC = () => {
               icon={item.icon}
               label={item.label}
               exact={item.exact}
-              // Close sidebar on mobile after navigation
               {...(sidebarOpen ? { onClick: () => setSidebarOpen(false) } : {})}
             />
           ))}
           <div className="my-2 border-t border-neutral-700"></div>
         </nav>
         <div className="mt-auto">
+          <hr className="my-2 border-t border-neutral-300" />
           <button
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
+            className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
           >
             <IconLogout className="w-5 h-5 mr-3" />
             Logout
