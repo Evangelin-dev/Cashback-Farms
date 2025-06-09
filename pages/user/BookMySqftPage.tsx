@@ -1,10 +1,9 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Button from '../../components/common/Button';
+import SqftGrid from '../../components/landingpage/landingpagecomponents/plot/SqftGrid';
 import { MOCK_BMS_PLOT_INFO } from '../../constants';
 import { BookMySqftPlotInfo, SqftUnit } from '../../types';
-import SqftGrid from '../../components/landingpage/landingpagecomponents/plot/SqftGrid';
-import Button from '../../components/common/Button';
 
 const BookMySqftPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();
@@ -63,21 +62,82 @@ const BookMySqftPage: React.FC = () => {
     // navigate('/booking-confirmation'); // Example
   };
 
+  // Use fallback image/video if not present in plotInfo
+  const plotImageUrl =
+   
+    (plotInfo && (plotInfo as any).imageUrl)
+      ? (plotInfo as any).imageUrl
+      : "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80";
+  const plotVideoUrl =
+  
+    (plotInfo && (plotInfo as any).videoUrl && (plotInfo as any).videoUrl.trim() !== "")
+      ? (plotInfo as any).videoUrl
+      : "https://www.w3schools.com/html/mov_bbb.mp4";
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-green-700">Book My SqFt</h1>
+        <h1 className="text-4xl font-bold text-green-700">Book My (SqFt,SqYd,SqCm)</h1>
         <p className="mt-2 text-lg text-gray-600">
           Select your desired area from <span className="font-semibold">{plotInfo.name}</span> located at {plotInfo.location}.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 flex justify-center md:justify-start">
-            <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect} />
+        <div className="md:col-span-2 flex flex-col items-center md:items-start">
+          <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect} />
         </div>
         
-        <div className="md:col-span-1 bg-white p-6 rounded-lg shadow-lg">
+        {/* Plot detail card (right) - width increased by 100px */}
+        <div
+          className="md:col-span-1 bg-white p-6 rounded-lg shadow-lg flex flex-col items-center"
+          style={{ minWidth: 320, maxWidth: 320 }} // 320 + 100 = 420px
+        >
+          {/* Plot image with video on hover, above Booking Summary */}
+          <div
+            className="mb-6 w-full flex justify-center"
+            style={{ maxWidth: 320 }}
+            onMouseEnter={e => {
+              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
+              if (video) {
+                video.style.opacity = '1';
+                video.currentTime = 0;
+                video.play();
+              }
+              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
+              if (img) img.style.opacity = '0';
+            }}
+            onMouseLeave={e => {
+              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
+              if (video) {
+                video.pause();
+                video.style.opacity = '0';
+              }
+              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
+              if (img) img.style.opacity = '1';
+            }}
+          >
+            <div className="relative w-full" style={{ aspectRatio: '16/9', maxHeight: 180 }}>
+              <img
+                src={plotImageUrl}
+                alt="Plot"
+                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
+                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 1, zIndex: 1 }}
+              />
+              <video
+                src={plotVideoUrl}
+                loop
+                muted
+                playsInline
+                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
+                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 0, zIndex: 2 }}
+              />
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded pointer-events-none z-10">
+                Hover to preview video
+              </div>
+            </div>
+          </div>
+          {/* Booking Summary */}
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">Booking Summary</h2>
           <div className="space-y-3">
             <p><strong>Plot:</strong> {plotInfo.name}</p>
@@ -125,4 +185,3 @@ const BookMySqftPage: React.FC = () => {
 };
 
 export default BookMySqftPage;
-    

@@ -1,6 +1,5 @@
 import React from 'react';
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { MOCK_BMS_PLOT_INFO } from './constants';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
@@ -16,7 +15,8 @@ import LandingPage from './components/landingpage/landingpage';
 import PlansPage from './components/landingpage/landingpagecomponents/assistedplans/plans';
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
 import MyBooking from './components/mybooking/mybooking';
-import HomeProfile from './components/myprofile/homeprofile';
+
+import MyProfile from './components/myprofile/myprofile';
 import ReferAndEarn from './components/referandearn/referandearn';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
@@ -28,14 +28,16 @@ import ManagePlotsPage from './pages/admin/ManagePlotsPage';
 import ManageSitePage from './pages/admin/ManageSitePage';
 import ManageUsersPage from './pages/admin/ManageUsersPage';
 import B2BPanelRoutes from './pages/b2b';
+import B2BProfile from './pages/b2b/components/b2bprofile';
 import RealEstateRoutes from './pages/realestate';
+import RealProfile from './pages/realestate/components/realprofile';
 import BookMySqftPage from './pages/user/BookMySqftPage';
 import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
 import MaterialsStorePage from './pages/user/MaterialsStorePage';
+import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
-import MySqftListing from './pages/user/MySqftListing';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -45,31 +47,33 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
-        <Route path="/profile" element={<HomeProfile/>} />
+        {/* Change /profile to use MyProfile directly */}
+        <Route path="/profile" element={<MyProfile />} />
         <Route path="/my-bookings" element={<MyBooking/>} />
         <Route path="/refer-earn" element={<ReferAndEarn/>} />
         <Route path="/knowledge-base" element={<KnowledgeBase/>} />
         <Route path="/help-support" element={<HelpAndSupport/>} />
-         <Route path="/plots" element={<PlotMarketplacePage />} />
-            <Route path="/plots/:id" element={<PlotDetailPage />} />
-            <Route path="/book-my-sqft" element={<BookMySqftPage />} />
-            {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-          
-            <Route path="/materials" element={<MaterialsStorePage />} />
-            <Route path="/materials/:id" element={<MaterialDetailPage />} />
-            <Route path="/services" element={<ServicesHubPage />} />
-            <Route path="/services/:id" element={<ProfessionalDetailPage />} />
-            <Route path="/plans" element={<PlansPage />} /> {/* Add this route */}
-            <Route path="/paymentvai" element={<PaymentVai />} /> {/* PaymentVai route */}
-            <Route path="/mysqft-listing" element={<MySqftListing />} />
-            <Route path="*" element={<NotFoundPage />} />
-        
+        <Route path="/plots" element={<PlotMarketplacePage />} />
+        <Route path="/plots/:id" element={<PlotDetailPage />} />
+        <Route path="/book-my-sqft" element={<BookMySqftPage />} />
+        {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
+        <Route path="/materials" element={<MaterialsStorePage />} />
+        <Route path="/materials/:id" element={<MaterialDetailPage />} />
+        <Route path="/services" element={<ServicesHubPage />} />
+        <Route path="/services/:id" element={<ProfessionalDetailPage />} />
+        <Route path="/plans" element={<PlansPage />} /> {/* Add this route */}
+        <Route path="/paymentvai" element={<PaymentVai />} /> {/* PaymentVai route */}
+        <Route path="/mysqft-listing" element={<MySqftListing />} />
+        <Route path="/myprofile" element={<MyProfile />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
       {/* B2B Vendor Panel Route */}
+      <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
       <Route path="/b2b/*" element={<B2BPanelRoutes />} />
 
       {/* RealEstate Agent Panel Route */}
+      <Route path="/realestate/realprofile" element={<RealProfile />} />
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
 
       {/* Admin Routes */}

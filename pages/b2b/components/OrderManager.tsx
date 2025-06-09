@@ -1,10 +1,11 @@
 import { Button, Card, Table, Tag, message } from "antd";
 import React, { useState } from "react";
+import { generateOrderId } from "../../../constants.tsx";
 
 // Use e-commerce product mock data
 const initialOrders = [
-  { key: 1, orderId: "ORD001", productName: "UltraTech Cement", category: "Cement", qty: 50, status: "Pending" },
-  { key: 2, orderId: "ORD002", productName: "Red Clay Bricks", category: "Bricks", qty: 500, status: "Pending" },
+  { key: 1, orderId: generateOrderId(), productName: "UltraTech Cement", category: "Cement", qty: 50, status: "Pending", buyer: "Ravi Kumar" },
+  { key: 2, orderId: generateOrderId(), productName: "Red Clay Bricks", category: "Bricks", qty: 500, status: "Pending", buyer: "Priya Sharma" },
 ];
 
 const OrderManager: React.FC = () => {
@@ -24,6 +25,7 @@ const OrderManager: React.FC = () => {
     { title: "Product Name", dataIndex: "productName" },
     { title: "Category", dataIndex: "category" },
     { title: "Quantity", dataIndex: "qty" },
+    { title: "Buyer", dataIndex: "buyer" },
     {
       title: "Status",
       dataIndex: "status",

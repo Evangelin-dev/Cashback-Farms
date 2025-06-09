@@ -573,3 +573,38 @@ export enum ExtendedServiceType {
   SELL_SERVICE = "Sell Service",
   COMMERCIAL_SERVICE = "Commercial Service",
 }
+
+// helpers.ts
+
+export function formatNamePart(name: string): string {
+  return name.slice(0, 3).toUpperCase().padEnd(3, "X");
+}
+
+export function formatDatePart(joiningDate: Date): string {
+  const day = joiningDate.getDate().toString().padStart(2, '0');
+  const month = (joiningDate.getMonth() + 1).toString().padStart(2, '0');
+  return `${day}${month}`;
+}
+// userCode.ts
+
+
+export function generateUserCode(username: string, joiningDate: Date): string {
+  return `GHF${formatNamePart(username)}${formatDatePart(joiningDate)}`;
+}
+
+export function generateUserID(username: string, joiningDate: Date): string {
+  return `USR${formatNamePart(username)}${formatDatePart(joiningDate)}`;
+}
+
+// b2bCode.ts
+
+
+export function generateB2BCode(companyName: string, joiningDate: Date): string {
+  return `B2B${formatNamePart(companyName)}${formatDatePart(joiningDate)}`;
+}
+
+// --- B2B Order ID Generator ---
+export function generateOrderId(): string {
+  // Format: ORD + 6-digit random number (e.g., ORD123456)
+  return `ORD${Math.floor(100000 + Math.random() * 900000)}`;
+}
