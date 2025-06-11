@@ -33,6 +33,7 @@ export interface Plot {
   area: number; // in sqft
   imageUrl: string;
   type: PlotType;
+  value: number;
   description: string;
   amenities?: string[];
   isFlagship?: boolean;
@@ -89,6 +90,9 @@ export interface MaterialDetail {
   qualityStandard: string;
   supplier?: string;
   imageUrl?: string;
+  pricing:number;
+  category: MaterialCategory; // Reference to MaterialCategory
+  moq: number; // Minimum Order Quantity
 }
 
 export interface User {

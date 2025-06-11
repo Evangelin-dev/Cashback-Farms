@@ -1,69 +1,36 @@
-import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import React from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import Header from "../components/Header";
 import {
-  IconAlertCircle,
-  IconCheck,
-  IconCollection,
-  IconEdit,
-  IconLogout,
-  IconMapPin,
-  IconRupee,
-  IconUsers,
-} from "../../constants.tsx";
-import { useAuth } from "../../contexts/AuthContext";
-import "./AgentProfileSection.css";
+    generateB2BCode,
+    IconAlertCircle,
+    IconCheck,
+    IconCollection,
+    IconEdit,
+    IconLogout,
+    IconMapPin,
+    IconRupee,
+    IconUsers,
+    IconWallet,
+} from "../constants.tsx";
+import { useAuth } from "../contexts/AuthContext";
+import "../pages/realestate/AgentProfileSection.css";
 
-const menuItems = [
-  {
-    key: "/realestate/post-plots",
-    icon: <IconMapPin className="w-5 h-5" />,
-    label: "Post Plots",
-  },
-  {
-    key: "/realestate/leads",
-    icon: <IconUsers className="w-5 h-5" />,
-    label: "Plot Inquiries & Leads",
-  },
-  {
-    key: "/realestate/commission",
-    icon: <IconRupee className="w-5 h-5" />,
-    label: "Commission Dashboard",
-  },
-  {
-    key: "/realestate/lead-management",
-    icon: <IconCollection className="w-5 h-5" />,
-    label: "Lead Management",
-  },
-];
-
-// Helper for simple OTP simulation
-function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
+// --- B2B Profile Section (copied from b2bMain) ---
 const ProfileSection: React.FC = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "Priya Sharma",
-    email: "priya.sharma@email.com",
-    phone: "+91-9123456789",
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const [profile, setProfile] = React.useState({
+    name: "John Doe",
+    email: "john.doe@email.com",
+    phone: "+91-9876543210",
     photo: "",
     kycStatus: "Not Verified",
+    company: "Acme Supplies",
+    joiningDate: new Date(),
   });
-  const [otpSentTo, setOtpSentTo] = useState<"email" | "phone" | null>(null);
-  const [otp, setOtp] = useState("");
-  const [otpInput, setOtpInput] = useState("");
-  const [otpVerified, setOtpVerified] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
-  const [showKyc, setShowKyc] = useState(false);
-  const [kycStatus, setKycStatus] = useState(profile.kycStatus);
+  const [showKyc, setShowKyc] = React.useState(false);
+  const [kycStatus, setKycStatus] = React.useState(profile.kycStatus);
   const navigate = useNavigate();
-
-  // Animation state
-  const [profileAnim, setProfileAnim] = useState(false);
-
-  // Validation
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email);
-  const isPhoneValid = /^\+91\d{10}$/.test(profile.phone);
 
   // KYC simulation
   const handleKyc = () => {
@@ -75,30 +42,11 @@ const ProfileSection: React.FC = () => {
     }, 2000);
   };
 
-  // OTP simulation
-  const sendOtp = (type: "email" | "phone") => {
-    const newOtp = generateOTP();
-    setOtp(newOtp);
-    setOtpSentTo(type);
-    setOtpInput("");
-    setTimeout(() => {
-      alert(`OTP for ${type}: ${newOtp}`);
-    }, 300);
-  };
-
-  const verifyOtp = () => {
-    if (otpInput === otp) {
-      setOtpVerified((prev) => ({ ...prev, [otpSentTo!] : true }));
-      setOtpSentTo(null);
-      setOtp("");
-      setOtpInput("");
-    } else {
-      alert("Invalid OTP");
-    }
-  };
-
   // Dropdown toggle
   const toggleDropdown = () => setDropdownOpen((open) => !open);
+
+  // Generate B2B Code for display
+  const b2bCode = generateB2BCode(profile.company || "Acme Supplies", profile.joiningDate || new Date());
 
   return (
     <div className="relative w-full">
@@ -132,7 +80,7 @@ const ProfileSection: React.FC = () => {
           dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
         }`}
         style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
-         >
+      >
         <div className="p-4 flex flex-col items-center">
           <div className="relative mb-2">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden agent-photo border-4 border-primary">
@@ -146,19 +94,9 @@ const ProfileSection: React.FC = () => {
           <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
             <span>{profile.phone}</span>
-            {otpVerified?.phone && (
-              <span className="text-green-500 w-4 h-4" title="Verified">
-                <IconCheck className="w-4 h-4" />
-              </span>
-            )}
           </div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
             <span>{profile.email}</span>
-            {otpVerified?.email && (
-              <span className="text-green-500 w-4 h-4" title="Verified">
-                <IconCheck className="w-4 h-4" />
-              </span>
-            )}
           </div>
           <div className="w-full flex flex-col items-center mt-4 mb-2">
             <div className="flex flex-col items-center w-full px-2 py-2 bg-neutral-100 rounded-lg border border-neutral-200">
@@ -195,16 +133,20 @@ const ProfileSection: React.FC = () => {
               )}
             </div>
           </div>
+          {/* Show B2B User Code */}
+          <div className="mt-2 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">
+            B2B User Code: <span className="text-primary font-semibold">{b2bCode}</span>
+          </div>
           <button
-            className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
-            onClick={() => {
-              setDropdownOpen(false);
-              navigate("/realestate/realprofile");
-            }}
-          >
-            <IconEdit className="w-4 h-4" />
-            Edit Profile
-          </button>
+                      className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/b2b/b2bprofile");
+                      }}
+                    >
+                      <IconEdit className="w-4 h-4" />
+                      Edit Profile
+                    </button>
         </div>
       </div>
       {/* Overlay for dropdown */}
@@ -219,53 +161,103 @@ const ProfileSection: React.FC = () => {
   );
 };
 
-const RealEstateAgentPanel: React.FC = () => {
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+// --- B2B SideNav using menuItems from b2bMain ---
+const menuItems = [
+  {
+    key: "/b2b/products",
+    icon: <IconCollection className="w-5 h-5" />,
+    label: "Manage Products",
+  },
+  {
+    key: "/b2b/orders",
+    icon: <IconMapPin className="w-5 h-5" />,
+    label: "Product Orders",
+  },
+  {
+    key: "/b2b/pricing",
+    icon: <IconRupee className="w-5 h-5" />,
+    label: "Pricing & Offers",
+  },
+  {
+    key: "/b2b/customers",
+    icon: <IconUsers className="w-5 h-5" />,
+    label: "Customers",
+  },
+  {
+    key: "/b2b/wallet",
+    icon: <IconWallet className="w-5 h-5" />,
+    label: "Wallet / Settlement",
+  },
+];
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+const B2BSideNav: React.FC = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <div className="flex min-h-screen bg-neutral-100">
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded shadow-md"
-        onClick={() => setSidebarOpen((open) => !open)}
-        aria-label="Open sidebar"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
+    <aside className="w-64 min-h-screen bg-white border-r border-neutral-200 flex flex-col p-4 space-y-2">
+      <ProfileSection />
+      <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
+        B2B<span className="text-black"> Vendor</span>
+      </div>
+      <nav className="flex-grow space-y-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.key}
+            to={item.key}
+            className={({ isActive }) =>
+              `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
+              ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
+            }
+          >
+            <span className="mr-3 w-5 h-5">{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="mt-auto">
+        <hr className="my-2 border-t border-neutral-300" />
+        <button
+          onClick={() => {
+            logout();
+            navigate("/");
+          }}
+          className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
-      
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      <main className="flex-1 p-4 md:p-8 bg-neutral-100 min-w-0">
-        <div className="max-w-6xl mx-auto">
+          <IconLogout className="w-5 h-5 mr-3" />
+          Logout
+        </button>
+      </div>
+    </aside>
+  );
+};
+
+function getB2BPageTitle(pathname: string): string {
+  if (pathname === "/b2b/products") return "Manage Products";
+  if (pathname === "/b2b/orders") return "Product Orders";
+  if (pathname === "/b2b/pricing") return "Pricing & Offers";
+  if (pathname === "/b2b/customers") return "Customers";
+  if (pathname === "/b2b/wallet") return "Wallet / Settlement";
+  if (pathname === "/b2b/profile") return "Vendor Profile";
+  return "B2B Vendor Panel";
+}
+
+const B2BLayout: React.FC = () => {
+  const location = useLocation();
+  const pageTitle = getB2BPageTitle(location.pathname);
+
+  return (
+    <div className="flex h-screen bg-neutral-100 font-sans">
+      <B2BSideNav />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header pageTitle={pageTitle} />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-neutral-100 p-4 md:p-6 lg:p-8">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
 
-export default RealEstateAgentPanel;
+export default B2BLayout;

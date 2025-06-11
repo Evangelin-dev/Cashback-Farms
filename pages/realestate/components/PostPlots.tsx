@@ -21,6 +21,7 @@ const PostPlots: React.FC = () => {
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [dragOver, setDragOver] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -77,6 +78,42 @@ const PostPlots: React.FC = () => {
       ),
     },
     {
+      title: "Description",
+      dataIndex: "description",
+      render: (desc: string) => desc || "-",
+    },
+    {
+      title: "Images",
+      dataIndex: "images",
+      render: (imgs: File[] | undefined) =>
+        imgs && imgs.length > 0 ? (
+          <div style={{ display: "flex", gap: 8 }}>
+            {imgs.map((img, idx) => (
+              <img
+                key={idx}
+                src={URL.createObjectURL(img)}
+                alt={`Plot Img ${idx + 1}`}
+                style={{
+                  width: 44,
+                  height: 44,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "1.5px solid #dbeafe",
+                  boxShadow: "0 2px 8px #dbeafe55",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  cursor: "pointer",
+                  background: "#f1f5f9",
+                }}
+                onMouseOver={e => (e.currentTarget.style.transform = "scale(1.08)")}
+                onMouseOut={e => (e.currentTarget.style.transform = "scale(1)")}
+              />
+            ))}
+          </div>
+        ) : (
+          "-"
+        ),
+    },
+    {
       title: "Action",
       render: (_: any, record: any) => (
         <Button
@@ -88,60 +125,57 @@ const PostPlots: React.FC = () => {
         </Button>
       ),
     },
-    {
-      title: "Description",
-      dataIndex: "description",
-      render: (desc: string) => desc || "-",
-    },
-    {
-      title: "Images",
-      dataIndex: "images",
-      render: (imgs: File[] | undefined) =>
-        imgs && imgs.length > 0 ? (
-          <div style={{ display: "flex", gap: 4 }}>
-            {imgs.map((img, idx) => (
-              <img
-                key={idx}
-                src={URL.createObjectURL(img)}
-                alt={`Plot Img ${idx + 1}`}
-                style={{
-                  width: 40,
-                  height: 40,
-                  objectFit: "cover",
-                  borderRadius: 4,
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          "-"
-        ),
-    },
   ];
 
   return (
     <Card
-      title="Post Plots for Clients"
+      title={
+        <span style={{ fontWeight: 700, fontSize: 22, color: "#1e293b" }}>
+          Post Plots for Clients
+        </span>
+      }
       extra={
-        <Button variant="primary" onClick={() => setModalVisible(true)}>
-          Add Plot
+        <Button
+          variant="primary"
+          onClick={() => setModalVisible(true)}
+          style={{
+            borderRadius: 8,
+            fontWeight: 600,
+            fontSize: 16,
+            padding: "8px 20px",
+            boxShadow: "0 2px 8px #2563eb22",
+          }}
+        >
+          + Add Plot
         </Button>
       }
       style={{
-        marginBottom: 24,
-        borderRadius: 8,
-        boxShadow: "0 1px 4px #e5e7eb",
+        marginBottom: 32,
+        borderRadius: 16,
+        boxShadow: "0 4px 24px #e0e7ef",
+        background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)",
+        border: "none",
       }}
-      bodyStyle={{ background: "#fff" }}
+      bodyStyle={{
+        background: "#fff",
+        borderRadius: 16,
+        padding: 32,
+      }}
     >
       <Table
         dataSource={plots}
         columns={columns}
         pagination={false}
         rowKey="key"
+        style={{ borderRadius: 12, overflow: "hidden" }}
+        rowClassName={() => "custom-table-row"}
       />
       <Modal
-        title="Add Plot"
+        title={
+          <span style={{ fontWeight: 700, fontSize: 20, color: "#059669" }}>
+            Add Plot
+          </span>
+        }
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={[
@@ -149,14 +183,24 @@ const PostPlots: React.FC = () => {
             key="footer-actions"
             style={{
               display: "flex",
-              gap: 12,
+              gap: 16,
               justifyContent: "flex-end",
+              padding: "8px 0",
             }}
           >
             <Button
               key="cancel"
               variant="outline"
               onClick={() => setModalVisible(false)}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 15,
+                padding: "7px 18px",
+                color: "#059669",
+                borderColor: "#059669",
+                background: "#f0fdf4",
+              }}
             >
               Cancel
             </Button>
@@ -164,51 +208,163 @@ const PostPlots: React.FC = () => {
               key="submit"
               variant="primary"
               onClick={() => form.submit()}
+              style={{
+                borderRadius: 8,
+                fontWeight: 600,
+                fontSize: 15,
+                padding: "7px 18px",
+                boxShadow: "0 2px 8px #05966922",
+                background: "#059669",
+                color: "#fff",
+                border: "none",
+              }}
             >
               Add Plot
             </Button>
           </div>,
         ]}
+        style={{
+          borderRadius: 16,
+          overflow: "hidden",
+          top: 40,
+        }}
+        bodyStyle={{
+          borderRadius: 16,
+          background: "#f0fdf4",
+          padding: 28,
+        }}
       >
-        <Form form={form} layout="vertical" onFinish={handleAdd}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleAdd}
+          style={{ gap: 12, display: "flex", flexDirection: "column" }}
+        >
           <Form.Item
             name="title"
-            label="Plot Title"
+            label={
+              <span style={{ fontWeight: 600, color: "#065f46" }}>
+                Plot Title
+              </span>
+            }
             rules={[{ required: true }]}
+            style={{ marginBottom: 16 }}
           >
-            <Input />
+            <Input
+              style={{
+                borderRadius: 8,
+                fontSize: 15,
+                padding: "8px 12px",
+                background: "#dcfce7",
+                color: "#065f46",
+                border: "1.5px solid #bbf7d0",
+              }}
+              placeholder="e.g. Sunshine Meadows"
+            />
           </Form.Item>
           <Form.Item
             name="owner"
-            label="Owner Name"
+            label={
+              <span style={{ fontWeight: 600, color: "#065f46" }}>
+                Owner Name
+              </span>
+            }
             rules={[{ required: true }]}
+            style={{ marginBottom: 16 }}
           >
-            <Input />
+            <Input
+              style={{
+                borderRadius: 8,
+                fontSize: 15,
+                padding: "8px 12px",
+                background: "#dcfce7",
+                color: "#065f46",
+                border: "1.5px solid #bbf7d0",
+              }}
+              placeholder="e.g. Ravi Kumar"
+            />
           </Form.Item>
           <Form.Item
             name="location"
-            label="Location"
+            label={
+              <span style={{ fontWeight: 600, color: "#065f46" }}>
+                Location
+              </span>
+            }
             rules={[{ required: true }]}
+            style={{ marginBottom: 16 }}
           >
-            <Input />
+            <Input
+              style={{
+                borderRadius: 8,
+                fontSize: 15,
+                padding: "8px 12px",
+                background: "#dcfce7",
+                color: "#065f46",
+                border: "1.5px solid #bbf7d0",
+              }}
+              placeholder="e.g. Sector 45, Gurgaon"
+            />
           </Form.Item>
           <Form.Item
             name="area"
-            label="Area (sqft)"
+            label={
+              <span style={{ fontWeight: 600, color: "#065f46" }}>
+                Area (sqft)
+              </span>
+            }
             rules={[{ required: true }]}
+            style={{ marginBottom: 16 }}
           >
-            <InputNumber min={100} style={{ width: "100%" }} />
+            <InputNumber
+              min={100}
+              style={{
+                width: "100%",
+                borderRadius: 8,
+                fontSize: 15,
+                padding: "8px 12px",
+                background: "#dcfce7",
+                color: "#065f46",
+                border: "1.5px solid #bbf7d0",
+              }}
+              placeholder="e.g. 1800"
+            />
           </Form.Item>
           <Form.Item
             name="price"
-            label="Price"
+            label={
+              <span style={{ fontWeight: 600, color: "#065f46" }}>
+                Price
+              </span>
+            }
             rules={[{ required: true }]}
+            style={{ marginBottom: 16 }}
           >
-            <InputNumber min={10000} style={{ width: "100%" }} />
+            <InputNumber
+              min={10000}
+              style={{
+                width: "100%",
+                borderRadius: 8,
+                fontSize: 15,
+                padding: "8px 12px",
+                background: "#dcfce7",
+                color: "#065f46",
+                border: "1.5px solid #bbf7d0",
+              }}
+              placeholder="e.g. 1200000"
+            />
           </Form.Item>
           {/* Simple Description Box */}
-          <div style={{ marginBottom: 16 }}>
-            <label className="block text-xs font-semibold text-gray-600 mb-2">
+          <div style={{ marginBottom: 18 }}>
+            <label
+              className="block text-xs font-semibold text-gray-600 mb-2"
+              style={{
+                fontWeight: 600,
+                color: "#059669",
+                fontSize: 15,
+                marginBottom: 6,
+              }}
+            >
               Description
             </label>
             <Input.TextArea
@@ -221,20 +377,74 @@ const PostPlots: React.FC = () => {
                 fontWeight: 500,
                 color: "#065f46",
                 resize: "vertical",
+                borderRadius: 8,
+                background: "#dcfce7",
+                border: "1.5px solid #bbf7d0",
+                padding: "10px 12px",
               }}
               autoSize={{ minRows: 4, maxRows: 8 }}
             />
           </div>
           {/* More Creative Image Upload */}
-          <div style={{ marginBottom: 16 }}>
-            <label className="block text-xs font-semibold text-gray-600 mb-2">
+          <div
+            style={{
+              marginBottom: 10,
+              transition: "box-shadow 0.2s, border 0.2s",
+              border: dragOver
+                ? "2.5px solid #059669"
+                : "2px dashed #bbf7d0",
+              borderRadius: 14,
+              background: dragOver ? "#bbf7d0" : "#f0fdf4",
+              padding: 18,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              boxShadow: dragOver
+                ? "0 4px 16px #05966933"
+                : "0 2px 8px #bbf7d033",
+            }}
+            onDragOver={e => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => {
+              e.preventDefault();
+              setDragOver(false);
+              const files = Array.from(e.dataTransfer.files).filter(f =>
+                f.type.startsWith("image/")
+              );
+              setImages(files);
+              setImagePreviews([]);
+              files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                  setImagePreviews((prev) => [
+                    ...prev,
+                    ev.target?.result as string,
+                  ]);
+                };
+                reader.readAsDataURL(file);
+              });
+            }}
+          >
+            <label
+              className="cursor-pointer flex flex-col items-center"
+              style={{
+                color: "#059669",
+                fontWeight: 600,
+                fontSize: 15,
+                marginBottom: 8,
+                transition: "color 0.2s",
+                cursor: "pointer",
+              }}
+            >
               <svg
-                className="w-6 h-6 inline-block mr-1"
+                className="w-8 h-8 mb-1"
                 fill="none"
-                stroke="#2563eb"
+                stroke="#059669"
                 strokeWidth={2}
                 viewBox="0 0 24 24"
-                style={{ verticalAlign: "middle" }}
               >
                 <path
                   strokeLinecap="round"
@@ -242,105 +452,87 @@ const PostPlots: React.FC = () => {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              <span style={{ color: "#2563eb", fontWeight: 600, fontSize: 15 }}>
-                Choose Image
+              <span>
+                {images.length > 0 ? "Change Images" : "Click or Drag to select images"}
               </span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
             </label>
             <div
               style={{
-                border: "2px dashed #93c5fd",
-                borderRadius: 12,
-                background: "#f0f9ff",
-                padding: 16,
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                transition: "box-shadow 0.2s",
-                boxShadow: "0 2px 8px #93c5fd33",
+                gap: 12,
+                flexWrap: "wrap",
+                marginTop: 8,
+                minHeight: 64,
               }}
             >
-              <label
-                className="cursor-pointer flex flex-col items-center"
-                style={{
-                  color: "#2563eb",
-                  fontWeight: 600,
-                  fontSize: 15,
-                  marginBottom: 8,
-                  transition: "color 0.2s",
-                }}
-              >
-                <svg
-                  className="w-8 h-8 mb-1"
-                  fill="none"
-                  stroke="#2563eb"
-                  strokeWidth={2}
-                  viewBox="0 0 24 24"
+              {imagePreviews.map((src, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    border: "1.5px solid #bbf7d0",
+                    borderRadius: 10,
+                    overflow: "hidden",
+                    width: 64,
+                    height: 64,
+                    background: "#fff",
+                    boxShadow: "0 1px 4px #bbf7d022",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "box-shadow 0.2s",
+                  }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4v16m8-8H4"
+                  <img
+                    src={src}
+                    alt={`Plot Preview ${idx + 1}`}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: 10,
+                      transition: "transform 0.2s",
+                    }}
                   />
-                </svg>
-                <span>
-                  {images.length > 0 ? "Change Images" : "Click to select images"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-              </label>
-              <div
+                </div>
+              ))}
+            </div>
+            {images.length === 0 && (
+              <span
+                className="text-xs text-gray-400 mt-2"
                 style={{
-                  display: "flex",
-                  gap: 10,
-                  flexWrap: "wrap",
+                  color: "#059669",
+                  fontSize: 13,
                   marginTop: 8,
+                  fontWeight: 500,
                 }}
               >
-                {imagePreviews.map((src, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      border: "1.5px solid #93c5fd",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      width: 64,
-                      height: 64,
-                      background: "#fff",
-                      boxShadow: "0 1px 4px #93c5fd22",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      transition: "box-shadow 0.2s",
-                    }}
-                  >
-                    <img
-                      src={src}
-                      alt={`Plot Preview ${idx + 1}`}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        borderRadius: 8,
-                        transition: "transform 0.2s",
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-              {images.length === 0 && (
-                <span className="text-xs text-gray-400 mt-2">
-                  No images selected
-                </span>
-              )}
-            </div>
+                No images selected
+              </span>
+            )}
           </div>
         </Form>
       </Modal>
+      {/* Custom Table Row Hover Style */}
+      <style>
+        {`
+          .custom-table-row:hover td {
+            background: #f0f9ff !important;
+            transition: background 0.2s;
+          }
+          @keyframes popIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            80% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); }
+          }
+        `}
+      </style>
     </Card>
   );
 };

@@ -169,6 +169,16 @@ export const IconWallet = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm10 3a1 1 0 110 2 1 1 0 010-2z" />
   </svg>
 );
+export const IconMinus = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm10 3a1 1 0 110 2 1 1 0 010-2z" />
+  </svg>
+);
+export const IconShoppingCart = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm10 3a1 1 0 110 2 1 1 0 010-2z" />
+  </svg>
+);
 
 // --- Mock Data ---
 export const MOCK_PLOTS: Plot[] = [
@@ -183,6 +193,7 @@ export const MOCK_PLOTS: Plot[] = [
     description: 'A beautiful plot in a rapidly developing area, perfect for your dream home. North-facing with good road access.',
     amenities: ['Water Connection', 'Electricity', 'Gated Community'],
     sqftPrice: 2000,
+    value: 0
   },
   {
     id: 'plot2',
@@ -196,6 +207,7 @@ export const MOCK_PLOTS: Plot[] = [
     isFlagship: true,
     amenities: ['24/7 Security', 'Clubhouse Access', 'Paved Roads', 'Park'],
     sqftPrice: 2500,
+    value: 0
   },
   {
     id: 'plot3',
@@ -207,19 +219,21 @@ export const MOCK_PLOTS: Plot[] = [
     type: PlotType.PUBLIC,
     description: 'Peaceful plot located near the river, offering scenic views. Ideal for a weekend getaway home or investment.',
     sqftPrice: 3000,
+    value: 0
   },
    {
-    id: 'plot4-bms',
-    title: 'Book My SqFt Special Plot',
-    location: 'Tech Park Extension, Hyderabad',
-    price: 0, // Price determined by sqft selection
-    area: 5000, // Total area available for sqft booking
-    imageUrl: 'https://picsum.photos/seed/plot4/400/300',
-    type: PlotType.VERIFIED,
-    description: 'Exclusive Greenheap plot available for "Book My SqFt". Choose your desired area and build your future.',
-    sqftPrice: 1800,
-    isFlagship: true,
-  },
+     id: 'plot4-bms',
+     title: 'Book My SqFt Special Plot',
+     location: 'Tech Park Extension, Hyderabad',
+     price: 0, // Price determined by sqft selection
+     area: 5000, // Total area available for sqft booking
+     imageUrl: 'https://picsum.photos/seed/plot4/400/300',
+     type: PlotType.VERIFIED,
+     description: 'Exclusive Greenheap plot available for "Book My SqFt". Choose your desired area and build your future.',
+     sqftPrice: 1800,
+     isFlagship: true,
+     value: 0
+   },
 ];
 
 export const MOCK_MATERIAL_CATEGORIES: MaterialCategory[] = [

@@ -178,9 +178,11 @@ const B2BProfile: React.FC = () => {
     setShowPopup(true);
     setTimeout(() => {
       setProfileAnim(false);
-      setShowPopup(false);
-      navigate("/b2b/products"); // or "/b2b" if you have a dashboard/home
-    }, 1500);
+      setTimeout(() => {
+        setShowPopup(false);
+        navigate("/b2b/products");
+      }, 1200);
+    }, 1200);
   };
 
   return (
@@ -447,6 +449,56 @@ const B2BProfile: React.FC = () => {
           </ul>
         </div>
       </div>
+      {showPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="relative bg-gradient-to-br from-blue-100 via-white to-blue-200 rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center animate-adminpop">
+            <div className="absolute top-2 right-2">
+              <button
+                className="text-gray-400 hover:text-red-500 text-2xl font-bold"
+                onClick={() => {
+                  setShowPopup(false);
+                  navigate("/b2b/products");
+                }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg animate-bounce-slow">
+              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="text-2xl font-bold text-primary mb-2 text-center">Profile Saved!</div>
+            <div className="text-base text-gray-700 mb-4 text-center">
+              Your profile changes have been saved.<br />
+              Redirecting to dashboard...
+            </div>
+            <button
+              className="mt-2 px-6 py-2 bg-primary text-white rounded-lg font-semibold shadow hover:bg-primary-dark transition"
+              onClick={() => {
+                setShowPopup(false);
+                navigate("/b2b/products");
+              }}
+            >
+              Go to Dashboard
+            </button>
+          </div>
+          <style>{`
+            @keyframes adminpop {
+              0% { transform: scale(0.8) rotate(-5deg); opacity: 0; }
+              60% { transform: scale(1.05) rotate(2deg); opacity: 1; }
+              100% { transform: scale(1) rotate(0deg); opacity: 1; }
+            }
+            .animate-adminpop { animation: adminpop 0.6s cubic-bezier(.68,-0.55,.27,1.55); }
+            @keyframes bounce-slow {
+              0%, 100% { transform: translateY(0);}
+              50% { transform: translateY(-10px);}
+            }
+            .animate-bounce-slow { animation: bounce-slow 1.5s infinite; }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };

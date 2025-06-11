@@ -1,18 +1,21 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  IconAlertCircle,
-  IconCheck,
-  IconCollection,
-  IconEdit,
-  IconLogout,
-  IconMapPin,
-  IconRupee,
-  IconUsers,
-} from "../../constants.tsx";
-import { useAuth } from "../../contexts/AuthContext";
-import "./AgentProfileSection.css";
+    generateUserCode,
+    IconAlertCircle,
+    IconCheck,
+    IconCollection,
+    IconEdit,
+    IconLogout,
+    IconMapPin,
+    IconPlus,
+    IconRupee,
+    IconUsers,
+} from "../../../constants.tsx";
+import { useAuth } from "../../../contexts/AuthContext";
+import "../AgentProfileSection.css";
 
+// Menu items for real estate agent panel
 const menuItems = [
   {
     key: "/realestate/post-plots",
@@ -34,13 +37,14 @@ const menuItems = [
     icon: <IconCollection className="w-5 h-5" />,
     label: "Lead Management",
   },
+  {
+    key: "/referrealestate",
+    icon: <IconPlus className="w-5 h-5" />,
+    label: "Refer and Earn",
+  },
 ];
 
-// Helper for simple OTP simulation
-function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
+// --- ProfileSection copied from RealEstateAgentPanel ---
 const ProfileSection: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [profile, setProfile] = useState({
@@ -58,13 +62,6 @@ const ProfileSection: React.FC = () => {
   const [kycStatus, setKycStatus] = useState(profile.kycStatus);
   const navigate = useNavigate();
 
-  // Animation state
-  const [profileAnim, setProfileAnim] = useState(false);
-
-  // Validation
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email);
-  const isPhoneValid = /^\+91\d{10}$/.test(profile.phone);
-
   // KYC simulation
   const handleKyc = () => {
     setShowKyc(true);
@@ -76,6 +73,9 @@ const ProfileSection: React.FC = () => {
   };
 
   // OTP simulation
+  function generateOTP() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
   const sendOtp = (type: "email" | "phone") => {
     const newOtp = generateOTP();
     setOtp(newOtp);
@@ -85,10 +85,9 @@ const ProfileSection: React.FC = () => {
       alert(`OTP for ${type}: ${newOtp}`);
     }, 300);
   };
-
   const verifyOtp = () => {
     if (otpInput === otp) {
-      setOtpVerified((prev) => ({ ...prev, [otpSentTo!] : true }));
+      setOtpVerified((prev) => ({ ...prev, [otpSentTo!]: true }));
       setOtpSentTo(null);
       setOtp("");
       setOtpInput("");
@@ -99,6 +98,12 @@ const ProfileSection: React.FC = () => {
 
   // Dropdown toggle
   const toggleDropdown = () => setDropdownOpen((open) => !open);
+
+  // Generate User Code (using name and a static date for demo)
+  const userCode = generateUserCode(
+    profile.name,
+    new Date("2024-01-01")
+  );
 
   return (
     <div className="relative w-full">
@@ -132,7 +137,7 @@ const ProfileSection: React.FC = () => {
           dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
         }`}
         style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
-         >
+      >
         <div className="p-4 flex flex-col items-center">
           <div className="relative mb-2">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden agent-photo border-4 border-primary">
@@ -141,6 +146,10 @@ const ProfileSection: React.FC = () => {
               ) : (
                 profile.name[0]
               )}
+            </div>
+            {/* Creative User Code display */}
+            <div className="mt-2 text-sm text-gray-600 font-mono bg-gray-100 px-4 py-1 rounded shadow-sm">
+              User Code: <span className="text-primary font-semibold">{userCode}</span>
             </div>
           </div>
           <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
@@ -219,53 +228,48 @@ const ProfileSection: React.FC = () => {
   );
 };
 
-const RealEstateAgentPanel: React.FC = () => {
-  const navigate = useNavigate();
+const RealSideNav: React.FC = () => {
   const { logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
-    <div className="flex min-h-screen bg-neutral-100">
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded shadow-md"
-        onClick={() => setSidebarOpen((open) => !open)}
-        aria-label="Open sidebar"
-      >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
+    <aside className="w-64 min-h-screen bg-white border-r border-neutral-200 flex flex-col p-4 space-y-2">
+      {/* ProfileSection at the top */}
+      <ProfileSection />
+      <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
+        RealEstate<span className="text-black"> Agent</span>
+      </div>
+      <nav className="flex-grow space-y-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.key}
+            to={item.key}
+            className={({ isActive }) =>
+              `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
+              ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
+            }
+          >
+            <span className="mr-3 w-5 h-5">{item.icon}</span>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="mt-auto">
+        <hr className="my-2 border-t border-neutral-300" />
+        <button
+          onClick={() => {
+            logout();
+            navigate("/");
+          }}
+          className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
-      
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      <main className="flex-1 p-4 md:p-8 bg-neutral-100 min-w-0">
-        <div className="max-w-6xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
-    </div>
+          <IconLogout className="w-5 h-5 mr-3" />
+          Logout
+        </button>
+      </div>
+    </aside>
   );
 };
 
-export default RealEstateAgentPanel;
+export default RealSideNav;

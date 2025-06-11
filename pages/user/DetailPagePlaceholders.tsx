@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { MOCK_PLOTS, MOCK_MATERIALS, MOCK_PROFESSIONALS } from '../../constants';
+import { Link, useNavigate, useParams } from 'react-router-dom'; // <-- add useNavigate
 import Button from '../../components/common/Button';
+import { MOCK_MATERIALS, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants';
 
 const DetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -60,6 +59,8 @@ export const MaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const material = MOCK_MATERIALS.find(m => m.id === id);
 
+  const navigate = useNavigate(); // <-- useNavigate for navigation
+
   if (!material) {
     return <DetailPageLayout title="Material Not Found" backLink="/materials" backLinkText="Back to Materials Store"><p>The material you are looking for does not exist.</p></DetailPageLayout>;
   }
@@ -74,7 +75,12 @@ export const MaterialDetailPage: React.FC = () => {
         <h3 className="text-xl font-semibold mt-4 mb-2">Description</h3>
         <p className="text-gray-600 whitespace-pre-line mb-4">{material.description}</p>
         <div className="mt-6">
-            <Button variant="primary">Add to Cart (Mock)</Button>
+            <Button
+              variant="primary"
+              onClick={() => navigate(`/cart`)}
+            >
+              Add to Cart (Mock)
+            </Button>
         </div>
     </DetailPageLayout>
   );
@@ -120,4 +126,3 @@ export const ProfessionalDetailPage: React.FC = () => {
     </DetailPageLayout>
   );
 };
-    

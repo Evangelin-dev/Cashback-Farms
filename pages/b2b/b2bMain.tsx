@@ -225,73 +225,16 @@ const B2BMain: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-neutral-100">
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded shadow-md"
-        onClick={() => setSidebarOpen((open) => !open)}
-        aria-label="Open sidebar"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-      {/* Sidebar as drawer on mobile, static on desktop */}
-      <aside
-        className={`
-          fixed z-40 top-0 left-0 h-full w-64 bg-white text-black flex flex-col p-4 space-y-2 border-r border-neutral-200
-          transition-transform duration-200
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:static md:translate-x-0 md:w-64 md:flex
-        `}
-        style={{ minWidth: "16rem" }}
-      >
-        <ProfileSection />
-        <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
-          B2B<span className="text-black"> Vendor</span>
-        </div>
-        <nav className="flex-grow space-y-1">
-          {menuItems.map((item) => (
-            <NavLink
-              key={item.key}
-              to={item.key}
-              className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
-                ${isActive ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
-              }
-              onClick={() => setSidebarOpen(false)}
-            >
-              <span className="mr-3 w-5 h-5">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="mt-auto">
-          <hr className="my-2 border-t border-neutral-300" />
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
-          >
-            <IconLogout className="w-5 h-5 mr-3" />
-            Logout
-          </button>
-        </div>
-      </aside>
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+     
       <main className="flex-1 p-2 sm:p-4 md:p-8 bg-neutral-100 min-w-0">
         {/* Responsive header with page title */}
         <header
           className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 px-2 md:px-0 gap-2"
           style={{ paddingLeft: "100px" }}
         >
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-light tracking-wide">
+          {/* <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary-light tracking-wide">
             {currentTitle}
-          </h1>
+          </h1> */}
         </header>
         <div className="w-full max-w-6xl mx-auto">
           <Outlet />

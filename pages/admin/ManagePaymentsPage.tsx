@@ -1,10 +1,9 @@
-
-import React, { useState, useMemo } from 'react';
-import Card from '../../components/Card';
+import React, { useMemo, useState } from 'react';
 import Button from '../../components/Button';
+import Card from '../../components/Card';
 import Modal from '../../components/Modal';
-import { MOCK_PAYMENTS, MOCK_BOOKINGS, MOCK_PLOTS, MOCK_USERS, IconPencil } from '../../constants';
-import { PaymentInstallment, PaymentStatus, PaymentType } from '../../types';
+import { IconPencil, MOCK_BOOKINGS, MOCK_PAYMENTS, MOCK_PLOTS, MOCK_USERS } from '../../constants';
+import { PaymentInstallment, PaymentStatus } from '../../types';
 
 const ManagePaymentsPage: React.FC = () => {
   const [payments, setPayments] = useState<PaymentInstallment[]>(MOCK_PAYMENTS);
@@ -78,8 +77,20 @@ const ManagePaymentsPage: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-neutral-800 mb-6">Manage Payments</h1>
-
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary shadow">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87" />
+            </svg>
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold text-primary mb-1">Manage Payments</h1>
+            <div className="text-sm text-neutral-500">Track, update, and manage all payment installments.</div>
+          </div>
+        </div>
+      </div>
       <Card className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           <div>
@@ -107,23 +118,22 @@ const ManagePaymentsPage: React.FC = () => {
           </div>
         </div>
       </Card>
-      
       <Card bodyClassName="p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-neutral-200">
-            <thead className="bg-neutral-50">
+            <thead className="bg-gradient-to-r from-primary/10 via-white to-primary/10">
               <tr>
                 {['Payment ID', 'Booking ID (User, Plot)', 'Schedule', 'Type', 'Amount (₹)', 'Due Date', 'Status', 'Actions'].map(header => (
-                  <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">{header}</th>
+                  <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">{header}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-neutral-200">
+            <tbody className="bg-white divide-y divide-neutral-100">
               {filteredPayments.map((payment) => {
                 const {user, plot} = getUserAndPlotForBooking(payment.bookingId);
                 return (
-                <tr key={payment.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{payment.id}</td>
+                <tr key={payment.id} className="hover:bg-primary/5 transition">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">{payment.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">
                     {payment.bookingId} <br />
                     <span className="text-xs text-neutral-400">({user}, Plot {plot})</span>
@@ -133,7 +143,7 @@ const ManagePaymentsPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">₹{payment.amount.toLocaleString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{new Date(payment.dueDate).toLocaleDateString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(payment.status)}`}>
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full shadow ${getStatusClass(payment.status)}`}>
                       {payment.status}
                     </span>
                   </td>
@@ -146,46 +156,73 @@ const ManagePaymentsPage: React.FC = () => {
               )})}
             </tbody>
           </table>
-          {filteredPayments.length === 0 && <p className="text-center py-4 text-neutral-500">No payments match filters.</p>}
+          {filteredPayments.length === 0 && (
+            <div className="text-center py-10 text-neutral-400 text-lg">
+              <svg className="w-16 h-16 mx-auto mb-2 text-primary/20" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87" />
+              </svg>
+              No payments match filters.
+            </div>
+          )}
         </div>
       </Card>
-
       {editingPayment && (
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Update Payment for ${editingPayment.id}`}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="paymentStatus" className="block text-sm font-medium text-neutral-700">Payment Status</label>
-              <select 
-                id="paymentStatus" 
-                name="status"
-                value={paymentFormData.status} 
-                onChange={handleFormInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-              >
-                {Object.values(PaymentStatus).map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="">
+          <div className="max-w-md mx-auto bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-2xl shadow-2xl p-0">
+            <div className="flex items-center justify-between px-8 pt-8 pb-2">
+              <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                <IconPencil className="w-5 h-5 text-primary" />
+                Update Payment for {editingPayment.id}
+              </h2>
             </div>
-            {paymentFormData.status === PaymentStatus.PAID && (
-              <>
-                <div>
-                  <label htmlFor="paidDate" className="block text-sm font-medium text-neutral-700">Paid Date</label>
-                  <input type="date" name="paidDate" id="paidDate" value={paymentFormData.paidDate} onChange={handleFormInputChange} 
-                         className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                </div>
-                <div>
-                  <label htmlFor="transactionId" className="block text-sm font-medium text-neutral-700">Transaction ID (Optional)</label>
-                  <input type="text" name="transactionId" id="transactionId" value={paymentFormData.transactionId} onChange={handleFormInputChange} 
-                         className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
-                </div>
-              </>
-            )}
-            <div className="flex justify-end space-x-3 pt-2">
-              <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
+            <div className="space-y-4 px-8 pb-8 pt-2">
+              <div>
+                <label htmlFor="paymentStatus" className="block text-sm font-medium text-neutral-700">Payment Status</label>
+                <select 
+                  id="paymentStatus" 
+                  name="status"
+                  value={paymentFormData.status} 
+                  onChange={handleFormInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                >
+                  {Object.values(PaymentStatus).map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+              {paymentFormData.status === PaymentStatus.PAID && (
+                <>
+                  <div>
+                    <label htmlFor="paidDate" className="block text-sm font-medium text-neutral-700">Paid Date</label>
+                    <input type="date" name="paidDate" id="paidDate" value={paymentFormData.paidDate} onChange={handleFormInputChange} 
+                           className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
+                  </div>
+                  <div>
+                    <label htmlFor="transactionId" className="block text-sm font-medium text-neutral-700">Transaction ID (Optional)</label>
+                    <input type="text" name="transactionId" id="transactionId" value={paymentFormData.transactionId} onChange={handleFormInputChange} 
+                           className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
+                  </div>
+                </>
+              )}
+              <div className="flex justify-end space-x-3 pt-2">
+                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
+              </div>
             </div>
           </div>
+          <style>{`
+            .modal-card-creative {
+              background: linear-gradient(135deg, #e0e7ff 0%, #fff 60%, #bae6fd 100%);
+              border-radius: 1.5rem;
+              box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.12);
+              animation: pop-in-modal 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+            }
+            @keyframes pop-in-modal {
+              0% { transform: scale(0.95) translateY(40px); opacity: 0.5; }
+              100% { transform: scale(1) translateY(0); opacity: 1; }
+            }
+          `}</style>
         </Modal>
       )}
     </div>
