@@ -44,13 +44,25 @@ import ServicesHubPage from './pages/user/ServicesHubPage';
 import RealLayout from './layouts/RealLayout';
 import ReferAndEarnReal from './pages/realestate/components/referandearnreal/referandearnreal';
 import B2BLayout from './layouts/B2BLayout';
+import DefaultLanding from './DefaultLanding';
+import DefaultLayout from './layouts/DefaultLayout';
 
 const AppRoutes: React.FC = () => {
   return (
+
+    
+   
+    
+  
     <Routes>
+         {/* Redirect root path to home page */}
+         <Route element={<DefaultLayout />}>
+      <Route path="/" element={<DefaultLanding />} />
+     </Route>
+
       {/* User Routes */}
       <Route element={<UserLayout />}>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/Landing" element={<LandingPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
         {/* Change /profile to use MyProfile directly */}
@@ -107,6 +119,7 @@ const AppRoutes: React.FC = () => {
       {/* Fallback for any unmatched route */}
       <Route path="*" element={<HomePage />} />
     </Routes>
+    
   );
 };
 
