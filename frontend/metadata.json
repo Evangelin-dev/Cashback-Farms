@@ -1,0 +1,6 @@
+{
+  "name": "Cashback Farm Plot Manager",
+  "description": "A React application to view plot booking details, payment schedules, site information, and materials for Cashback Farm projects.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
