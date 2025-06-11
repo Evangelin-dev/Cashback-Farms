@@ -1,0 +1,69 @@
+.cardsRow {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  justify-content: flex-start;
+}
+
+@media (min-width: 768px) {
+  .cardsRow {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2rem;
+    overflow-x: unset;
+  }
+}
+
+.card {
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+  box-shadow: none;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  width: 18rem;
+  height: 18rem;
+  margin-left: auto;
+  margin-right: auto;
+  transition: box-shadow 0.2s;
+}
+
+@media (max-width: 640px) {
+  .cardsRow {
+    gap: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
+  .card {
+    width: 6rem !important;
+    min-width: 6rem !important;
+    max-width: 6rem !important;
+    height: 6rem !important;
+    min-height: 6rem !important;
+    max-height: 6rem !important;
+    padding: 0.2rem !important;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .card img {
+    width: 1.1rem !important;
+    height: 1.1rem !important;
+  }
+  .card h2 {
+    font-size: 0.62rem !important;
+    margin-bottom: 0.2rem !important;
+    line-height: 1.1 !important;
+  }
+  .card p, .card .text-base, .card .text-lg, .card .text-xl {
+    font-size: 0.48rem !important;
+    line-height: 1.1 !important;
+  }
+}
