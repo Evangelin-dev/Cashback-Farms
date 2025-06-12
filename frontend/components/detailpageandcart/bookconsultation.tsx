@@ -143,8 +143,7 @@ const BookConsultation: React.FC = () => {
             {submitted && (
               <div className="mt-6 text-center">
                 <div className="inline-block px-6 py-3 bg-green-100 rounded-xl shadow text-green-700 font-semibold">
-                  Thank you! Your consultation is booked.<br />
-                  Our team will contact you soon.
+                  PLease Login/Sign up to continue 
                 </div>
               </div>
             )}
@@ -197,8 +196,7 @@ const BookConsultation: React.FC = () => {
             {submitted && (
               <div className="mt-6 text-center">
                 <div className="inline-block px-6 py-3 bg-green-100 rounded-xl shadow text-green-700 font-semibold">
-                  Thank you! We have received your request.<br />
-                  Our team will call you back soon.
+                 PLease Login/Sign up to continue   
                 </div>
               </div>
             )}
