@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import AssistedPlans from '@/components/landingpage/landingpagecomponents/assistedplans/assistedplans';
+
 import Button from '@/components/common/Button';
-import FinancialServices from '@/components/landingpage/landingpagecomponents/financialservices/financialservices';
-import Payments from '@/components/landingpage/landingpagecomponents/payments/payments';
-import PlotCard from '@/components/landingpage/landingpagecomponents/plot/PlotCard';
+
 import ProfessionalCard from '@/components/landingpage/landingpagecomponents/service/ProfessionalCard';
 import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '@/constants';
+import DFinancialServices from './components/defaultlandingpage/defaultlandingcomponents/financialservices/financialservices';
+import DAssistedPlans from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
+import DPayments from './components/defaultlandingpage/defaultlandingcomponents/payments/payments';
+import DPlotCard from './components/defaultlandingpage/defaultlandingcomponents/plot/PlotCard';
+import DProfessionalCard from './components/defaultlandingpage/defaultlandingcomponents/service/ProfessionalCard';
 
 const DefaultLanding: React.FC = () => {
   const featuredPlots = MOCK_PLOTS.slice(0, 3);
@@ -168,7 +171,7 @@ const DefaultLanding: React.FC = () => {
             Cashback Farms offers verified plots, quality construction materials, and expert professionals, all in one place.
           </p>
           <div className="mt-10">
-            <Link to="/plots">
+            <Link to="/Dplots">
               <Button size="lg" variant="secondary" className="text-green-700 hover:bg-green-200">
                 Explore Plots
               </Button>
@@ -260,7 +263,7 @@ const DefaultLanding: React.FC = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-semibold text-gray-800 mb-6">Featured Plots</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {featuredPlots.map(plot => <PlotCard key={plot.id} plot={plot} />)}
+          {featuredPlots.map(plot => <DPlotCard key={plot.id} plot={plot} />)}
         </div>
         <div className="text-center mt-8">
           <Link to="/Dplots">
@@ -277,7 +280,7 @@ const DefaultLanding: React.FC = () => {
                 Don't want to buy a whole plot? Now you can book the exact square footage you need.
                 Flexible, affordable, and transparent.
             </p>
-            <Link to="/book-my-sqft">
+            <Link to="/Dbook-my-sqft">
                 <Button size="lg" variant="primary">Explore Book My SqFt</Button>
             </Link>
         </div>
@@ -286,18 +289,18 @@ const DefaultLanding: React.FC = () => {
       {/* Assisted Plans Section */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AssistedPlans />
+          <DAssistedPlans />
         </div>
       </section>
 
       {/* Payments Section */}
       <section className="py-12 bg-white">
-        <Payments />
+        <DPayments />
       </section>
 
       {/* Financial Services Section */}
       <section className="py-12 bg-white">
-        <FinancialServices />
+        <DFinancialServices />
       </section>
 
       {/* Featured Professionals Section */}
@@ -305,7 +308,7 @@ const DefaultLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Hire Top Professionals</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProfessionals.map(prof => <ProfessionalCard key={prof.id} professional={prof} />)}
+            {featuredProfessionals.map(prof => <DProfessionalCard key={prof.id} professional={prof} />)}
             </div>
             <div className="text-center mt-8">
             <Link to="/Dservices">
