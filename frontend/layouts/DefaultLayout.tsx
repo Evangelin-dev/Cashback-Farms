@@ -9,10 +9,11 @@ const DefaultLayout: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
 
   return (
+    
     <div className="flex flex-col min-h-screen bg-neutral-100 font-sans">
-      <Navbar onAuthClick={() => setShowModal(true)} />
-      
+  
       <main className="flex-grow">
+        <Navbar onAuthClick={() => setShowModal(true)} />
         <Outlet />
       </main>
       

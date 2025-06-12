@@ -119,15 +119,15 @@ const DefaultLanding: React.FC = () => {
     if (searchType === 'buy') {
       services = buyServices;
       heading = 'Home Services for Buyers';
-      link = '/services/buy';
+      link = '/services/';
     } else if (searchType === 'sell') {
       services = sellServices;
       heading = 'Home Services for Sellers';
-      link = '/services/sell';
+      link = '/services/';
     } else {
       services = commercialServices;
       heading = 'Commercial Services';
-      link = '/services/commercial';
+      link = '/services/';
     }
     // Show only first 3 cards
     const visibleServices = services.slice(0, 3);
@@ -263,7 +263,7 @@ const DefaultLanding: React.FC = () => {
           {featuredPlots.map(plot => <PlotCard key={plot.id} plot={plot} />)}
         </div>
         <div className="text-center mt-8">
-          <Link to="/plots">
+          <Link to="/Dplots">
             <Button variant="outline">View All Plots</Button>
           </Link>
         </div>
@@ -308,7 +308,7 @@ const DefaultLanding: React.FC = () => {
             {featuredProfessionals.map(prof => <ProfessionalCard key={prof.id} professional={prof} />)}
             </div>
             <div className="text-center mt-8">
-            <Link to="/services">
+            <Link to="/Dservices">
                 <Button variant="primary">Find Professionals</Button>
             </Link>
             </div>

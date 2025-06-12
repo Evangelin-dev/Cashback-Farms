@@ -150,10 +150,10 @@ const Sidebar: React.FC = () => {
     { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
     { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Book My SqFt" },
-    { to: "/materials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
+    { to: "/Umaterials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
     { to: "/services", icon: <IconUsers className="w-5 h-5" />, label: "Professional Services" },
     { to: "/book-my-sqft/B001", icon: <IconShieldCheck className="w-5 h-5" />, label: "View Plot Details" },
-    { to: "/refer-earn", icon: <IconPlus className="w-5 h-5" />, label: "Refer & Earn" },
+    // { to: "/refer-earn", icon: <IconPlus className="w-5 h-5" />, label: "Refer & Earn" },
     { to: "/knowledge-base", icon: <IconInformationCircle className="w-5 h-5" />, label: "Knowledge Base" },
     { to: "/help-support", icon: <IconCog className="w-5 h-5" />, label: "Help & Support" },
   ];

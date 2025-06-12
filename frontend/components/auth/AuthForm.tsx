@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Add this import
 
-interface AuthFormProps {
+interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: (user: {
@@ -14,11 +13,14 @@ interface AuthFormProps {
   }) => void;
 }
 
-function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
-  const [activeTab, setActiveTab] = useState<'login'>('login');
-  const [otpSent, setOtpSent] = useState(false);
+const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [showForgot, setShowForgot] = useState(false);
+
+  // Mobile login/signup state
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [otpInput, setOtpInput] = useState('');
   const [mobileVerified, setMobileVerified] = useState(false);
   const [error, setError] = useState('');
@@ -30,9 +32,9 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
     { code: '+91', label: '🇮🇳 +91' }
   ]);
 
-  const navigate = useNavigate(); // Add this line
-
   useEffect(() => {
+    // Example API: https://restcountries.com/v3.1/all
+    // We'll fetch country calling codes and flags
     fetch('https://restcountries.com/v3.1/all')
       .then(res => res.json())
       .then(data => {
@@ -42,6 +44,7 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
               ? `${c.idd.root}${c.idd.suffixes[0]}`
               : null;
             if (!code) return null;
+            // Use emoji flag if available, else country code
             const flag = c.flag || '';
             return {
               code,
@@ -49,6 +52,7 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
             };
           })
           .filter(Boolean)
+          // Remove duplicates and sort by code
           .filter((v: any, i: number, arr: any[]) => arr.findIndex(x => x.code === v.code) === i)
           .sort((a: any, b: any) => a.code.localeCompare(b.code));
         setCountryOptions(options.length ? options : [{ code: '+91', label: '🇮🇳 +91' }]);
@@ -58,11 +62,14 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
       });
   }, []);
 
+  // Helper: mobile validation (10 digits, Indian format)
   const validateMobile = (mobile: string) =>
     /^[6-9]\d{9}$/.test(mobile);
 
+  // Helper: OTP generation
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+  // Send OTP
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -77,6 +84,7 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
     setSuccess(`OTP sent to ${countryCode} ${mobile} (demo: ${newOtp})`);
   };
 
+  // Verify OTP
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -94,7 +102,6 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
       });
     }
     onClose();
-    navigate('/'); // Navigate to main page after login
   };
 
   if (!isOpen) return null;
@@ -135,13 +142,36 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
           {/* Header */}
           <div className="flex justify-between items-center mb-4 w-full">
             <h2 className="text-lg font-bold text-green-600 mx-auto">
-              Login
+              {activeTab === 'login' ? 'Login' : 'Sign Up'}
             </h2>
             <button onClick={onClose} className="text-gray-500 hover:text-red-600 text-xl absolute right-8 md:static">
               ×
             </button>
           </div>
-          {/* Mobile login form */}
+          {/* Tabs */}
+          <div className="w-full flex mb-4 border-b border-gray-200 justify-center">
+            <button
+              onClick={() => setActiveTab('login')}
+              className={`w-1/2 py-2 text-sm font-medium ${
+                activeTab === 'login'
+                  ? 'text-green-600 border-b-2 border-green-600'
+                  : 'text-gray-600 hover:text-green-600'
+              }`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setActiveTab('signup')}
+              className={`w-1/2 py-2 text-sm font-medium ${
+                activeTab === 'signup'
+                  ? 'text-green-600 border-b-2 border-green-600'
+                  : 'text-gray-600 hover:text-green-600'
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+          {/* Mobile login/signup form */}
           <div className="w-full flex flex-col items-center flex-1">
             {!otpSent ? (
               <form className="space-y-4 w-full flex flex-col items-center" onSubmit={handleSendOtp}>
@@ -203,6 +233,6 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
       </div>
     </div>
   );
-}
+};
 
-export default AuthForm;
+export default AuthModal;
