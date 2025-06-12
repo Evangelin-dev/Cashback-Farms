@@ -6,7 +6,6 @@ interface NavbarProps {
   onAuthClick: () => void;
 }
 
-
 const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -25,27 +24,27 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 <NavLink
                   key={link.name}
                   to={link.path}
-                 className={({ isActive }) =>
-  `px-3 py-2 rounded-md text-sm font-medium ${
-    isActive
-      ? 'bg-green-600 text-white'
-      : 'text-gray-700 hover:bg-green-500 hover:text-white'
-  }`
-}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive
+                        ? 'bg-green-600 text-white'
+                        : 'text-gray-700 hover:bg-green-500 hover:text-white'
+                    }`
+                  }
                 >
                   {link.name}
                 </NavLink>
               ))}
             </div>
           </div>
-         
+
           <div className="hidden md:block">
-              <button
-          onClick={onAuthClick}
-          className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-        >
-          Login / Sign Up
-        </button>
+            <button
+              onClick={onAuthClick}
+              className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+            >
+              Login / Sign Up
+            </button>
           </div>
           <div className="-mr-2 flex md:hidden">
             <button
@@ -57,12 +56,36 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
             >
               <span className="sr-only">Open main menu</span>
               {!isOpen ? (
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                <svg
+                  className="block h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               ) : (
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="block h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               )}
             </button>
@@ -78,20 +101,26 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 key={link.name}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-               className={({ isActive }) =>
-  `px-3 py-2 rounded-md text-sm font-medium ${
-    isActive
-      ? 'bg-green-600 text-white'
-      : 'text-gray-700 hover:bg-green-500 hover:text-white'
-  }`
-}
+                className={({ isActive }) =>
+                  `px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive
+                      ? 'bg-green-600 text-white'
+                      : 'text-gray-700 hover:bg-green-500 hover:text-white'
+                  }`
+                }
               >
                 {link.name}
               </NavLink>
             ))}
-             <button className="w-full mt-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                Login / Sign Up
-              </button>
+            <button
+              className="w-full mt-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              onClick={() => {
+                setIsOpen(false);
+                onAuthClick();
+              }}
+            >
+              Login / Sign Up
+            </button>
           </div>
         </div>
       )}
