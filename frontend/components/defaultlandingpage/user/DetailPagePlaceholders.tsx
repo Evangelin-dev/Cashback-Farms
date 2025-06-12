@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import Button from '../../components/common/Button';
+import Button from '../../../components/common/Button';
+import { MOCK_MATERIALS, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../../constants';
 
-import { MOCK_MATERIALS, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants';
-const DetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
+const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
             <Link to={backLink} className="text-green-600 hover:text-green-800 hover:underline">
@@ -22,11 +22,11 @@ export const DPlotDetailPage: React.FC = () => {
   const plot = MOCK_PLOTS.find(p => p.id === id);
 
   if (!plot) {
-    return <DetailPageLayout title="Plot Not Found" backLink="/plots" backLinkText="Back to Plot Marketplace"><p>The plot you are looking for does not exist or has been removed.</p></DetailPageLayout>;
+    return <DDetailPageLayout title="Plot Not Found" backLink="/Dplots" backLinkText="Back to Plot Marketplace"><p>The plot you are looking for does not exist or has been removed.</p></DDetailPageLayout>;
   }
 
   return (
-    <DetailPageLayout title={plot.title} backLink="/plots" backLinkText="Back to Plot Marketplace">
+    <DDetailPageLayout title={plot.title} backLink="/Dplots" backLinkText="Back to Plot Marketplace">
         <img src={plot.imageUrl} alt={plot.title} className="w-full h-64 object-cover rounded-md mb-6" />
         <p className="text-gray-700 mb-2"><span className="font-semibold">Location:</span> {plot.location}</p>
         <p className="text-gray-700 mb-2"><span className="font-semibold">Price:</span> ₹{plot.price > 0 ? plot.price.toLocaleString('en-IN') : 'N/A (Book My SqFt)'}</p>
@@ -46,12 +46,12 @@ export const DPlotDetailPage: React.FC = () => {
          <div className="mt-6">
             <Button variant="primary">Contact Owner/Agent (Mock)</Button>
             {plot.sqftPrice && (
-                 <Link to={`/book-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`}>
+                 <Link to={`/Dbook-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`}>
                     <Button variant="secondary" className="ml-4">Book My SqFt</Button>
                 </Link>
             )}
         </div>
-    </DetailPageLayout>
+    </DDetailPageLayout>
   );
 };
 
@@ -62,10 +62,10 @@ export const MaterialDetailPage: React.FC = () => {
   const navigate = useNavigate(); // <-- useNavigate for navigation
 
   if (!material) {
-    return <DetailPageLayout title="Material Not Found" backLink="/materials" backLinkText="Back to Materials Store"><p>The material you are looking for does not exist.</p></DetailPageLayout>;
+    return <DDetailPageLayout title="Material Not Found" backLink="/materials" backLinkText="Back to Materials Store"><p>The material you are looking for does not exist.</p></DDetailPageLayout>;
   }
   return (
-    <DetailPageLayout title={material.name} backLink="/materials" backLinkText="Back to Materials Store">
+    <DDetailPageLayout title={material.name} backLink="/materials" backLinkText="Back to Materials Store">
         <img src={material.imageUrl} alt={material.name} className="w-full h-64 object-contain rounded-md mb-6 bg-gray-100 p-4" />
         <p className="text-gray-700 mb-2"><span className="font-semibold">Category:</span> {material.category}</p>
         <p className="text-gray-700 mb-2"><span className="font-semibold">Price:</span> ₹{material.price.toLocaleString('en-IN')}</p>
@@ -82,20 +82,20 @@ export const MaterialDetailPage: React.FC = () => {
               Add to Cart (Mock)
             </Button>
         </div>
-    </DetailPageLayout>
+    </DDetailPageLayout>
   );
 };
 
-export const ProfessionalDetailPage: React.FC = () => {
+export const DProfessionalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const professional = MOCK_PROFESSIONALS.find(p => p.id === id);
   const navigate = useNavigate();
 
   if (!professional) {
-    return <DetailPageLayout title="Professional Not Found" backLink="/services" backLinkText="Back to Services Hub"><p>The professional you are looking for does not exist.</p></DetailPageLayout>;
+    return <DDetailPageLayout title="Professional Not Found" backLink="/services" backLinkText="Back to Services Hub"><p>The professional you are looking for does not exist.</p></DDetailPageLayout>;
   }
   return (
-    <DetailPageLayout title={professional.name} backLink="/services" backLinkText="Back to Services Hub">
+    <DDetailPageLayout title={professional.name} backLink="/services" backLinkText="Back to Services Hub">
       <div className="flex flex-col md:flex-row gap-8 items-center">
         <img
           src={professional.imageUrl}
@@ -114,14 +114,14 @@ export const ProfessionalDetailPage: React.FC = () => {
             <Button
               variant="primary"
               className="shadow-lg"
-              onClick={() => navigate('/logbookconsultation')}
+              onClick={() => navigate('/bookconsultation')}
             >
               Book Consultation
             </Button>
             <Button
               variant="outline"
               className="shadow-lg"
-              onClick={() => navigate('/logbookconsultation')}
+              onClick={() => navigate('/bookconsultation')}
             >
               Request Callback
             </Button>
@@ -141,6 +141,6 @@ export const ProfessionalDetailPage: React.FC = () => {
         </>
       )}
       {!professional.portfolioImages && <p className="text-gray-500">Portfolio images coming soon.</p>}
-    </DetailPageLayout>
+    </DDetailPageLayout>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 // Layouts
@@ -16,7 +16,13 @@ import PlansPage from './components/landingpage/landingpagecomponents/assistedpl
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
 import MyBooking from './components/mybooking/mybooking';
 
-import AuthModal from '@/components/auth/AuthForm';
+import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
+import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
+import { DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
+import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
+import BookConsultation from './components/detailpageandcart/bookconsultation';
+import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
 import Cart from './components/detailpageandcart/cart';
 import MyProfile from './components/myprofile/myprofile';
 import MaterialCheckout from "./components/payment/materialcheckout";
@@ -41,7 +47,7 @@ import RealEstateRoutes from './pages/realestate';
 import RealProfile from './pages/realestate/components/realprofile';
 import ReferAndEarnReal from './pages/realestate/components/referandearnreal/referandearnreal';
 import BookMySqftPage from './pages/user/BookMySqftPage';
-import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
+import { DPlotDetailPage, MaterialDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
 import MaterialsStorePage from './pages/user/MaterialsStorePage';
 import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
@@ -61,11 +67,14 @@ const AppRoutes: React.FC = () => {
       <Route path="/" element={<DefaultLanding />} />
       <Route path="/D" element={<DefaultLanding />} />
       <Route path="/Dplots" element={<PlotMarketplacePage />} />
-      <Route path="/Dbook-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
+      <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
       <Route path="/Dmaterials" element={<MaterialsStorePage />} />
-      <Route path="/Dservices" element={<ServicesHubPage />} />
+      <Route path="/Dservices" element={<DServicesHubPage />} />
       <Route path="/Dbook-my-sqft" element={<BookMySqftPage />} />
-      <Route path="/Dpaymentvai" element={<PaymentVai/>} />
+      <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
+      <Route path="/Dplans" element={<DPlansPage />} /> 
+      <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
+      <Route path="bookconsultation" element={<BookConsultation />} />
     
 
      </Route>
@@ -82,7 +91,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/knowledge-base" element={<KnowledgeBase/>} />
         <Route path="/help-support" element={<HelpAndSupport/>} />
         <Route path="/plots" element={<PlotMarketplacePage />} />
-        <Route path="/plots/:id" element={<PlotDetailPage />} />
+        <Route path="/plots/:id" element={<DPlotDetailPage />} />
         <Route path="/book-my-sqft" element={<BookMySqftPage />} />
         {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
         <Route path="/Umaterials" element={<MaterialsStorePage />} />
@@ -95,6 +104,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/myprofile" element={<MyProfile />} />
         <Route path="/cart" element={<Cart /> } />
         <Route path="/materialcheckout" element={<MaterialCheckout />} />
+        <Route path="logbookconsultation" element={<LogBookConsultation />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
