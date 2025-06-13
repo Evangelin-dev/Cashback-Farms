@@ -19,7 +19,7 @@ const MaterialCard: React.FC<MaterialCardProps> = ({ material }) => {
         <p className="text-sm text-green-600 font-bold mb-1">₹{material.price.toLocaleString('en-IN')}</p>
         <p className="text-xs text-gray-500 mb-1">MOQ: {material.moq}</p>
         <p className="text-xs text-gray-500 mb-2">Vendor: {material.vendor}</p>
-        <Link to={`/materials/${material.id}`}>
+        <Link to={`/Dmaterials/${material.id}`}>
           <Button variant="outline" size="sm" className="w-full">View Details</Button>
         </Link>
       </div>
