@@ -122,15 +122,15 @@ const DefaultLanding: React.FC = () => {
     if (searchType === 'buy') {
       services = buyServices;
       heading = 'Home Services for Buyers';
-      link = '/services/';
+      link = '/Dservices/';
     } else if (searchType === 'sell') {
       services = sellServices;
       heading = 'Home Services for Sellers';
-      link = '/services/';
+      link = '/Dservices/';
     } else {
       services = commercialServices;
       heading = 'Commercial Services';
-      link = '/services/';
+      link = '/Dservices/';
     }
     // Show only first 3 cards
     const visibleServices = services.slice(0, 3);
