@@ -18,7 +18,7 @@ import MyBooking from './components/mybooking/mybooking';
 
 import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
 import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
-import { DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
 import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
 import BookConsultation from './components/detailpageandcart/bookconsultation';
@@ -53,6 +53,12 @@ import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
+import DMaterialsStorePage from './components/defaultlandingpage/user/MaterialsStorePage';
+import DCart from './components/detailpageandcart/cart';
+
+import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
+import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
+
 
 
 const AppRoutes: React.FC = () => {
@@ -66,15 +72,18 @@ const AppRoutes: React.FC = () => {
          
       <Route path="/" element={<DefaultLanding />} />
       <Route path="/D" element={<DefaultLanding />} />
-      <Route path="/Dplots" element={<PlotMarketplacePage />} />
+      <Route path="/Dplots" element={<DPlotMarketplacePage />} />
       <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
-      <Route path="/Dmaterials" element={<MaterialsStorePage />} />
+      <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
       <Route path="/Dservices" element={<DServicesHubPage />} />
-      <Route path="/Dbook-my-sqft" element={<BookMySqftPage />} />
+      <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
       <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
       <Route path="/Dplans" element={<DPlansPage />} /> 
       <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
       <Route path="bookconsultation" element={<BookConsultation />} />
+      <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
+      <Route path="/Dcart" element={<DCart /> } />
+      <Route path="/Dplans" element={<DPlansPage />} /> 
     
 
      </Route>
@@ -84,6 +93,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Landing" element={<LandingPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
+        
         {/* Change /profile to use MyProfile directly */}
         <Route path="/profile" element={<MyProfile />} />
         <Route path="/my-bookings" element={<MyBooking/>} />
@@ -94,8 +104,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/plots/:id" element={<DPlotDetailPage />} />
         <Route path="/book-my-sqft" element={<BookMySqftPage />} />
         {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-        <Route path="/Umaterials" element={<MaterialsStorePage />} />
-        <Route path="/Umaterials/:id" element={<MaterialDetailPage />} />
+        <Route path="/materials" element={<MaterialsStorePage />} />
+        <Route path="/materials/:id" element={<MaterialDetailPage />} />
         <Route path="/services" element={<ServicesHubPage />} />
         <Route path="/services/:id" element={<ProfessionalDetailPage />} />
         <Route path="/plans" element={<PlansPage />} /> 
