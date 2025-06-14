@@ -58,6 +58,7 @@ import DCart from './components/detailpageandcart/cart';
 
 import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
 import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
+import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
 
 
@@ -84,6 +85,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
       <Route path="/Dcart" element={<DCart /> } />
       <Route path="/Dplans" element={<DPlansPage />} /> 
+      <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
     
 
      </Route>

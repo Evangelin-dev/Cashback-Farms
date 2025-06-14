@@ -67,7 +67,7 @@ const DMySqftListing: React.FC = () => {
 						</div>
 						<button
 							className="mt-auto bg-primary text-white px-4 py-2 rounded hover:bg-primary-dark transition"
-							onClick={() => navigate(`/book-my-sqft`)}
+							onClick={() => navigate(`/Dbook-my-sqft`)}
 						>
 							Book Now
 						</button>
