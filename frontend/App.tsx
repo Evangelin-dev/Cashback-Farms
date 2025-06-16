@@ -59,6 +59,7 @@ import DCart from './components/detailpageandcart/cart';
 import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
 import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
+import TermsAndConditions from './pages/TermsAndConditions';
 
 
 
@@ -86,10 +87,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/Dcart" element={<DCart /> } />
       <Route path="/Dplans" element={<DPlansPage />} /> 
       <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
+      
     
 
      </Route>
-
+<Route path="/terms" element={<TermsAndConditions />} />
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
