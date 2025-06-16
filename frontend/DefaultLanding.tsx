@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Button from '@/components/common/Button';
+import Button from './components/Button';
 
-import ProfessionalCard from '@/components/landingpage/landingpagecomponents/service/ProfessionalCard';
+
 import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '@/constants';
 import DFinancialServices from './components/defaultlandingpage/defaultlandingcomponents/financialservices/financialservices';
 import DAssistedPlans from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
