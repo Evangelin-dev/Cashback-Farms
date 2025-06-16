@@ -167,7 +167,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           });
         }
         onClose();
-        navigate('/Landing');
+        navigate('/realestate');
       }, 900);
     }, 900);
   };
