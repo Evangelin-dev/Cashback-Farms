@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from '../../../components/common/Button';
 import SqftGrid from '../../../components/landingpage/landingpagecomponents/plot/SqftGrid';
-import { MOCK_BMS_PLOT_INFO } from '../../../../constants';
-import { BookMySqftPlotInfo, SqftUnit } from '../../../../types';
+import { MOCK_BMS_PLOT_INFO } from '../../../constants';
+import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
 
 const DBookMySqftPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();
