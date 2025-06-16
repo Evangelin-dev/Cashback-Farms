@@ -60,6 +60,7 @@ import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage
 import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 import TermsAndConditions from './pages/TermsAndConditions';
+import PostPlots from './pages/realestate/components/PostPlots';
 
 
 
@@ -133,6 +134,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/realestate/realprofile" element={<RealProfile />} />
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
       <Route path="/referrealestate" element={<ReferAndEarnReal />} />
+      <Route path="post-plots" element={<PostPlots />} />
  </Route>
 
       {/* Admin Routes */}
