@@ -78,7 +78,7 @@ export const DMaterialDetailPage: React.FC = () => {
               variant="primary"
               onClick={() => navigate(`/Dcart`)}
             >
-              Add to Cart (Mock)
+              Request a Call for Order(Mock)
             </Button>
         </div>
     </DDetailPageLayout>

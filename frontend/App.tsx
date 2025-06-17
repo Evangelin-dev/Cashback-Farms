@@ -47,7 +47,7 @@ import RealEstateRoutes from './pages/realestate';
 import RealProfile from './pages/realestate/components/realprofile';
 import ReferAndEarnReal from './pages/realestate/components/referandearnreal/referandearnreal';
 import BookMySqftPage from './pages/user/BookMySqftPage';
-import { DPlotDetailPage, MaterialDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
+import { PlotDetailPage, MaterialDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
 import MaterialsStorePage from './pages/user/MaterialsStorePage';
 import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
@@ -61,6 +61,7 @@ import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarke
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 import TermsAndConditions from './pages/TermsAndConditions';
 import PostPlots from './pages/realestate/components/PostPlots';
+import BookPlotPayment from './pages/user/BookPlotPayment';
 
 
 
@@ -106,7 +107,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/knowledge-base" element={<KnowledgeBase/>} />
         <Route path="/help-support" element={<HelpAndSupport/>} />
         <Route path="/plots" element={<PlotMarketplacePage />} />
-        <Route path="/plots/:id" element={<DPlotDetailPage />} />
+        <Route path="/plots/:id" element={<PlotDetailPage />} />
         <Route path="/book-my-sqft" element={<BookMySqftPage />} />
         {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
         <Route path="/materials" element={<MaterialsStorePage />} />
@@ -120,6 +121,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/cart" element={<Cart /> } />
         <Route path="/materialcheckout" element={<MaterialCheckout />} />
         <Route path="logbookconsultation" element={<LogBookConsultation />} />
+        <Route path="bookplotpayment" element={<BookPlotPayment />} />
+        
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 

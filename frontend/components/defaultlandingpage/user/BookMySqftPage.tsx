@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Button from '../../../components/common/Button';
-import SqftGrid from '../../../components/landingpage/landingpagecomponents/plot/SqftGrid';
+import SqftGrid from '../../../components/defaultlandingpage/defaultlandingcomponents/plot/SqftGrid';
 import { MOCK_BMS_PLOT_INFO } from '../../../constants';
 import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
 
 
-const DBookMySqftPage: React.FC = () => {
+  const DBookMySqftPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();
   const navigate = useNavigate();
 
@@ -14,14 +14,9 @@ const DBookMySqftPage: React.FC = () => {
   const [plotInfo, setPlotInfo] = useState<BookMySqftPlotInfo | null>(MOCK_BMS_PLOT_INFO);
   const [grid, setGrid] = useState<SqftUnit[][]>(plotInfo?.initialGrid || []);
   const [selectedUnits, setSelectedUnits] = useState<SqftUnit[]>([]);
-  const [paymentOption, setPaymentOption] = useState("");
-  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
 
-  const PAYMENT_OPTIONS = [
-    "20% Booking Advance",
-    "50% 2nd Installment",
-    "30% Final Amount"
-  ];
+
 
   useEffect(() => {
     // Simulate fetching plot data if plotId changes or for initial load
@@ -63,14 +58,7 @@ const DBookMySqftPage: React.FC = () => {
       alert("Please select at least one unit to book.");
       return;
     }
-    if (!paymentOption) {
-      alert("Please select a PAYMENT OPTION before proceeding.");
-      return;
-    }
-    alert(`Booking ${totalSelectedArea} units for a total of ₹${totalCost.toLocaleString('en-IN')}. \nPlot: ${plotInfo.name}\nSelected Units: ${selectedUnits.map(u => u.id).join(', ')}\nPayment Option: ${paymentOption}\nThis is a mock confirmation.`);
-    // In a real app, this would navigate to a payment page or show a success modal.
-    // For MVP, we can reset selection or navigate away.
-    // navigate('/booking-confirmation'); // Example
+    setShowLoginPopup(true);
   };
 
   // Use fallback image/video if not present in plotInfo
@@ -157,62 +145,18 @@ const DBookMySqftPage: React.FC = () => {
               Total Cost: ₹{totalCost.toLocaleString('en-IN')}
             </p>
           </div>
-          {/* PAYMENT OPTIONS Dropdown - improved UI */}
-          <div className="w-full mt-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-1">PAYMENT OPTIONS</label>
-            <div className="relative">
-              <button
-                type="button"
-                className={`border rounded-lg px-3 py-2 w-full text-base focus:border-green-500 transition shadow flex justify-between items-center bg-white ${!paymentOption ? "text-gray-400" : "text-gray-800"}`}
-                onClick={() => setShowPaymentDropdown(open => !open)}
-                tabIndex={0}
-              >
-                <span>{paymentOption || "Choose the PAYMENT OPTIONS"}</span>
-                <svg className={`w-4 h-4 ml-2 transition-transform ${showPaymentDropdown ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {showPaymentDropdown && (
-                <ul className="absolute left-0 right-0 mt-1 bg-white border border-green-100 rounded-lg shadow-lg z-10 animate-dropdown-fade">
-                  {PAYMENT_OPTIONS.map(opt => (
-                    <li
-                      key={opt}
-                      className={`px-4 py-2 cursor-pointer hover:bg-green-50 ${paymentOption === opt ? "bg-green-100 font-semibold text-green-700" : ""}`}
-                      onClick={() => {
-                        setPaymentOption(opt);
-                        setShowPaymentDropdown(false);
-                      }}
-                    >
-                      {opt}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <style>{`
-                .animate-dropdown-fade {
-                  animation: dropdownFade 0.18s;
-                }
-                @keyframes dropdownFade {
-                  from { opacity: 0; transform: translateY(-8px);}
-                  to { opacity: 1; transform: translateY(0);}
-                }
-              `}</style>
-            </div>
-          </div>
+         
           {/* Booking Button */}
           <Button 
             variant="primary" 
             size="lg" 
             className="w-full mt-8"
             onClick={handleBooking}
-            disabled={totalSelectedArea === 0 || !paymentOption}
+            disabled={totalSelectedArea === 0}
           >
             Proceed to Book ({totalSelectedArea} Units)
           </Button>
           {totalSelectedArea === 0 && <p className="text-xs text-red-500 text-center mt-2">Please select units from the grid.</p>}
-          {!paymentOption && (
-            <p className="text-xs text-red-500 text-center mt-2">Please select a PAYMENT OPTION.</p>
-          )}
         </div>
       </div>
 
@@ -226,8 +170,27 @@ const DBookMySqftPage: React.FC = () => {
             <li>Receive your digital booking receipt.</li>
         </ol>
       </div>
+      {/* Popup for login/sign up */}
+      {showLoginPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full flex flex-col items-center animate-fade-in">
+            <svg className="w-16 h-16 text-green-500 mb-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z" />
+            </svg>
+            <div className="text-xl font-bold text-green-700 mb-2 text-center">Please Login / Sign Up</div>
+            <div className="text-gray-600 text-center mb-6">You need to be logged in to continue to checkout.</div>
+            <button
+              className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+              onClick={() => setShowLoginPopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default DBookMySqftPage;
+   
