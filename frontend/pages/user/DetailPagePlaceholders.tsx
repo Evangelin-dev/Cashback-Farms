@@ -17,7 +17,7 @@ const DetailPageLayout: React.FC<{title: string; children: React.ReactNode; back
     </div>
 );
 
-export const DPlotDetailPage: React.FC = () => {
+export const PlotDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const plot = MOCK_PLOTS.find(p => p.id === id);
 
@@ -79,7 +79,7 @@ export const MaterialDetailPage: React.FC = () => {
               variant="primary"
               onClick={() => navigate(`/cart`)}
             >
-              Add to Cart (Mock)
+              Request a Call for Order(Mock)
             </Button>
         </div>
     </DetailPageLayout>

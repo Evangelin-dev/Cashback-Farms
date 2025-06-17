@@ -8,7 +8,7 @@ const plotData = [
 		location: "Sector 21, Noida",
 		totalUnits: 100,
 		sqftPricePerUnit: 25000,
-		imageUrl: "https://picsum.photos/seed/bms1/400/220",
+		imageUrl: "https://images.unsplash.com/photo-1591389703635-e15a07b842d7?q=80&w=1933&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 	},
 	{
 		id: "bms-plot-beta",
@@ -16,7 +16,7 @@ const plotData = [
 		location: "Tech Park, Bengaluru",
 		totalUnits: 80,
 		sqftPricePerUnit: 22000,
-		imageUrl: "https://picsum.photos/seed/bms2/400/220",
+		imageUrl: "https://plus.unsplash.com/premium_photo-1661899405263-a0bee333068e?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 	},
 	{
 		id: "bms-plot-gamma",
@@ -24,7 +24,7 @@ const plotData = [
 		location: "Green Meadows, Pune",
 		totalUnits: 120,
 		sqftPricePerUnit: 18000,
-		imageUrl: "https://picsum.photos/seed/bms3/400/220",
+		imageUrl: "https://images.unsplash.com/photo-1581534697223-e35803ba6a35?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 	},
 ];
 
