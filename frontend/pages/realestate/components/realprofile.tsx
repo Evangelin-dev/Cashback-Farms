@@ -39,6 +39,7 @@ const RealProfile: React.FC = () => {
   const [gstFile, setGstFile] = useState<File | null>(null);
   const [gstFileName, setGstFileName] = useState<string>("");
   const [gstStage, setGstStage] = useState<"none" | "submitted" | "verifying" | "verified">("none");
+  const [showWithdrawPopup, setShowWithdrawPopup] = useState(false);
   const navigate = useNavigate();
 
   // Country codes state and fetching logic
@@ -413,6 +414,27 @@ const RealProfile: React.FC = () => {
                 />
                 <span className="text-[10px] text-gray-400 mt-0.5">PDF/JPG/PNG</span>
               </label>
+              {/* Passport Size Photo Upload */}
+              <label
+                className="flex flex-col items-center justify-center cursor-pointer bg-yellow-50 border-2 border-dashed border-yellow-300 rounded-xl px-3 py-2 hover:bg-yellow-100 transition shadow-sm"
+                style={{ minWidth: 80, minHeight: 70 }}
+                title="Upload Passport Size Photo"
+              >
+                <svg className="w-6 h-6 mb-1 text-yellow-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <circle cx="12" cy="10" r="4" stroke="currentColor" strokeWidth={2} />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 20c0-2.5 3.5-4 8-4s8 1.5 8 4" />
+                </svg>
+                <span className="text-xs font-semibold text-yellow-700 mb-0.5">Photo</span>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={e => {
+                    // Handle Passport size photo upload here
+                  }}
+                />
+                <span className="text-[10px] text-gray-400 mt-0.5">JPG/PNG</span>
+              </label>
             </div>
           </div>
           {/* --- KYC Status --- */}
@@ -580,7 +602,7 @@ const RealProfile: React.FC = () => {
           </div>
           <button
             className="mt-4 px-4 py-1 bg-primary text-white rounded-lg font-semibold shadow hover:bg-green-700 transition text-xs"
-            onClick={() => window.location.href = "/#/refer-earn"}
+            onClick={() => navigate('/referrealestate')} // Replace with your actual route "referrealestate"}
           >
             Go to Referral Page
           </button>
@@ -639,7 +661,10 @@ const RealProfile: React.FC = () => {
                 <span className="text-red-600 font-semibold text-xs">Rejected</span>
               </div>
             </div>
-            <button className="mt-2 px-2 py-1 bg-primary text-white rounded-lg font-semibold shadow hover:bg-green-700 transition animate-bounce text-xs">
+            <button
+              className="mt-2 px-2 py-1 bg-primary text-white rounded-lg font-semibold shadow hover:bg-green-700 transition animate-bounce text-xs"
+              onClick={() => setShowWithdrawPopup(true)}
+            >
               Request Withdrawal
             </button>
           </div>
@@ -701,6 +726,10 @@ const RealProfile: React.FC = () => {
           }
         `}</style>
       </div>
+    {/* --- Withdrawal Popup Component --- */}
+    {showWithdrawPopup && (
+      <WithdrawPopup onClose={() => setShowWithdrawPopup(false)} />
+    )}
     </>
   );
 };
@@ -727,5 +756,199 @@ function useCountUp(target: number, duration = 2500) {
   }, [target, duration]);
   return count;
 }
+
+// --- Withdrawal Popup Component ---
+const WithdrawPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [method, setMethod] = useState<"account" | "upi" | "">("");
+  const [account, setAccount] = useState({ number: "", ifsc: "", name: "" });
+  const [upi, setUpi] = useState("");
+  const [amount, setAmount] = useState("");
+  const [step, setStep] = useState<1 | 2>(1);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStep(2);
+    setTimeout(() => setSubmitted(true), 800);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 animate-fade-in-fast">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md min-h-[420px] flex flex-col items-center relative animate-slide-up overflow-hidden">
+        {/* Close Button */}
+        <button
+          className="absolute top-4 right-6 text-gray-400 hover:text-red-600 text-3xl z-10"
+          onClick={onClose}
+          aria-label="Close"
+          type="button"
+        >
+          ×
+        </button>
+        {/* Header */}
+        <div className="w-full flex flex-col items-center pt-8 pb-2">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg animate-bounce-slow mb-2">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" />
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={2.5} />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-green-700 mb-1 animate-fade-in-fast">Request Withdrawal</h2>
+          <p className="text-gray-500 text-xs text-center animate-fade-in-fast">
+            Withdraw your commission to your preferred account.
+          </p>
+        </div>
+        {/* Step 1: Choose Method */}
+        {step === 1 && (
+          <form className="w-full flex flex-col items-center px-8 animate-fade-in-fast" onSubmit={handleSubmit}>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 w-full text-left">Withdrawal Method</label>
+            <div className="flex gap-3 w-full mb-4">
+              <button
+                type="button"
+                className={`flex-1 py-2 rounded-lg border transition-all duration-200 ${
+                  method === "account"
+                    ? "bg-green-100 border-green-500 text-green-700 font-bold shadow"
+                    : "bg-gray-50 border-gray-200 text-gray-500"
+                }`}
+                onClick={() => setMethod("account")}
+              >
+                Bank Account
+              </button>
+              <button
+                type="button"
+                className={`flex-1 py-2 rounded-lg border transition-all duration-200 ${
+                  method === "upi"
+                    ? "bg-green-100 border-green-500 text-green-700 font-bold shadow"
+                    : "bg-gray-50 border-gray-200 text-gray-500"
+                }`}
+                onClick={() => setMethod("upi")}
+              >
+                UPI ID
+              </button>
+            </div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2 w-full text-left">Amount</label>
+            <input
+              type="number"
+              className="border rounded-lg px-4 py-2 w-full text-base focus:border-green-500 transition shadow mb-4"
+              placeholder="Enter amount to withdraw"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+              min={1}
+              required
+            />
+            {method === "account" && (
+              <div className="w-full animate-fade-in-fast">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Account Number</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-3 py-2 w-full text-base focus:border-green-500 transition shadow mb-2"
+                  placeholder="Account Number"
+                  value={account.number}
+                  onChange={e => setAccount({ ...account, number: e.target.value })}
+                  required
+                />
+                <label className="block text-xs font-semibold text-gray-700 mb-1">IFSC Code</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-3 py-2 w-full text-base focus:border-green-500 transition shadow mb-2"
+                  placeholder="IFSC Code"
+                  value={account.ifsc}
+                  onChange={e => setAccount({ ...account, ifsc: e.target.value })}
+                  required
+                />
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Account Holder Name</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-3 py-2 w-full text-base focus:border-green-500 transition shadow"
+                  placeholder="Account Holder Name"
+                  value={account.name}
+                  onChange={e => setAccount({ ...account, name: e.target.value })}
+                  required
+                />
+              </div>
+            )}
+            {method === "upi" && (
+              <div className="w-full animate-fade-in-fast">
+                <label className="block text-xs font-semibold text-gray-700 mb-1">UPI ID</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-3 py-2 w-full text-base focus:border-green-500 transition shadow"
+                  placeholder="yourupi@bank"
+                  value={upi}
+                  onChange={e => setUpi(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+            <button
+              type="submit"
+              className={`w-full py-2 rounded-lg font-bold text-white bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 shadow-lg transition text-base mt-4 animate-fade-in-fast ${
+                !amount || (!method || (method === "account" && (!account.number || !account.ifsc || !account.name)) || (method === "upi" && !upi))
+                  ? "opacity-60 cursor-not-allowed"
+                  : ""
+              }`}
+              disabled={
+                !amount ||
+                !method ||
+                (method === "account" && (!account.number || !account.ifsc || !account.name)) ||
+                (method === "upi" && !upi)
+              }
+            >
+              Submit Withdrawal Request
+            </button>
+          </form>
+        )}
+        {/* Step 2: Success */}
+        {step === 2 && (
+          <div className="flex flex-col items-center justify-center flex-1 w-full px-8 py-12 animate-fade-in-fast">
+            {submitted && (
+              <>
+                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-4 shadow-lg animate-bounce-slow">
+                  <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={2.5} />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                  </svg>
+                </div>
+                <div className="text-green-700 font-bold text-xl mb-2 animate-fade-in-fast">Request Submitted!</div>
+                <div className="text-gray-600 text-center mb-4 animate-fade-in-fast">
+                  Your withdrawal request has been received.<br />
+                  Our team will process it soon.
+                </div>
+                <button
+                  className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition mt-2"
+                  onClick={onClose}
+                >
+                  Close
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+      <style>{`
+        .animate-fade-in-fast {
+          animation: fadeInFast 0.5s;
+        }
+        @keyframes fadeInFast {
+          from { opacity: 0; transform: translateY(20px);}
+          to { opacity: 1; transform: translateY(0);}
+        }
+        .animate-slide-up {
+          animation: slideUp 0.5s cubic-bezier(.4,2,.6,1) both;
+        }
+        @keyframes slideUp {
+          from { transform: translateY(80px) scale(0.95); opacity: 0; }
+          to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 1.5s infinite;
+        }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0);}
+          50% { transform: translateY(-10px);}
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default RealProfile;
