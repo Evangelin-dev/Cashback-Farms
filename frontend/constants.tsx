@@ -255,13 +255,20 @@ export let MOCK_USERS: User[] = [
 export let MOCK_PAYMENTS: PaymentInstallment[] = [
   // Payments for Booking B001 (Plot AG-P1-A101)
   { id: 'pay-001', bookingId: 'B001', scheduleName: 'Booking Advance', dueDate: '2024-01-15', amount: 60000, status: PaymentStatus.PAID, paymentType: PaymentType.BOOKING_ADVANCE, paidDate: '2024-01-14', transactionId: 'TXN1001' },
-  { id: 'pay-002', bookingId: 'B001', scheduleName: '1st Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
-  { id: 'pay-003', bookingId: 'B001', scheduleName: '2nd Installment', dueDate: '2024-06-15', amount: 120000, status: PaymentStatus.DUE, paymentType: PaymentType.INSTALLMENT },
-  { id: 'pay-004', bookingId: 'B001', scheduleName: '3rd Installment', dueDate: '2024-09-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
-  { id: 'pay-005', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-12-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-002', bookingId: 'B001', scheduleName: '2nd Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
+  { id: 'pay-003', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-12-15', amount: 150000, status: PaymentStatus.DUE, paymentType: PaymentType.FINAL },
   // Payments for another booking (imaginary)
   { id: 'pay-006', bookingId: 'B002', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
-  { id: 'pay-007', bookingId: 'B002', scheduleName: '1st Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-007', bookingId: 'B002', scheduleName: '2nd Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+   { id: 'pay-008', bookingId: 'B003', scheduleName: 'Booking Advance', dueDate: '2024-01-15', amount: 60000, status: PaymentStatus.PAID, paymentType: PaymentType.BOOKING_ADVANCE, paidDate: '2024-01-14', transactionId: 'TXN1001' },
+  { id: 'pay-009', bookingId: 'B003', scheduleName: '2nd Installment', dueDate: '2024-03-15', amount: 180000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
+  { id: 'pay-010', bookingId: 'B003', scheduleName: 'Final Payment', dueDate: '2025-12-15', amount: 150000, status: PaymentStatus.DUE, paymentType: PaymentType.FINAL},
+   { id: 'pay-011', bookingId: 'B004', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
+  { id: 'pay-012', bookingId: 'B004', scheduleName: '2nd Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+   { id: 'pay-013', bookingId: 'B005', scheduleName: 'Booking Advance', dueDate: '2024-01-15', amount: 60000, status: PaymentStatus.PAID, paymentType: PaymentType.BOOKING_ADVANCE, paidDate: '2024-01-14', transactionId: 'TXN1001' },
+  { id: 'pay-014', bookingId: 'B005', scheduleName: '2nd Installment', dueDate: '2024-03-15', amount: 180000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
+  { id: 'pay-015', bookingId: 'B005', scheduleName: 'Final Payment', dueDate: '2024-12-15', amount: 150000, status: PaymentStatus.DUE, paymentType: PaymentType.FINAL}
+  // Payments for another booking (imaginary)
 ];
 
 export let MOCK_BOOKINGS: Booking[] = [
@@ -271,7 +278,7 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-001',
     bookingDate: '2024-01-15',
     status: BookingStatus.CONFIRMED,
-    paymentIds: ['pay-001', 'pay-002', 'pay-003', 'pay-004', 'pay-005'],
+    paymentIds: ['pay-001', 'pay-002', 'pay-005'],
     investmentDetails: { // Example specific to this booking for user view
         yourInvestment: MOCK_PLOTS.find(p=>p.id === 'AG-P1-A101')?.plotValue || 0,
         cashbackPercentage: 10,
@@ -285,7 +292,21 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-002',
     bookingDate: '2024-02-20',
     status: BookingStatus.PENDING_CONFIRMATION,
-    paymentIds: ['pay-006', 'pay-007']
+    paymentIds: ['pay-004', 'pay-005']
+  },
+  {
+    id: 'B003',
+    plotId: 'AG-P1-A103',
+    userId: 'user-003',
+    bookingDate: '2024-06-15',
+    status: BookingStatus.CONFIRMED,
+    paymentIds: ['pay-006', 'pay-007', 'pay-008'],
+    investmentDetails: { // Example specific to this booking for user view
+        yourInvestment: MOCK_PLOTS.find(p=>p.id === 'AG-P1-A103')?.plotValue || 0,
+        cashbackPercentage: 10,
+        cashbackAmount: (MOCK_PLOTS.find(p=>p.id === 'AG-P1-A103')?.plotValue || 0) * 0.10,
+        netInvestment: (MOCK_PLOTS.find(p=>p.id === 'AG-P1-A103')?.plotValue || 0) * 0.90,
+    }
   },
 ];
 

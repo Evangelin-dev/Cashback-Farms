@@ -10,7 +10,7 @@ export enum PaymentStatus {
 export enum PaymentType {
   BOOKING_ADVANCE = 'Booking Advance',
   INSTALLMENT = 'Installment',
-  OTHER = 'Other'
+  FINAL = 'Final Payment',
 }
 
 export enum UserRole {
