@@ -22,6 +22,11 @@ const menuItems = [
     icon: <IconMapPin className="w-5 h-5" />,
     label: "Post Plots",
   },
+   {
+    key: "/realestate/post-mysqft",
+    icon: <IconMapPin className="w-5 h-5" />,
+    label: "Post MySqft/MySqyd",
+  },
   {
     key: "/realestate/leads",
     icon: <IconUsers className="w-5 h-5" />,

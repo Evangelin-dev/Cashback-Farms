@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 // Layouts
@@ -16,13 +16,7 @@ import PlansPage from './components/landingpage/landingpagecomponents/assistedpl
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
 import MyBooking from './components/mybooking/mybooking';
 
-import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
-import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
-import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
-import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
-import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
-import BookConsultation from './components/detailpageandcart/bookconsultation';
-import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
+import AuthModal from '@/components/auth/AuthForm';
 import Cart from './components/detailpageandcart/cart';
 import MyProfile from './components/myprofile/myprofile';
 import MaterialCheckout from "./components/payment/materialcheckout";
@@ -47,22 +41,21 @@ import RealEstateRoutes from './pages/realestate';
 import RealProfile from './pages/realestate/components/realprofile';
 import ReferAndEarnReal from './pages/realestate/components/referandearnreal/referandearnreal';
 import BookMySqftPage from './pages/user/BookMySqftPage';
-import { PlotDetailPage, MaterialDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
+import { MaterialDetailPage, PlotDetailPage, ProfessionalDetailPage } from './pages/user/DetailPagePlaceholders';
 import MaterialsStorePage from './pages/user/MaterialsStorePage';
 import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
-import DMaterialsStorePage from './components/defaultlandingpage/user/MaterialsStorePage';
-import DCart from './components/detailpageandcart/cart';
-
-import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
-import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
+import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
+import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
+import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
+import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
+import BookConsultation from './components/detailpageandcart/bookconsultation';
+import { DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
-import TermsAndConditions from './pages/TermsAndConditions';
-import PostPlots from './pages/realestate/components/PostPlots';
-import BookPlotPayment from './pages/user/BookPlotPayment';
-
+import ManageMysqft from './pages/admin/ManageMysqft';
+import RealMySqft from './pages/realestate/components/realMysqft';
 
 
 const AppRoutes: React.FC = () => {
@@ -76,30 +69,24 @@ const AppRoutes: React.FC = () => {
          
       <Route path="/" element={<DefaultLanding />} />
       <Route path="/D" element={<DefaultLanding />} />
-      <Route path="/Dplots" element={<DPlotMarketplacePage />} />
+      <Route path="/Dplots" element={<PlotMarketplacePage />} />
       <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
-      <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
+      <Route path="/Dmaterials" element={<MaterialsStorePage />} />
       <Route path="/Dservices" element={<DServicesHubPage />} />
-      <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
+      <Route path="/Dbook-my-sqft" element={<BookMySqftPage />} />
       <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
       <Route path="/Dplans" element={<DPlansPage />} /> 
       <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
       <Route path="bookconsultation" element={<BookConsultation />} />
-      <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
-      <Route path="/Dcart" element={<DCart /> } />
-      <Route path="/Dplans" element={<DPlansPage />} /> 
-      <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
-      
-    
+    <Route path="Dmysqft-listing" element={<DMySqftListing />} />
 
      </Route>
-<Route path="/terms" element={<TermsAndConditions />} />
+
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
-        
         {/* Change /profile to use MyProfile directly */}
         <Route path="/profile" element={<MyProfile />} />
         <Route path="/my-bookings" element={<MyBooking/>} />
@@ -110,8 +97,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/plots/:id" element={<PlotDetailPage />} />
         <Route path="/book-my-sqft" element={<BookMySqftPage />} />
         {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-        <Route path="/materials" element={<MaterialsStorePage />} />
-        <Route path="/materials/:id" element={<MaterialDetailPage />} />
+        <Route path="/Umaterials" element={<MaterialsStorePage />} />
+        <Route path="/Umaterials/:id" element={<MaterialDetailPage />} />
         <Route path="/services" element={<ServicesHubPage />} />
         <Route path="/services/:id" element={<ProfessionalDetailPage />} />
         <Route path="/plans" element={<PlansPage />} /> 
@@ -120,9 +107,6 @@ const AppRoutes: React.FC = () => {
         <Route path="/myprofile" element={<MyProfile />} />
         <Route path="/cart" element={<Cart /> } />
         <Route path="/materialcheckout" element={<MaterialCheckout />} />
-        <Route path="logbookconsultation" element={<LogBookConsultation />} />
-        <Route path="bookplotpayment" element={<BookPlotPayment />} />
-        
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
@@ -137,13 +121,14 @@ const AppRoutes: React.FC = () => {
       <Route path="/realestate/realprofile" element={<RealProfile />} />
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
       <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-      <Route path="post-plots" element={<PostPlots />} />
+      <Route path="/realestate/post-mysqft" element={<RealMySqft />} />
  </Route>
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
+        <Route path="mysqft" element={<ManageMysqft />} />
         <Route path="commercial" element={<ManageCommercialPage />} />
         <Route path="bookings" element={<ManageBookingsPage />} />
         <Route path="payments" element={<ManagePaymentsPage />} />

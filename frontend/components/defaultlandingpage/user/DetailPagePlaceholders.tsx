@@ -7,7 +7,8 @@ const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; bac
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
             <Link to={backLink} className="text-green-600 hover:text-green-800 hover:underline">
-                &larr;             </Link>
+                &larr; {backLinkText}
+            </Link>
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-6">{title}</h1>
         <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -21,11 +22,11 @@ export const DPlotDetailPage: React.FC = () => {
   const plot = MOCK_PLOTS.find(p => p.id === id);
 
   if (!plot) {
-    return <DDetailPageLayout title="Plot Not Found" backLink="/Dplots" backLinkText="Back to Plot Marketplace"><p>The plot you are looking for does not exist or has been removed.</p></DDetailPageLayout>;
+    return <DDetailPageLayout title="Plot Not Found" backLink="/plots" backLinkText="Back to Plot Marketplace"><p>The plot you are looking for does not exist or has been removed.</p></DDetailPageLayout>;
   }
 
   return (
-    <DDetailPageLayout title={plot.title} backLink="/Dplots" backLinkText="Back to Plot Marketplace">
+    <DDetailPageLayout title={plot.title} backLink="/plots" backLinkText="Back to Plot Marketplace">
         <img src={plot.imageUrl} alt={plot.title} className="w-full h-64 object-cover rounded-md mb-6" />
         <p className="text-gray-700 mb-2"><span className="font-semibold">Location:</span> {plot.location}</p>
         <p className="text-gray-700 mb-2"><span className="font-semibold">Price:</span> ₹{plot.price > 0 ? plot.price.toLocaleString('en-IN') : 'N/A (Book My SqFt)'}</p>
@@ -45,7 +46,7 @@ export const DPlotDetailPage: React.FC = () => {
          <div className="mt-6">
             <Button variant="primary">Contact Owner/Agent (Mock)</Button>
             {plot.sqftPrice && (
-                 <Link to={`/Dbook-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`}>
+                 <Link to={`/book-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`}>
                     <Button variant="secondary" className="ml-4">Book My SqFt</Button>
                 </Link>
             )}
@@ -54,7 +55,7 @@ export const DPlotDetailPage: React.FC = () => {
   );
 };
 
-export const DMaterialDetailPage: React.FC = () => {
+export const MaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const material = MOCK_MATERIALS.find(m => m.id === id);
 
@@ -76,9 +77,9 @@ export const DMaterialDetailPage: React.FC = () => {
         <div className="mt-6">
             <Button
               variant="primary"
-              onClick={() => navigate(`/Dcart`)}
+              onClick={() => navigate(`/cart`)}
             >
-              Request a Call for Order(Mock)
+              Add to Cart (Mock)
             </Button>
         </div>
     </DDetailPageLayout>

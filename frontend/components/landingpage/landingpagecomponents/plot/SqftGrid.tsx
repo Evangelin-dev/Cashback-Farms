@@ -1,337 +1,469 @@
 import React, { useRef, useState } from 'react';
-import { SqftUnit } from '../../../../types';
+import { SqftUnit as BaseSqftUnit } from '../../../../types';
 
-interface GridLabelInfo {
-  label: string;
-  sqft: string;
-  dimensions: string;
-  direction: string;
-}
-
-interface SqftGridProps {
-  gridData: SqftUnit[][];
-  onUnitSelect: (row: number, col: number) => void;
-  unitSize?: number; // in pixels
+interface ExtendedSqftUnit extends BaseSqftUnit {
   imageUrl?: string;
 }
 
-const GRID_LABELS: GridLabelInfo[] = [
-  { label: "93",    sqft: "1000 SqFt", dimensions: "104' x 100'", direction: "N" },
-  { label: "2C1A",  sqft: "900 SqFt",  dimensions: "90' x 100'",  direction: "E" },
-  { label: "5",     sqft: "1200 SqFt", dimensions: "120' x 100'", direction: "S" },
-  { label: "2C1B",  sqft: "950 SqFt",  dimensions: "95' x 100'",  direction: "W" },
-  { label: "7A",    sqft: "1100 SqFt", dimensions: "110' x 100'", direction: "N" },
-  { label: "7B",    sqft: "1050 SqFt", dimensions: "105' x 100'", direction: "E" },
-  { label: "8A",    sqft: "980 SqFt",  dimensions: "98' x 100'",  direction: "S" },
-  { label: "8B",    sqft: "1020 SqFt", dimensions: "102' x 100'", direction: "W" },
-  { label: "9A",    sqft: "1150 SqFt", dimensions: "115' x 100'", direction: "N" },
-  { label: "9B",    sqft: "1080 SqFt", dimensions: "108' x 100'", direction: "E" },
-  { label: "10A",   sqft: "1120 SqFt", dimensions: "112' x 100'", direction: "S" },
-  { label: "10B",   sqft: "990 SqFt",  dimensions: "99' x 100'",  direction: "W" },
-];
+interface SqftGridProps {
+  gridData: ExtendedSqftUnit[][];
+  onUnitSelect: (row: number, col: number) => void;
+  // plotImageUrl: string; // No longer needed as prop, using static image below
+  unitSize?: number;
+}
+
+// Example GRID_LABELS and additional subplot data for demonstration
+const GRID_LABELS = {
+  rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+  cols: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+};
+
+// Example subplot details (in real use, this should come from props or context)
+const SUBPLOT_DETAILS: Record<string, {
+  imageUrl: string;
+  dimension: string;
+  facing: string;
+  sqft: number;
+}> = {};
+for (let r = 0; r < GRID_LABELS.rows.length; r++) {
+  for (let c = 0; c < GRID_LABELS.cols.length; c++) {
+    const key = `${GRID_LABELS.rows[r]}${GRID_LABELS.cols[c]}`;
+    SUBPLOT_DETAILS[key] = {
+      imageUrl: `https://picsum.photos/seed/${key}/100/80`,
+      dimension: `${30 + r} x ${40 + c} ft`,
+      facing: ['East', 'West', 'North', 'South'][(r + c) % 4],
+      sqft: (30 + r) * (40 + c),
+    };
+  }
+}
+
+// Helper to get label for a cell
+function getGridLabel(row: number, col: number) {
+  const rowLabel = GRID_LABELS.rows[row] ?? `R${row + 1}`;
+  const colLabel = GRID_LABELS.cols[col] ?? `C${col + 1}`;
+  return `${rowLabel}${colLabel}`;
+}
+
+interface SqftUnit {
+  id: string;
+  row: number;
+  col: number;
+  isAvailable: boolean;
+  isSelected: boolean;
+  isBooked: boolean;
+  imageUrl?: string;
+  dimension?: string;
+  facing?: string;
+  sqft?: number;
+}
 
 const SqftGrid: React.FC<SqftGridProps> = ({
   gridData,
   onUnitSelect,
-  unitSize = 28,
-  imageUrl = "/PlotLayoutGrid/kanathur.png"
+  unitSize = 44,
 }) => {
-  const [showImagePopup, setShowImagePopup] = useState(false);
+  const [hoveredUnit, setHoveredUnit] = useState<SqftUnit | null>(null);
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
+  const [hoveredDetail, setHoveredDetail] = useState<{
+    unit: SqftUnit & { imageUrl?: string; dimension?: string; facing?: string; sqft?: number };
+    x: number;
+    y: number;
+  } | null>(null);
+  const [selectedUnits, setSelectedUnits] = useState<SqftUnit[]>([]);
+  // State for zoom and pan
   const [zoom, setZoom] = useState(1);
-  const [selectedIdxs, setSelectedIdxs] = useState<number[]>([]);
-  const [showSelectedDetails, setShowSelectedDetails] = useState(false);
+  const [imgOffset, setImgOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
 
-  // For drag
-  const dragFrameRef = useRef<HTMLDivElement>(null);
-  const dragImgRef = useRef<HTMLImageElement>(null);
-  const [dragState, setDragState] = useState<{ dragging: boolean; x: number; y: number; offsetX: number; offsetY: number }>({
-    dragging: false, x: 0, y: 0, offsetX: 0, offsetY: 0
-  });
+  const imgFrameRef = useRef<HTMLDivElement>(null);
 
-  // Flatten gridData and only use as many as GRID_LABELS.length
-  const flatUnits = gridData.flat().slice(0, GRID_LABELS.length);
+  // Maintain local grid state to reflect selection/removal
+  const [localGrid, setLocalGrid] = useState(() =>
+    gridData.map(row =>
+      row.map(unit => ({ ...unit }))
+    )
+  );
 
-  // Stats
-  const totalPlots = flatUnits.length;
-  const availablePlots = flatUnits.filter(u => u.isAvailable && !u.isBooked).length;
-  const bookedPlots = flatUnits.filter(u => u.isBooked).length;
+  // Update localGrid if gridData changes (optional, if gridData is dynamic)
+  // React.useEffect(() => {
+  //   setLocalGrid(gridData.map(row => row.map(unit => ({ ...unit }))));
+  // }, [gridData]);
 
-  if (!flatUnits.length) {
-    return <p className="text-center text-gray-500">No grid data available.</p>;
-  }
-
-  const getUnitClasses = (unit: SqftUnit, idx: number): string => {
-    let base = 'border border-gray-300 flex items-center justify-center text-xs transition-colors duration-150 relative group';
-    if (unit.isBooked) {
-      base += ' bg-gray-400 cursor-not-allowed text-white';
-    } else if (unit.isSelected || selectedIdxs.includes(idx)) {
-      base += ' bg-green-500 hover:bg-green-600 text-white cursor-pointer';
-    } else if (unit.isAvailable) {
-      base += ' bg-green-100 hover:bg-green-200 text-green-700 cursor-pointer';
-    }
-    return base;
-  };
-
-  // Handle selection and booking logic
-  const handleBlockClick = (unit: SqftUnit, idx: number) => {
-    if (unit.isBooked) return;
+  // Handle unit selection
+  const handleUnitClick = (unit: SqftUnit) => {
+    if (!unit.isAvailable) return;
     onUnitSelect(unit.row, unit.col);
-    setSelectedIdxs(prev => {
-      if (prev.includes(idx)) {
-        // Deselect
-        return prev.filter(i => i !== idx);
-      } else {
-        // Select
-        return [...prev, idx];
-      }
+    setSelectedUnits(prev =>
+      prev.some(u => u.id === unit.id)
+        ? prev.filter(u => u.id !== unit.id)
+        : [...prev, unit]
+    );
+    setLocalGrid(prev =>
+      prev.map(row =>
+        row.map(u =>
+          u.id === unit.id ? { ...u, isSelected: !u.isSelected } : u
+        )
+      )
+    );
+  };
+
+  // Remove selected plot (from both selectedUnits and grid)
+  const handleRemoveSelected = (unitId: string) => {
+    setSelectedUnits(prev => prev.filter(u => u.id !== unitId));
+    setLocalGrid(prev =>
+      prev.map(row =>
+        row.map(u =>
+          u.id === unitId ? { ...u, isSelected: false } : u
+        )
+      )
+    );
+  };
+
+  // Helper to show hover detail at correct position (relative to grid container)
+  const handleMouseEnter = (
+    e: React.MouseEvent,
+    unit: SqftUnit,
+    subplot: { imageUrl: string; dimension: string; facing: string; sqft: number }
+  ) => {
+    const gridRect = gridContainerRef.current?.getBoundingClientRect();
+    const cellRect = (e.target as HTMLElement).getBoundingClientRect();
+    if (gridRect) {
+      setHoveredUnit({ ...unit, ...subplot });
+      setHoveredDetail({
+        unit: { ...unit, ...subplot },
+        x: cellRect.left - gridRect.left + cellRect.width / 2,
+        y: cellRect.top - gridRect.top + cellRect.height,
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredUnit(null);
+    setHoveredDetail(null);
+  };
+
+  // Mouse/touch handlers for drag
+  const handleImgMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    setDragging(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setDragStart({ x: clientX - imgOffset.x, y: clientY - imgOffset.y });
+  };
+  const handleImgMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!dragging || !dragStart) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    setImgOffset({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y,
     });
   };
-
-  // Show details for all selected plots
-  const selectedGridInfos: GridLabelInfo[] = selectedIdxs
-    .filter(idx => GRID_LABELS[idx])
-    .map(idx => GRID_LABELS[idx]);
-
-  // Booking handler (mock)
-  const handleBookSelected = () => {
-    setShowSelectedDetails(true);
+  const handleImgMouseUp = () => {
+    setDragging(false);
+    setDragStart(null);
   };
 
-  // Minimize total plots after booking
-  const effectiveTotalPlots = totalPlots - selectedIdxs.length;
+  // Smoother zoom with pointer-centered zoom
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  const imgOffsetRef = useRef(imgOffset);
+  imgOffsetRef.current = imgOffset;
 
-  // Drag handlers for popup image
-  const handleDragStart = (e: React.MouseEvent) => {
-    if (!dragImgRef.current) return;
-    setDragState({
-      dragging: true,
-      x: dragState.x,
-      y: dragState.y,
-      offsetX: e.clientX - dragState.x,
-      offsetY: e.clientY - dragState.y,
-    });
-  };
-  const handleDrag = (e: React.MouseEvent) => {
-    if (!dragState.dragging || !dragFrameRef.current || !dragImgRef.current) return;
-    const frame = dragFrameRef.current.getBoundingClientRect();
-    const img = dragImgRef.current.getBoundingClientRect();
-    let newX = e.clientX - dragState.offsetX;
-    let newY = e.clientY - dragState.offsetY;
+  const handleImgWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (!imgFrameRef.current) return;
+    const rect = imgFrameRef.current.getBoundingClientRect();
+    const pointerX = e.clientX - rect.left;
+    const pointerY = e.clientY - rect.top;
 
-    // Clamp image inside frame
-    const maxX = 0;
-    const maxY = 0;
-    const minX = frame.width - img.width * zoom;
-    const minY = frame.height - img.height * zoom;
-    if (img.width * zoom > frame.width) {
-      newX = Math.min(maxX, Math.max(minX, newX));
-    } else {
-      newX = (frame.width - img.width * zoom) / 2;
-    }
-    if (img.height * zoom > frame.height) {
-      newY = Math.min(maxY, Math.max(minY, newY));
-    } else {
-      newY = (frame.height - img.height * zoom) / 2;
-    }
-    setDragState({ ...dragState, x: newX, y: newY });
+    let newZoom = zoomRef.current - e.deltaY * 0.0015;
+    newZoom = Math.max(1, Math.min(2.5, newZoom));
+    if (newZoom === zoomRef.current) return;
+
+    // Calculate new offset so that zoom centers on pointer
+    const scaleChange = newZoom / zoomRef.current;
+    const newOffsetX = (imgOffsetRef.current.x - pointerX) * scaleChange + pointerX;
+    const newOffsetY = (imgOffsetRef.current.y - pointerY) * scaleChange + pointerY;
+
+    setZoom(newZoom);
+    setImgOffset({ x: newOffsetX, y: newOffsetY });
   };
-  const handleDragEnd = () => setDragState(prev => ({ ...prev, dragging: false }));
+
+  // Reset zoom and pan
+  const handleReset = () => {
+    setZoom(1);
+    setImgOffset({ x: 0, y: 0 });
+  };
+
+  // Download PDF (dummy link, replace with actual PDF if needed)
+  const handleDownload = () => {
+    window.open('/PlotLayoutGrid/kanathur.pdf', '_blank');
+  };
+
+  // Plot counts for summary
+  const totalPlots = localGrid.reduce((sum, row) => sum + row.length, 0);
+  const bookedPlots = localGrid.flat().filter(u => u.isBooked).length;
+  const availablePlots = localGrid.flat().filter(u => u.isAvailable && !u.isBooked).length;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      {/* Image on top with View button */}
-      {imageUrl && (
-        <div className="mb-4 flex flex-col items-center">
-          <div className="relative w-full flex justify-center">
-            <img
-              src={imageUrl}
-              alt="Plot Layout"
-              className="w-full h-auto rounded border max-h-56 object-contain"
-              style={{ maxWidth: 400 }}
-            />
-            <button
-              className="absolute bottom-2 right-2 bg-green-600 text-white px-3 py-1 rounded shadow hover:bg-green-700 transition"
-              onClick={() => { setShowImagePopup(true); setZoom(1); setDragState({ dragging: false, x: 0, y: 0, offsetX: 0, offsetY: 0 }); }}
-              type="button"
-            >
-              View
-            </button>
+    <div className="flex flex-col items-center w-full gap-8">
+      {/* Plot summary */}
+      <div className="flex flex-row items-center gap-6 mb-2 mt-2">
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded bg-green-200 border border-green-400 inline-block" />
+          <span className="text-xs text-green-700 font-semibold">Available Plots: {availablePlots}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded bg-gray-300 border border-gray-400 inline-block" />
+          <span className="text-xs text-gray-600 font-semibold">Booked Plots: {bookedPlots}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded bg-indigo-100 border border-indigo-300 inline-block" />
+          <span className="text-xs text-indigo-700 font-semibold">Total Plots: {totalPlots}</span>
+        </div>
+      </div>
+      {/* Top: Plot layout image with controls below */}
+      <div className="flex flex-col items-center justify-center w-[480px] mb-6 pt-6">
+        <div
+          ref={imgFrameRef}
+          className="flex-shrink-0 flex items-center justify-center bg-white rounded-xl shadow border border-green-100 overflow-hidden"
+          style={{
+            width: 480,
+            height: 320,
+            paddingTop: 24,
+            position: 'relative',
+            userSelect: 'none',
+            touchAction: 'none',
+          }}
+          onWheel={handleImgWheel}
+          onMouseDown={handleImgMouseDown}
+          onMouseMove={dragging ? handleImgMouseMove : undefined}
+          onMouseUp={handleImgMouseUp}
+          onMouseLeave={handleImgMouseUp}
+          onTouchStart={handleImgMouseDown}
+          onTouchMove={dragging ? handleImgMouseMove : undefined}
+          onTouchEnd={handleImgMouseUp}
+        >
+          <img
+            src="/PlotLayoutGrid/kanathur.png"
+            alt="Plot Layout"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              transform: `scale(${zoom}) translate(${imgOffset.x / zoom}px, ${imgOffset.y / zoom}px)`,
+              transition: dragging ? 'none' : 'transform 0.35s cubic-bezier(.4,0,.2,1)',
+              cursor: dragging ? 'grabbing' : zoom > 1 ? 'grab' : 'default',
+            }}
+            draggable={false}
+          />
+          {/* Zoom hint */}
+          <div className="absolute top-2 right-3 bg-white/80 rounded px-2 py-0.5 text-xs text-green-700 shadow border border-green-100 select-none pointer-events-none">
+            Zoom: {(zoom * 100).toFixed(0)}%
           </div>
         </div>
-      )}
-
-      {/* Image Popup with Zoom and Drag */}
-      {showImagePopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-          <div
-            ref={dragFrameRef}
-            className="relative bg-white rounded-lg shadow-2xl p-4 flex flex-col items-center animate-fade-in-fast"
-            style={{ width: 700, height: 520, overflow: "hidden", touchAction: "none", userSelect: "none" }}
-            onMouseMove={e => dragState.dragging && handleDrag(e)}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
-          >
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                cursor: dragState.dragging ? "grabbing" : "grab",
-                overflow: "hidden",
-                position: "relative"
-              }}
-              onMouseDown={handleDragStart}
-            >
-              <img
-                ref={dragImgRef}
-                src={imageUrl}
-                alt="Zoomed Plot Layout"
-                className="rounded border"
-                style={{
-                  position: "absolute",
-                  left: dragState.x,
-                  top: dragState.y,
-                  width: `${zoom * 600}px`,
-                  height: "auto",
-                  maxWidth: "none",
-                  maxHeight: "none",
-                  transition: dragState.dragging ? "none" : "transform 0.2s"
-                }}
-                draggable={false}
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button
-                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                onClick={() => setZoom(z => Math.max(1, z - 0.2))}
-                disabled={zoom <= 1}
-                type="button"
-              >-</button>
-              <span className="px-2 text-green-700 font-semibold">Zoom: {Math.round(zoom * 100)}%</span>
-              <button
-                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                onClick={() => setZoom(z => Math.min(3, z + 0.2))}
-                disabled={zoom >= 3}
-                type="button"
-              >+</button>
-              <button
-                className="ml-4 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                onClick={() => setShowImagePopup(false)}
-                type="button"
-              >Close</button>
-            </div>
-          </div>
-          <style>{`
-            .animate-fade-in-fast {
-              animation: fadeInFast 0.3s;
-            }
-            @keyframes fadeInFast {
-              from { opacity: 0; transform: scale(0.95);}
-              to { opacity: 1; transform: scale(1);}
-            }
-          `}</style>
-        </div>
-      )}
-
-      {/* Grid: show only as many blocks as GRID_LABELS */}
-      <div
-        className="grid gap-1 mx-auto"
-        style={{
-          gridTemplateColumns: `repeat(${GRID_LABELS.length}, minmax(0, 1fr))`,
-          width: GRID_LABELS.length * (unitSize + 4)
-        }}
-      >
-        {flatUnits.map((unit, idx) => (
-          <div
-            key={unit.id}
-            className={getUnitClasses(unit, idx)}
-            style={{ width: `${unitSize}px`, height: `${unitSize}px`, position: "relative" }}
-            onClick={() => handleBlockClick(unit, idx)}
-            title={unit.isBooked ? 'Booked' : unit.isSelected || selectedIdxs.includes(idx) ? 'Selected (Click to deselect)' : 'Available (Click to select)'}
-          >
-            {/* Main label */}
-            <span>{GRID_LABELS[idx].label}</span>
-            {/* Sublabel on hover */}
-            <div
-              className="absolute left-1/2 top-full z-20 mt-1 px-2 py-1 rounded bg-white border border-green-200 text-xs text-green-700 shadow-lg whitespace-nowrap pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ transform: "translateX(-50%)" }}
-            >
-              <div><b>SqFt:</b> {GRID_LABELS[idx].sqft}</div>
-              <div><b>Dimensions:</b> {GRID_LABELS[idx].dimensions}</div>
-              <div><b>Direction:</b> {GRID_LABELS[idx].direction}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center"><div className="w-4 h-4 bg-green-100 border border-gray-300 mr-2"></div> Available</div>
-        <div className="flex items-center"><div className="w-4 h-4 bg-green-500 border border-gray-300 mr-2"></div> Selected</div>
-        <div className="flex items-center"><div className="w-4 h-4 bg-gray-400 border border-gray-300 mr-2"></div> Booked</div>
-      </div>
-      {/* Show button for selected grid block info */}
-      {selectedGridInfos.length > 0 && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg shadow text-green-800 text-sm max-w-xs mx-auto animate-fade-in-fast">
-          <div className="font-bold mb-1">Selected Plots: {selectedGridInfos.map(info => info.label).join(', ')}</div>
+        {/* Controls below the image */}
+        <div className="flex flex-row gap-3 mt-4">
           <button
-            className="mt-2 w-full py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
-            onClick={handleBookSelected}
+            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center gap-1"
+            onClick={handleReset}
+            type="button"
+            tabIndex={0}
           >
-            Show All Selected Plot Details
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582M20 20v-5h-.581M5.582 9A7.003 7.003 0 0112 5c3.314 0 6.127 2.163 6.918 5M18.418 15A7.003 7.003 0 0112 19c-3.314 0-6.127-2.163-6.918-5" />
+            </svg>
+            Reset
+          </button>
+          <button
+            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center gap-1"
+            onClick={handleDownload}
+            type="button"
+            tabIndex={0}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Download PDF
           </button>
         </div>
-      )}
-      {/* Popup for all selected plot details */}
-      {showSelectedDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full flex flex-col items-center animate-fade-in-fast">
-            <h2 className="text-xl font-bold text-green-700 mb-4">All Selected Plot Details</h2>
-            <div className="w-full">
-              {selectedGridInfos.map(info => (
-                <div key={info.label} className="mb-4 border-b border-green-100 pb-2">
-                  <div className="font-semibold text-green-800">Plot: {info.label}</div>
-                  <div className="text-sm text-gray-700"><b>SqFt:</b> {info.sqft}</div>
-                  <div className="text-sm text-gray-700"><b>Dimensions:</b> {info.dimensions}</div>
-                  <div className="text-sm text-gray-700"><b>Direction:</b> {info.direction}</div>
+      </div>
+      {/* Main content: Grid left, Details right */}
+      <div className="flex flex-row w-full justify-center gap-10">
+        {/* Left: Redesigned Grid */}
+        <div
+          ref={gridContainerRef}
+          className="relative flex flex-col items-center justify-center rounded-3xl shadow-2xl border-0 bg-white/60 backdrop-blur-lg p-6"
+          style={{
+            width: 560,
+            height: 560,
+            boxShadow: '0 8px 32px 0 rgba(34,197,94,0.15), 0 1.5px 6px 0 rgba(0,0,0,0.04)',
+            border: '1.5px solid #bbf7d0',
+          }}
+        >
+          {/* Grid header (sticky) */}
+          <div
+            className="sticky top-0 z-20 flex flex-row gap-2 bg-white/80 backdrop-blur-md rounded-t-2xl px-2 py-1"
+            style={{ marginLeft: unitSize + 16 }}
+          >
+            {GRID_LABELS.cols.map(col => (
+              <div
+                key={col}
+                className="w-11 text-center text-green-700 font-bold text-xs tracking-wide"
+                style={{ width: unitSize }}
+              >
+                {col}
+              </div>
+            ))}
+          </div>
+          <div
+            ref={gridScrollRef}
+            className="flex flex-row w-full h-full overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent"
+            style={{ maxHeight: 500, marginTop: 8, borderRadius: 18, position: 'relative' }}
+          >
+            {/* Row labels (sticky) */}
+            <div className="flex flex-col gap-2 sticky left-0 z-10 bg-white/70 backdrop-blur-md rounded-l-2xl px-1 py-1">
+              {GRID_LABELS.rows.map(row => (
+                <div
+                  key={row}
+                  className="h-11 flex items-center justify-center text-green-700 font-bold text-xs tracking-wide"
+                  style={{ height: unitSize }}
+                >
+                  {row}
                 </div>
               ))}
             </div>
-            <button
-              className="mt-4 w-full py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
-              onClick={() => setShowSelectedDetails(false)}
+            {/* Grid */}
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: `repeat(${localGrid[0]?.length || 1}, ${unitSize}px)`,
+                marginLeft: 8,
+              }}
             >
-              Close
-            </button>
+              {localGrid.map((row, rowIdx) =>
+                row.map((unit, colIdx) => {
+                  const label = getGridLabel(unit.row, unit.col);
+                  const subplot = SUBPLOT_DETAILS[label];
+                  return (
+                    <div
+                      key={unit.id}
+                      className={`
+                        group relative flex items-center justify-center rounded-xl shadow-md border-2 transition-all duration-200
+                        ${unit.isBooked
+                          ? 'bg-gray-200 border-gray-400 cursor-not-allowed opacity-60'
+                          : unit.isSelected
+                          ? 'bg-gradient-to-br from-green-300 to-green-500 border-green-700 scale-105 ring-2 ring-green-300'
+                          : 'bg-white/80 border-green-200 hover:bg-green-50 hover:border-green-400'}
+                        w-11 h-11
+                      `}
+                      style={{
+                        width: unitSize,
+                        height: unitSize,
+                        boxShadow: unit.isSelected ? '0 0 0 4px #bbf7d0' : undefined,
+                        cursor: unit.isBooked ? 'not-allowed' : 'pointer',
+                        position: 'relative',
+                        zIndex: 1,
+                        transition: 'box-shadow 0.2s, transform 0.2s',
+                      }}
+                      onClick={() => handleUnitClick(unit)}
+                      onMouseEnter={e => handleMouseEnter(e, unit, SUBPLOT_DETAILS[getGridLabel(unit.row, unit.col)])}
+                      onMouseLeave={handleMouseLeave}
+                    >
+                      <span className={`text-xs font-bold ${unit.isBooked ? 'text-gray-400' : 'text-green-800'}`}>
+                        {getGridLabel(unit.row, unit.col)}
+                      </span>
+                      {/* Dot indicator for selected */}
+                      {unit.isSelected && (
+                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-700 border-2 border-white shadow"></span>
+                      )}
+                      {/* No hover detail here */}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            {/* Hover detail rendered inside grid container, absolutely positioned */}
+            {hoveredDetail && (
+              <div
+                className="z-[9999] absolute animate-fade-in bg-white/95 border border-green-200 rounded-2xl shadow-2xl p-3"
+                style={{
+                  width: 220,
+                  left: hoveredDetail.x,
+                  top: hoveredDetail.y + 8,
+                  transform: 'translate(-50%, 0)',
+                  pointerEvents: 'none'
+                }}
+              >
+                <img
+                  src={hoveredDetail.unit.imageUrl}
+                  alt="Subplot"
+                  className="w-full h-20 object-cover rounded mb-2 border border-green-100"
+                />
+                <div className="text-xs text-green-700 font-semibold mb-1">
+                  {getGridLabel(hoveredDetail.unit.row, hoveredDetail.unit.col)}
+                </div>
+                <div className="text-xs text-gray-700">
+                  <div><b>Dimension:</b> {hoveredDetail.unit.dimension}</div>
+                  <div><b>Facing:</b> {hoveredDetail.unit.facing}</div>
+                  <div><b>Sqft:</b> {hoveredDetail.unit.sqft}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
-      {/* Plot stats */}
-      <div className="mt-4 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center font-semibold text-green-700">
-          Total Plots: <span className="ml-1">{effectiveTotalPlots}</span>
-        </div>
-        <div className="flex items-center font-semibold text-green-700">
-          Available Plots: <span className="ml-1">{availablePlots}</span>
-        </div>
-        <div className="flex items-center font-semibold text-green-700">
-          Booked Plots: <span className="ml-1">{bookedPlots}</span>
+        {/* Right: Selected plot details (scrollable, card style) */}
+        <div className="w-80 max-h-[560px]">
+          {selectedUnits.length > 0 && (
+            <div className="bg-white/80 rounded-3xl shadow-2xl border border-green-100 h-full max-h-[560px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent p-4 flex flex-col gap-4">
+              <h3 className="text-xl font-extrabold text-green-700 mb-2 sticky top-0 bg-white/90 z-10 pb-2 rounded-t-2xl">
+                Selected Plot Details
+              </h3>
+              {selectedUnits.map(unit => {
+                const label = getGridLabel(unit.row, unit.col);
+                const subplot = SUBPLOT_DETAILS[label];
+                return (
+                  <div
+                    key={unit.id}
+                    className="relative flex items-center gap-4 bg-gradient-to-r from-green-50 via-white to-green-100 rounded-2xl border border-green-100 shadow p-3 transition-all duration-150 hover:shadow-lg"
+                  >
+                    <img
+                      src={subplot.imageUrl}
+                      alt="Subplot"
+                      className="w-16 h-16 object-cover rounded-xl border border-green-200 shadow"
+                    />
+                    <div className="flex-1">
+                      <div className="font-bold text-green-700 text-base">{label}</div>
+                      <div className="text-xs text-gray-500">Dimension: {subplot.dimension}</div>
+                      <div className="text-xs text-gray-500">Facing: {subplot.facing}</div>
+                      <div className="text-xs text-gray-500">Sqft: {subplot.sqft}</div>
+                    </div>
+                    <button
+                      className="absolute top-2 right-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-full p-1 shadow transition"
+                      title="Remove"
+                      onClick={() => handleRemoveSelected(unit.id)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-      <style>{`
-        .grid > div:hover > .absolute {
-          opacity: 1 !important;
-        }
-        .animate-fade-in-fast {
-          animation: fadeInFast 0.3s;
-        }
-        @keyframes fadeInFast {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
+      
     </div>
   );
 };
 
 export default SqftGrid;
+
 
 
