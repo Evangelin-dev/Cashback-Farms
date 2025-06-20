@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Booking, BookingStatus, BookMySqftPlotInfo, CommercialPropertyInfo, CommercialPropertyType, InvestmentDetails, ListingType, Material, MaterialCategory, PaymentInstallment, PaymentStatus, PaymentType, Plot, PlotType, Professional, PropertyCategory, PropertyListing, ResidentialPropertyType, ServiceType, SiteDetails, SqftUnit, User, UserRole } from './types';
 
 const generateSqftGrid = (rows: number, cols: number, bookedUnits?: {row: number, col: number}[]): SqftUnit[][] => {
@@ -525,40 +525,73 @@ export const MOCK_PROFESSIONALS: Professional[] = [
   { id: 'comm5', name: 'Building Planner', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.8, rate: '₹8000/project', imageUrl: 'https://picsum.photos/seed/comm5/300/300', specialization: 'Planning', bio: 'Building planning and consulting.' },
   { id: 'comm6', name: 'Construction Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm6/300/300', specialization: 'Materials', bio: 'Commercial construction material supplier.' },
 ];
-export const LocationMarkerIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 inline mr-1", viewBox: "0 0 20 20", fill: "currentColor" },
-    React.createElement('path', { fillRule: "evenodd", d: "M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z", clipRule: "evenodd" })
-  )
-);
-export const CheckBadgeIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 20 20", fill: "currentColor", className: "w-5 h-5 inline text-green-500" },
-    React.createElement('path', { fillRule: "evenodd", d: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z", clipRule: "evenodd" })
-  )
-);
-export const AreaIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 inline mr-1", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2" },
-    React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" })
-  )
+
+export const LocationMarkerIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    {...props}
+  >
+    <path
+      fillRule="evenodd"
+      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+      clipRule="evenodd"
+    />
+  </svg>
 );
 
-export const RupeeIcon: React.FC = () => (
-  React.createElement('svg', {
-    xmlns: "http://www.w3.org/2000/svg",
-    className: "h-5 w-5 inline mr-1",
-    viewBox: "0 0 20 20",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.5" // Adjusted for visual clarity; can be fine-tuned
-  },
-    React.createElement('path', {
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-      // Standard path for Indian Rupee Symbol (₹)
-      // M6 3 H16 (top bar), M6 7 H16 (middle bar), M9 7 V17 (vertical stem), M6 11 H10 (lower horizontal bar on stem)
-      // Simplified for better rendering in small sizes:
-      d: "M6 4h10M6 8h10M8.5 8v8M6 12h5"
-    })
-  )
+export const CheckBadgeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5 inline text-green-500"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    {...props}
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+export const AreaIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5"
+    />
+  </svg>
+);
+
+export const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M6 4h10M6 8h10M8.5 8v8M6 12h5"
+    />
+  </svg>
 );
 export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
   id: 'bms-plot-alpha',
