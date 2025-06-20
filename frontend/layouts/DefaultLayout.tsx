@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Navbar from "@/components/landingpage/landingpagecomponents/layout/Navbar";
+import Navbar from "../components/defaultlandingpage/defaultlandingcomponents/layout/Navbar";
 import { Layout } from "antd";
 
 const { Footer } = Layout;

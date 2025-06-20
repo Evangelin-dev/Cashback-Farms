@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Button from '@/components/common/Button';
+import Button from './components/Button';
 
-import ProfessionalCard from '@/components/landingpage/landingpagecomponents/service/ProfessionalCard';
+
 import { MOCK_MATERIAL_CATEGORIES, MOCK_PLOTS, MOCK_PROFESSIONALS } from '@/constants';
 import DFinancialServices from './components/defaultlandingpage/defaultlandingcomponents/financialservices/financialservices';
 import DAssistedPlans from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
@@ -122,15 +122,15 @@ const DefaultLanding: React.FC = () => {
     if (searchType === 'buy') {
       services = buyServices;
       heading = 'Home Services for Buyers';
-      link = '/services/';
+      link = '/Dservices/';
     } else if (searchType === 'sell') {
       services = sellServices;
       heading = 'Home Services for Sellers';
-      link = '/services/';
+      link = '/Dservices/';
     } else {
       services = commercialServices;
       heading = 'Commercial Services';
-      link = '/services/';
+      link = '/Dservices/';
     }
     // Show only first 3 cards
     const visibleServices = services.slice(0, 3);

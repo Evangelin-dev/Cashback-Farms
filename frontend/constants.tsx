@@ -575,7 +575,7 @@ export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
 export const NAV_LINKS = [
   { name: 'Home', path: '/D' },
   { name: 'Plot Marketplace', path: '/Dplots' },
-  { name: 'Book My SqFt', path: `/Dbook-my-sqft/${MOCK_BMS_PLOT_INFO.id}` },
+  { name: 'Book My SqFt', path: `Dmysqft-listing` },
   { name: 'Materials Store', path: '/Dmaterials' },
   { name: 'Professional Services', path: '/Dservices' },
   // { name: 'Dash Board', path: '/dashboard' },

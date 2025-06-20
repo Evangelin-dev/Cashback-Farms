@@ -11,13 +11,17 @@ const PROFESSIONALS = [
 
 const BookConsultation: React.FC = () => {
   const location = useLocation();
-  // Expecting professional type to be passed as state: navigate('/bookconsultation', { state: { professional: 'Architect' } })
-  const professionalType = location.state?.professional as string | undefined;
-  const professional = PROFESSIONALS.find(p => p.type === professionalType);
+  // Accept both state and query param fallback for professional type
+  let professionalType = location.state?.professional as string | undefined;
+  if (!professionalType && location.search) {
+    const params = new URLSearchParams(location.search);
+    professionalType = params.get('professional') || undefined;
+  }
+  // Always use the professional from navigation/card click
+  const professional = PROFESSIONALS.find(p => p.type === professionalType) || PROFESSIONALS[0];
 
   const [tab, setTab] = useState<'consultation' | 'callback'>('consultation');
-  // If professional is provided, preselect and lock it, else allow selection
-  const [selected, setSelected] = useState<string | null>(professional ? professional.type : null);
+  const [selected] = useState<string | null>(professional.type);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [name, setName] = useState('');
@@ -36,22 +40,24 @@ const BookConsultation: React.FC = () => {
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-green-100 p-8">
         <div className="flex justify-center mb-8">
           <button
-            className={`px-6 py-2 rounded-l-lg font-bold transition ${
+            className={`px-6 py-2 rounded-l-lg font-bold transition outline-none focus:outline-none ${
               tab === 'consultation'
-                ? 'bg-green-600 text-white shadow'
+                ? 'bg-green-600 text-white shadow ring-2 ring-green-400'
                 : 'bg-green-100 text-green-700 hover:bg-green-200'
             }`}
             onClick={() => setTab('consultation')}
+            tabIndex={0}
           >
             Book Consultation
           </button>
           <button
-            className={`px-6 py-2 rounded-r-lg font-bold transition ${
+            className={`px-6 py-2 rounded-r-lg font-bold transition outline-none focus:outline-none ${
               tab === 'callback'
-                ? 'bg-green-600 text-white shadow'
+                ? 'bg-green-600 text-white shadow ring-2 ring-green-400'
                 : 'bg-green-100 text-green-700 hover:bg-green-200'
             }`}
             onClick={() => setTab('callback')}
+            tabIndex={0}
           >
             Request Callback
           </button>
@@ -66,32 +72,11 @@ const BookConsultation: React.FC = () => {
             </p>
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-green-700 mb-3 text-center">Professional</h2>
-              {professional ? (
-                <div className="flex flex-col items-center p-4 rounded-xl border-2 border-green-600 bg-green-50 shadow-sm w-full">
-                  <span className="text-3xl mb-2">{professional.icon}</span>
-                  <span className="font-bold text-green-700">{professional.type}</span>
-                  <span className="text-xs text-gray-500 mt-1 text-center">{professional.desc}</span>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
-                  {PROFESSIONALS.map((pro) => (
-                    <button
-                      key={pro.type}
-                      type="button"
-                      className={`flex flex-col items-center p-4 rounded-xl border-2 transition shadow-sm w-full
-                        ${selected === pro.type
-                          ? 'border-green-600 bg-green-50 scale-105'
-                          : 'border-green-100 bg-white hover:border-green-400'}
-                      `}
-                      onClick={() => setSelected(pro.type)}
-                    >
-                      <span className="text-3xl mb-2">{pro.icon}</span>
-                      <span className="font-bold text-green-700">{pro.type}</span>
-                      <span className="text-xs text-gray-500 mt-1 text-center">{pro.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex flex-col items-center p-4 rounded-xl border-2 border-green-600 bg-green-50 shadow-sm w-full">
+                <span className="text-3xl mb-2">{professional.icon}</span>
+                <span className="font-bold text-green-700">{professional.type}</span>
+                <span className="text-xs text-gray-500 mt-1 text-center">{professional.desc}</span>
+              </div>
             </div>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -130,9 +115,9 @@ const BookConsultation: React.FC = () => {
               </div>
               <button
                 type="submit"
-                disabled={!selected && !professional || !name || !contact || !date || !time}
+                disabled={!selected || !professional || !name || !contact || !date || !time}
                 className={`w-full py-3 rounded-lg font-bold text-white transition
-                  ${(!selected && !professional) || !name || !contact || !date || !time
+                  ${(!selected || !professional) || !name || !contact || !date || !time
                     ? 'bg-green-200 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700 shadow-lg'}
                 `}
@@ -143,7 +128,8 @@ const BookConsultation: React.FC = () => {
             {submitted && (
               <div className="mt-6 text-center">
                 <div className="inline-block px-6 py-3 bg-green-100 rounded-xl shadow text-green-700 font-semibold">
-                  PLease Login/Sign up to continue 
+                  Thank you! Your consultation is booked.<br />
+                  Our team will contact you soon.
                 </div>
               </div>
             )}
@@ -157,6 +143,14 @@ const BookConsultation: React.FC = () => {
             <p className="text-gray-600 text-center mb-8">
               Leave your details and our team will call you back to discuss your requirements.
             </p>
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-green-700 mb-3 text-center">Professional</h2>
+              <div className="flex flex-col items-center p-4 rounded-xl border-2 border-green-600 bg-green-50 shadow-sm w-full">
+                <span className="text-3xl mb-2">{professional.icon}</span>
+                <span className="font-bold text-green-700">{professional.type}</span>
+                <span className="text-xs text-gray-500 mt-1 text-center">{professional.desc}</span>
+              </div>
+            </div>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <input
                 type="text"
@@ -183,9 +177,9 @@ const BookConsultation: React.FC = () => {
               />
               <button
                 type="submit"
-                disabled={!name || !contact}
+                disabled={!name || !contact || !selected || !professional}
                 className={`w-full py-3 rounded-lg font-bold text-white transition
-                  ${!name || !contact
+                  ${!name || !contact || !selected || !professional
                     ? 'bg-green-200 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700 shadow-lg'}
                 `}
@@ -196,7 +190,8 @@ const BookConsultation: React.FC = () => {
             {submitted && (
               <div className="mt-6 text-center">
                 <div className="inline-block px-6 py-3 bg-green-100 rounded-xl shadow text-green-700 font-semibold">
-                 PLease Login/Sign up to continue   
+                  Thank you! We have received your request.<br />
+                  Our team will call you back soon.
                 </div>
               </div>
             )}
