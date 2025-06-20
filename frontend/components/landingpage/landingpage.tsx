@@ -120,17 +120,17 @@ const LandingPage: React.FC = () => {
       services = buyServices;
       heading = 'Home Services for Buyers';
       link = '/services';
-      section = 'buy';
+     
     } else if (searchType === 'sell') {
       services = sellServices;
       heading = 'Home Services for Sellers';
       link = '/services';
-      section = 'sell';
+      
     } else {
       services = commercialServices;
       heading = 'Commercial Services';
       link = '/services';
-      section = 'commercial';
+      
     }
     // Show only first 3 cards
     const visibleServices = services.slice(0, 3);
@@ -280,7 +280,7 @@ const LandingPage: React.FC = () => {
                 Don't want to buy a whole plot? Now you can book the exact square footage you need.
                 Flexible, affordable, and transparent.
             </p>
-            <Link to="/book-my-sqft">
+            <Link to="/mysqft-listing">
                 <Button size="lg" variant="primary">Explore Book My SqFt</Button>
             </Link>
         </div>

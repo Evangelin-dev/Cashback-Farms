@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../../../common/Button';
 
 interface PlanCardProps {
@@ -44,7 +44,9 @@ const AssistedPlans: React.FC = () => {
         />
       </div>
       <div className="text-center">
-        <Button onClick={() => alert('Explore More clicked!')}>Explore More</Button>
+        <Link to="/plans">
+        <Button >Explore More</Button>
+        </Link>
       </div>
     </div>
   );
