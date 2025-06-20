@@ -8,7 +8,8 @@ interface ExtendedSqftUnit extends BaseSqftUnit {
 interface SqftGridProps {
   gridData: ExtendedSqftUnit[][];
   onUnitSelect: (row: number, col: number) => void;
-  // plotImageUrl: string; // No longer needed as prop, using static image below
+  // Add prop for uploaded project layout image
+  projectLayoutImage?: string; // URL or base64 string
   unitSize?: number;
 }
 
@@ -60,6 +61,7 @@ interface SqftUnit {
 const SqftGrid: React.FC<SqftGridProps> = ({
   gridData,
   onUnitSelect,
+  projectLayoutImage, // new prop
   unitSize = 44,
 }) => {
   const [hoveredUnit, setHoveredUnit] = useState<SqftUnit | null>(null);
@@ -247,7 +249,7 @@ const SqftGrid: React.FC<SqftGridProps> = ({
           onTouchEnd={handleImgMouseUp}
         >
           <img
-            src="/PlotLayoutGrid/kanathur.png"
+            src={projectLayoutImage || "/PlotLayoutGrid/kanathur.png"}
             alt="Plot Layout"
             style={{
               width: '100%',
