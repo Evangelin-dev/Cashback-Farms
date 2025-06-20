@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { CacheProvider } from '@emotion/react';
+import createCache from '@emotion/cache';
+
+// Optional: MUI ThemeProvider and CssBaseline
+import { ThemeProvider, CssBaseline } from '@mui/material';
+// your custom MUI theme (optional)
+
+// Create a cache instance
+const emotionCache = createCache({ key: 'mui', prepend: true });
+
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
@@ -152,14 +162,16 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => {
  
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        
-        <AppRoutes />
-        
-       
-      </AuthProvider>
-    </BrowserRouter>
+       <CacheProvider value={emotionCache}>
+      
+        <CssBaseline />
+        <BrowserRouter>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrowserRouter>
+      
+    </CacheProvider>
   );
 };
 
