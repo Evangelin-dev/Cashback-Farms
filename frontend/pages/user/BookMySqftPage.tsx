@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MOCK_BMS_PLOT_INFO } from '../../../constants';
 import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
@@ -18,6 +18,7 @@ const BookMySqftPage: React.FC = () => {
   const [paymentOption, setPaymentOption] = useState("");
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [zoom, setZoom] = useState(1);
 
   useEffect(() => {
     // Simulate fetching plot data if plotId changes or for initial load
@@ -31,7 +32,7 @@ const BookMySqftPage: React.FC = () => {
     setSelectedUnits([]); // Reset selection when plot changes
   }, [plotId]);
 
-  const handleUnitSelect = useCallback((row: number, col: number) => {
+  const handleUnitSelect = (row: number, col: number) => {
     setGrid(prevGrid => {
       const newGrid = prevGrid.map(r => r.map(unit => ({ ...unit })));
       const unit = newGrid[row][col];
@@ -45,7 +46,7 @@ const BookMySqftPage: React.FC = () => {
       }
       return newGrid;
     });
-  }, []);
+  };
 
   if (!plotInfo) {
     return null;
@@ -74,92 +75,71 @@ const BookMySqftPage: React.FC = () => {
       : "https://www.w3schools.com/html/mov_bbb.mp4";
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-green-700">Book My (SqFt,SqYd,SqCm)</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Select your desired area from <span className="font-semibold">{plotInfo.name}</span> located at {plotInfo.location}.
-        </p>
-      </div>
-
-      {/* ...LandPlotSelector UI if needed... */}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2 flex flex-col items-center md:items-start">
-          <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect} />
-        </div>
-        {/* Plot detail card (right) */}
-        <div
-          className="md:col-span-1 bg-white p-6 rounded-lg shadow-lg flex flex-col items-center"
-          style={{ minWidth: 320, maxWidth: 320 }}
-        >
-          {/* Plot image with video on hover, above Booking Summary */}
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 py-6 px-2">
+      <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
+        {/* Title at the top */}
+        <h1 className="text-3xl font-extrabold text-green-800 mb-2 mt-4 tracking-tight drop-shadow">
+          {/* ...your page title here... */}
+          Book My SqFt
+        </h1>
+        {/* SqftGrid at the top */}
+        <div className="w-full flex flex-col items-center">
+          {/* Remove Zoom controls */}
+          {/* SqftGrid - larger and zoomable */}
           <div
-            className="mb-6 w-full flex justify-center"
-            style={{ maxWidth: 320 }}
-            onMouseEnter={e => {
-              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
-              if (video) {
-                video.style.opacity = '1';
-                video.currentTime = 0;
-                video.play();
-              }
-              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
-              if (img) img.style.opacity = '0';
-            }}
-            onMouseLeave={e => {
-              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
-              if (video) {
-                video.pause();
-                video.style.opacity = '0';
-              }
-              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
-              if (img) img.style.opacity = '1';
+            className="flex justify-center items-center"
+            style={{
+              overflow: 'auto',
+              borderRadius: 12,
+              border: '2px solid #bbf7d0',
+              background: '#fff',
+              marginBottom: 16,
+              width: '100%',
+              minHeight: 350,
             }}
           >
-            <div className="relative w-full" style={{ aspectRatio: '16/9', maxHeight: 180 }}>
+            <div style={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}>
+              <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect}  unitSize={28} />
+            </div>
+          </div>
+        </div>
+        {/* Move the summary/info card to the bottom, horizontal layout */}
+        <div className="w-full mt-4 flex flex-col items-center">
+          <div className="md:col-span-1 bg-white p-6 rounded-lg shadow-lg flex flex-col md:flex-row items-center md:items-stretch gap-6 w-full max-w-3xl">
+            {/* Image on the left */}
+            <div className="flex-shrink-0 flex items-center justify-center w-full md:w-56">
               <img
                 src={plotImageUrl}
                 alt="Plot"
-                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
-                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 1, zIndex: 1 }}
+                className="rounded-lg shadow-md object-cover w-full md:w-56 h-40"
               />
-              <video
-                src={plotVideoUrl}
-                loop
-                muted
-                playsInline
-                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
-                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 0, zIndex: 2 }}
-              />
-              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded pointer-events-none z-10">
-                Hover to preview video
+            </div>
+            {/* Text and details on the right */}
+            <div className="flex-1 flex flex-col justify-center items-start w-full">
+              {/* ...put your summary text, details, and actions here... */}
+              {/* Example: */}
+              <h2 className="text-xl font-bold text-green-700 mb-2">Booking Summary</h2>
+              <div className="text-gray-700 mb-2">
+                <p><strong>Plot:</strong> {plotInfo.name}</p>
+                <p><strong>Price per Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+                <p><strong>Selected Units:</strong> {totalSelectedArea}</p>
+                <p className="text-xl font-bold text-green-600">
+                  Total Cost: ₹{totalCost.toLocaleString('en-IN')}
+                </p>
               </div>
+              {/* Booking Button */}
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="w-full mt-4"
+                onClick={handleBooking}
+                disabled={totalSelectedArea === 0}
+              >
+                Proceed to Book ({totalSelectedArea} Units)
+              </Button>
+              {totalSelectedArea === 0 && <p className="text-xs text-red-500 text-center mt-2">Please select units from the grid.</p>}
             </div>
           </div>
-          {/* Booking Summary */}
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Booking Summary</h2>
-          <div className="space-y-3">
-            <p><strong>Plot:</strong> {plotInfo.name}</p>
-            <p><strong>Price per Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
-            <p><strong>Selected Units:</strong> {totalSelectedArea}</p>
-            <p className="text-xl font-bold text-green-600">
-              Total Cost: ₹{totalCost.toLocaleString('en-IN')}
-            </p>
-          </div>
-          {/* Removed PAYMENT OPTIONS Dropdown */}
-          {/* Booking Button */}
-          <Button 
-            variant="primary" 
-            size="lg" 
-            className="w-full mt-8"
-            onClick={handleBooking}
-            disabled={totalSelectedArea === 0}
-          >
-            Proceed to Book ({totalSelectedArea} Units)
-          </Button>
-          {totalSelectedArea === 0 && <p className="text-xs text-red-500 text-center mt-2">Please select units from the grid.</p>}
-          {/* Removed PAYMENT OPTION warning */}
         </div>
       </div>
 
@@ -182,4 +162,4 @@ const BookMySqftPage: React.FC = () => {
 };
 
 export default BookMySqftPage;
-                     
+

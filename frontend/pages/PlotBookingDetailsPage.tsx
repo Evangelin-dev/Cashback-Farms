@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import InvestmentSummaryCard from '../components/InvestmentSummaryCard';
@@ -8,7 +8,6 @@ import PaymentSummaryCard from '../components/PaymentSummaryCard';
 import SiteInfoCard from '../components/SiteInfoCard';
 import { getExtendedBookingDetailsById, MOCK_BOOKINGS, MOCK_PLOTS } from '../constants';
 import { Plot } from '../types';
-import BookPlotPayment from './user/BookPlotPayment';
 
 const DEMO_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
 
@@ -104,8 +103,7 @@ const PlotOverviewDocs: React.FC<{ plot: Plot }> = ({ plot }) => (
 
 const PlotBookingDetailsPage: React.FC = () => {
   const { bookingId: routeBookingId } = useParams<{ bookingId: string }>();
-  const navigate = useNavigate();
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+
   let bookingDetails = routeBookingId ? getExtendedBookingDetailsById(routeBookingId) : undefined;
   if (!bookingDetails && !routeBookingId) {
     for (const booking of MOCK_BOOKINGS) {
@@ -132,22 +130,8 @@ const PlotBookingDetailsPage: React.FC = () => {
               <p className="text-base text-green-600 font-semibold mb-1">Plot ID: {plot.id}</p>
               <p className="text-xs text-neutral-500 mb-2">No booking found for this plot.</p>
               <div className="flex items-center gap-2 mt-2">
-                <Button
-                  variant="primary"
-                  size='sm'
-                  className="px-3 py-1 text-sm rounded shadow"
-                  onClick={() => setShowPaymentPopup(true)}
-                >
-                  Book Plot (Mock)
-                </Button>
-                <Button
-                  variant="outline"
-                  size='sm'
-                  className="px-3 py-1 text-sm rounded shadow ml-1"
-                  onClick={() => navigate('/book-my-sqft')}
-                >
-                  Book My SqFt (Mock)
-                </Button>
+                <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow">Book Plot (Mock)</Button>
+                <Button variant="outline" size='sm' className="px-3 py-1 text-sm rounded shadow ml-1">Book My SqFt (Mock)</Button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Area: {plot.area} sqft</span>
@@ -215,10 +199,6 @@ const PlotBookingDetailsPage: React.FC = () => {
             </div>
           </div>
         </div>
-        {/* BookPlotPayment as popup */}
-        {showPaymentPopup && (
-          <BookPlotPayment onClose={() => setShowPaymentPopup(false)} />
-        )}
       </div>
     );
   }

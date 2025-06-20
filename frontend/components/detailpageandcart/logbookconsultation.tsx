@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const PROFESSIONALS = [
@@ -7,34 +7,40 @@ const PROFESSIONALS = [
   { type: 'Civil Engineer', icon: '🏗️', desc: 'Structural and construction expert.' },
   { type: 'Landscape Designer', icon: '🌳', desc: 'Garden and outdoor space designer.' },
   { type: 'Vastu Consultant', icon: '🧭', desc: 'Vastu and energy flow advisor.' },
-  { type: 'Property Valuation', icon: '💰', desc: 'Get your property valued by experts.' },
-  { type: 'Home Loan Facilitation', icon: '🏦', desc: 'Assistance with home loan process.' },
-  { type: 'Structural Engineer', icon: '🧱', desc: 'Expert in structural safety and design.' },
-  { type: 'Government Approvals', icon: '📄', desc: 'Help with government approvals and permits.' },
-  { type: 'Land Survey Services', icon: '📐', desc: 'Land measurement and survey services.' },
 ];
+
 
 const LogBookConsultation: React.FC = () => {
   const location = useLocation();
-  // Expecting professional type to be passed as state: navigate('/bookconsultation', { state: { professional: 'Architect' } })
-  const professionalType = location.state?.professional as string | undefined;
-  const professional = PROFESSIONALS.find(p => p.type === professionalType);
+  let professionalType = location.state?.professional as string | undefined;
+  if (!professionalType && location.search) {
+    const params = new URLSearchParams(location.search);
+    professionalType = params.get('professional') || undefined;
+  }
+  let initialTab = location.state?.tab as 'consultation' | 'callback' | undefined;
+  if (!initialTab && location.search) {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'callback' || tabParam === 'consultation') initialTab = tabParam;
+  }
 
-  const [tab, setTab] = useState<'consultation' | 'callback'>('consultation');
-  const [selected, setSelected] = useState<string | null>(professional ? professional.type : null);
+  const professional = PROFESSIONALS.find(p => p.type === professionalType) || PROFESSIONALS[0];
+
+  const [tab, setTab] = useState<'consultation' | 'callback'>(initialTab || 'consultation');
+  const [selected] = useState<string | null>(professional.type);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [name, setName] = useState('John Doe');
-  const [contact, setContact] = useState('+91 9876543210');
   const [message, setMessage] = useState('');
   const [submitted, setSubmitted] = useState(false);
-  const [showAll, setShowAll] = useState(false);
-  const [address, setAddress] = useState({
-    town: '',
-    city: '',
-    state: '',
-    country: '',
-  });
+
+  // Autofill user info (mock)
+  const [name] = useState('John Doe');
+  const [contact] = useState('9876543210');
+
+  useEffect(() => {
+    if (initialTab && initialTab !== tab) setTab(initialTab);
+    // eslint-disable-next-line
+  }, [location.state?.tab, location.search]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,31 +48,29 @@ const LogBookConsultation: React.FC = () => {
     // Here you would send the booking/callback data to your backend
   };
 
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAddress({ ...address, [e.target.name]: e.target.value });
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-white flex flex-col items-center py-10 px-4">
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-green-100 p-8">
         <div className="flex justify-center mb-8">
           <button
-            className={`px-6 py-2 rounded-l-lg font-bold transition ${
+            className={`px-6 py-2 rounded-l-lg font-bold transition outline-none focus:outline-none ${
               tab === 'consultation'
-                ? 'bg-green-600 text-white shadow'
+                ? 'bg-green-600 text-white shadow ring-2 ring-green-400'
                 : 'bg-green-100 text-green-700 hover:bg-green-200'
             }`}
             onClick={() => setTab('consultation')}
+            tabIndex={0}
           >
             Book Consultation
           </button>
           <button
-            className={`px-6 py-2 rounded-r-lg font-bold transition ${
+            className={`px-6 py-2 rounded-r-lg font-bold transition outline-none focus:outline-none ${
               tab === 'callback'
-                ? 'bg-green-600 text-white shadow'
+                ? 'bg-green-600 text-white shadow ring-2 ring-green-400'
                 : 'bg-green-100 text-green-700 hover:bg-green-200'
             }`}
             onClick={() => setTab('callback')}
+            tabIndex={0}
           >
             Request Callback
           </button>
@@ -81,63 +85,29 @@ const LogBookConsultation: React.FC = () => {
             </p>
             <div className="mb-8">
               <h2 className="text-lg font-semibold text-green-700 mb-3 text-center">Professional</h2>
-              {professional ? (
-                <div className="flex flex-col items-center p-4 rounded-xl border-2 border-green-600 bg-green-50 shadow-sm w-full">
-                  <span className="text-3xl mb-2">{professional.icon}</span>
-                  <span className="font-bold text-green-700">{professional.type}</span>
-                  <span className="text-xs text-gray-500 mt-1 text-center">{professional.desc}</span>
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 justify-items-center">
-                    {(showAll ? PROFESSIONALS : PROFESSIONALS.slice(0, 3)).map((pro) => (
-                      <button
-                        key={pro.type}
-                        type="button"
-                        className={`flex flex-col items-center p-4 rounded-xl border-2 transition shadow-sm w-full
-                          ${selected === pro.type
-                            ? 'border-green-600 bg-green-50 scale-105'
-                            : 'border-green-100 bg-white hover:border-green-400'}
-                        `}
-                        onClick={() => setSelected(pro.type)}
-                      >
-                        <span className="text-3xl mb-2">{pro.icon}</span>
-                        <span className="font-bold text-green-700">{pro.type}</span>
-                        <span className="text-xs text-gray-500 mt-1 text-center">{pro.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {PROFESSIONALS.length > 3 && (
-                    <div className="flex justify-center mt-2">
-                      <button
-                        type="button"
-                        className="text-green-600 underline text-sm font-semibold"
-                        onClick={() => setShowAll(v => !v)}
-                      >
-                        {showAll ? 'Show Less' : 'Show More'}
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
+              <div className="flex flex-col items-center p-4 rounded-xl border-2 border-green-600 bg-green-50 shadow-sm w-full">
+                <span className="text-3xl mb-2">{professional.icon}</span>
+                <span className="font-bold text-green-700">{professional.type}</span>
+                <span className="text-xs text-gray-500 mt-1 text-center">{professional.desc}</span>
+              </div>
             </div>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="flex flex-col sm:flex-row gap-4">
                 <input
                   type="text"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-gray-100"
                   placeholder="Your Name"
                   value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
+                  disabled
+                  readOnly
                 />
                 <input
                   type="tel"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 bg-gray-100"
                   placeholder="Contact Number"
                   value={contact}
-                  onChange={e => setContact(e.target.value)}
-                  required
+                  disabled
+                  readOnly
                 />
               </div>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -156,62 +126,11 @@ const LogBookConsultation: React.FC = () => {
                   required
                 />
               </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="text"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-                  placeholder="Town"
-                  name="town"
-                  value={address.town}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <input
-                  type="text"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-                  placeholder="City"
-                  name="city"
-                  value={address.city}
-                  onChange={handleAddressChange}
-                  required
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="text"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-                  placeholder="State"
-                  name="state"
-                  value={address.state}
-                  onChange={handleAddressChange}
-                  required
-                />
-                <input
-                  type="text"
-                  className="flex-1 border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
-                  placeholder="Country"
-                  name="country"
-                  value={address.country}
-                  onChange={handleAddressChange}
-                  required
-                />
-              </div>
               <button
                 type="submit"
-                disabled={
-                  (!selected && !professional) ||
-                  !name ||
-                  !contact ||
-                  !date ||
-                  !time ||
-                  !address.town ||
-                  !address.city ||
-                  !address.state ||
-                  !address.country
-                }
+                disabled={!selected || !date || !time}
                 className={`w-full py-3 rounded-lg font-bold text-white transition
-                  ${(!selected && !professional) || !name || !contact || !date || !time ||
-                  !address.town || !address.city || !address.state || !address.country
+                  ${!selected || !date || !time
                     ? 'bg-green-200 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700 shadow-lg'}
                 `}
@@ -240,19 +159,19 @@ const LogBookConsultation: React.FC = () => {
             <form className="space-y-5" onSubmit={handleSubmit}>
               <input
                 type="text"
-                className="w-full border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                className="w-full border border-green-200 rounded-lg px-4 py-2 bg-gray-100"
                 placeholder="Your Name"
                 value={name}
-                onChange={e => setName(e.target.value)}
-                required
+                disabled
+                readOnly
               />
               <input
                 type="tel"
-                className="w-full border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                className="w-full border border-green-200 rounded-lg px-4 py-2 bg-gray-100"
                 placeholder="Contact Number"
                 value={contact}
-                onChange={e => setContact(e.target.value)}
-                required
+                disabled
+                readOnly
               />
               <textarea
                 className="w-full border border-green-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
@@ -287,5 +206,4 @@ const LogBookConsultation: React.FC = () => {
     </div>
   );
 };
-
 export default LogBookConsultation;
