@@ -54,8 +54,9 @@ import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBo
 import BookConsultation from './components/detailpageandcart/bookconsultation';
 import { DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
-import ManageMysqft from './pages/admin/ManageMysqft';
+
 import RealMySqft from './pages/realestate/components/realMysqft';
+import ManageMysqft from './pages/admin/ManageMysqft';
 
 
 const AppRoutes: React.FC = () => {
