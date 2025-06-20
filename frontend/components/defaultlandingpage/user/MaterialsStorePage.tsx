@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { MOCK_MATERIALS, MOCK_MATERIAL_CATEGORIES } from '../../../constants';
-import MaterialCard from '../../../components/landingpage/landingpagecomponents/material/MaterialCard.tsx';
+import MaterialCard from '../defaultlandingcomponents/material/MaterialCard';
 
 const DMaterialsStorePage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);

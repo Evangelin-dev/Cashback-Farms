@@ -243,7 +243,7 @@ const MaterialCheckout: React.FC = () => {
               <Button
                 variant="primary"
                 className="mt-2 px-8 py-2 text-lg font-semibold rounded-lg shadow"
-                onClick={() => window.location.href = "/"}
+                onClick={() => window.location.href = "/Landing"}
               >
                 Go to Home
               </Button>
@@ -263,5 +263,4 @@ const MaterialCheckout: React.FC = () => {
     </div>
   );
 };
-
 export default MaterialCheckout;
