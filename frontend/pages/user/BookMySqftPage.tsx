@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MOCK_BMS_PLOT_INFO } from '../../constants';
-import { BookMySqftPlotInfo, SqftUnit } from '../../types';
 import Button from '../../components/common/Button';
 import SqftGrid from '../../components/landingpage/landingpagecomponents/plot/SqftGrid';
-import BookMySqftPayment from './BookMySqftPayment';
+import { MOCK_BMS_PLOT_INFO } from '../../constants';
+import { BookMySqftPlotInfo, SqftUnit } from '../../types';
 
 
 const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
@@ -105,8 +104,8 @@ const BookMySqftPage: React.FC = () => {
       alert("Please select at least one unit to book.");
       return;
     }
-    // Remove payment option check
-    setShowPaymentPopup(true);
+    // Navigate to payment page instead of showing popup
+    navigate('/bookmicroplotpayment');
   };
 
   // Use fallback image/video if not present in plotInfo
@@ -245,9 +244,9 @@ const BookMySqftPage: React.FC = () => {
         </ol>
       </div>
       {/* BookMySqftPayment as popup */}
-      {showPaymentPopup && (
+      {/* {showPaymentPopup && (
         <BookMySqftPayment onClose={() => setShowPaymentPopup(false)} />
-      )}
+      )} */}
     </div>
   );
 };

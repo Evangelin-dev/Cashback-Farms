@@ -77,6 +77,7 @@ import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarke
 import PostPlots from './pages/realestate/components/PostPlots';
 import BookPlotPayment from './pages/user/BookPlotPayment';
 import TermsAndConditions from './pages/TermsAndConditions';
+import BookMySqftPayment from './pages/user/BookMySqftPayment';
 
 const AppRoutes: React.FC = () => {
 
@@ -135,6 +136,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/materialcheckout" element={<MaterialCheckout />} />
         <Route path="logbookconsultation" element={<LogBookConsultation />} />
         <Route path="bookplotpayment" element={<BookPlotPayment />} />
+        <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
         
         <Route path="*" element={<NotFoundPage />} />
       </Route>
@@ -151,7 +153,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
       <Route path="/referrealestate" element={<ReferAndEarnReal />} />
       <Route path="post-plots" element={<PostPlots />} />
-      <Route path="/realestate/post-mysqft" element={<RealMySqft />} />
+      <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
  </Route>
 
       {/* Admin Routes */}
@@ -166,7 +168,7 @@ const AppRoutes: React.FC = () => {
         <Route path="materials" element={<ManageMaterialsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
-        <Route path="mysqft" element={< ManageMysqft/>} />
+        <Route path="microplot" element={< ManageMysqft/>} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
       
