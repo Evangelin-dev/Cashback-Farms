@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { MOCK_BMS_PLOT_INFO } from '../../../constants';
-import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
+import { MOCK_BMS_PLOT_INFO } from '../../constants';
+import { BookMySqftPlotInfo, SqftUnit } from '../../types';
 import Button from '../../components/common/Button';
 import SqftGrid from '../../components/landingpage/landingpagecomponents/plot/SqftGrid';
 import BookMySqftPayment from './BookMySqftPayment';

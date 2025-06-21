@@ -25,6 +25,7 @@ export enum BookingStatus {
 }
 
 export interface Plot {
+  isAvailable: boolean;
   id: string;
   title: string;
   location: string;

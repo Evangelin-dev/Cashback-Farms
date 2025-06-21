@@ -16,7 +16,7 @@ import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
 
 // Pages
-import HomePage from './pages/HomePage';
+// import HomePage from './pages/HomePage';
 import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
 
 import HelpAndSupport from './components/helpandsupport/helpandsupport';
@@ -110,7 +110,7 @@ const AppRoutes: React.FC = () => {
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
-        <Route path="/home" element={<HomePage />} />
+        {/* <Route path="/home" element={<HomePage />} /> */}
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
         
         {/* Change /profile to use MyProfile directly */}
@@ -171,7 +171,7 @@ const AppRoutes: React.FC = () => {
       </Route>
       
       {/* Fallback for any unmatched route */}
-      <Route path="*" element={<HomePage />} />
+      <Route path="*" element={<LandingPage/>} />
       
     </Routes>
     

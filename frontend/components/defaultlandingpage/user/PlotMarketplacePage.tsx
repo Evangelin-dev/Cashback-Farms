@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { MOCK_PLOTS } from '../../../constants';
-import PlotCard from '../../../components/landingpage/landingpagecomponents/plot/PlotCard';
+
 import { Plot, PlotType } from '../../../types';
 import Button from '../../../components/common/Button.tsx';
 import DPlotCard from '../defaultlandingcomponents/plot/PlotCard.tsx';
