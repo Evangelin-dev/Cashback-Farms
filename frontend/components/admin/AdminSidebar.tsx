@@ -225,7 +225,7 @@ const AdminSidebar: React.FC = () => {
         <AdminNavItem to="/admin/dashboard" icon={<IconDashboard className="w-5 h-5" />} label="Dashboard" />
         <div className="pt-2 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Content</div>
         <AdminNavItem to="/admin/plots" icon={<IconTableCells className="w-5 h-5" />} label="Plots (Residential)" />
-        <AdminNavItem to="/admin/mysqft" icon={<IconMapPin className="w-5 h-5" />} label="Mysqft" />
+        <AdminNavItem to="/admin/microplot" icon={<IconMapPin className="w-5 h-5" />} label="Micro Plots" />
         <AdminNavItem to="/admin/commercial" icon={<IconBuildingOffice className="w-5 h-5" />} label="Commercial Properties" />
         <AdminNavItem to="/admin/bookings" icon={<IconCollection className="w-5 h-5" />} label="Bookings" />
         <AdminNavItem to="/admin/payments" icon={<IconCreditCard className="w-5 h-5" />} label="Payments" />

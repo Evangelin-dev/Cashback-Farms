@@ -23,9 +23,9 @@ const menuItems = [
     label: "Post Plots",
   },
    {
-    key: "/realestate/post-mysqft",
+    key: "/realestate/post-micro-plots",
     icon: <IconMapPin className="w-5 h-5" />,
-    label: "Post MySqft/MySqyd",
+    label: "Post Micro Plots",
   },
   {
     key: "/realestate/leads",
