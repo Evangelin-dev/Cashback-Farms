@@ -78,6 +78,8 @@ import PostPlots from './pages/realestate/components/PostPlots';
 import BookPlotPayment from './pages/user/BookPlotPayment';
 import TermsAndConditions from './pages/TermsAndConditions';
 import BookMySqftPayment from './pages/user/BookMySqftPayment';
+import RegurestionPage from './pages/regurestion/regurestion';
+import OTPPage from './pages/regurestion/OTP';
 
 const AppRoutes: React.FC = () => {
 
@@ -174,7 +176,11 @@ const AppRoutes: React.FC = () => {
       
       {/* Fallback for any unmatched route */}
       <Route path="*" element={<LandingPage/>} />
+      <Route path="/regurestion" element={<RegurestionPage />} /> 
+      <Route path="/OTP" element={<OTPPage />} /> 
       
+
+
     </Routes>
     
   );
