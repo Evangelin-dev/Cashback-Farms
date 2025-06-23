@@ -90,6 +90,9 @@ const RealMySqft: React.FC = () => {
   // Add state for Google Map link
   const [mapLink, setMapLink] = useState<string>('');
 
+  // Add state to control showing the project creation form
+  const [showProjectForm, setShowProjectForm] = useState(false);
+
   const handleProjectSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setProjectCreated(true);
@@ -490,8 +493,29 @@ const RealMySqft: React.FC = () => {
               </CardContent>
             </Card>
           )}
-          {/* Project creation form if not created or editing */}
-          {(!projectCreated || editProject) && (
+          {/* Show "Create Project" button if not showing form and not editing */}
+          {!showProjectForm && !projectCreated && !editProject && (
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                sx={{
+                  bgcolor: '#16a34a',
+                  '&:hover': { bgcolor: '#166534' },
+                  fontWeight: 700,
+                  minWidth: 180,
+                  fontSize: 18,
+                  boxShadow: 3,
+                  borderRadius: 2,
+                  letterSpacing: 1,
+                }}
+                onClick={() => setShowProjectForm(true)}
+              >
+                Create Project
+              </Button>
+            </Box>
+          )}
+          {/* Project creation form if not created or editing and showProjectForm is true */}
+          {((!projectCreated || editProject) && showProjectForm) && (
             <Card
               variant="outlined"
               sx={{
@@ -515,6 +539,7 @@ const RealMySqft: React.FC = () => {
                     e.preventDefault();
                     setProjectCreated(true);
                     setEditProject(false);
+                    setShowProjectForm(false);
                   }}
                 >
                   <Stack spacing={2}>

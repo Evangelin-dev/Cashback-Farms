@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-    generateUserCode,
-    IconAlertCircle,
-    IconCheck,
-    IconCollection,
-    IconEdit,
-    IconLogout,
-    IconMapPin,
-    IconPlus,
-    IconRupee,
-    IconUsers,
+  generateUserCode,
+  IconAlertCircle,
+  IconCheck,
+  IconCollection,
+  IconEdit,
+  IconLogout,
+  IconMapPin,
+  IconPlus,
+  IconRupee,
+  IconUsers,
 } from "../../../constants.tsx";
 import { useAuth } from "../../../contexts/AuthContext";
 import "../AgentProfileSection.css";
@@ -237,43 +237,89 @@ const RealSideNav: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Helper for mobile: close sidebar after navigation
+  const handleNavClick = () => {
+    setSidebarOpen(false);
+  };
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-neutral-200 flex flex-col p-4 space-y-2">
-      {/* ProfileSection at the top */}
-      <ProfileSection />
-      <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
-        RealEstate<span className="text-black"> Agent</span>
-      </div>
-      <nav className="flex-grow space-y-1">
-        {menuItems.map((item) => (
-          <NavLink
-            key={item.key}
-            to={item.key}
-            className={({ isActive }) =>
-              `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
-              ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
-            }
+    <>
+      {/* Mobile menu button */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-green-500 to-green-700 text-white p-2 rounded-full shadow-lg"
+        onClick={() => setSidebarOpen((open) => !open)}
+        aria-label="Open sidebar"
+        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
+      >
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      {/* Sidebar as creative side drawer on mobile, static on desktop */}
+      <div
+        className={`
+          fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200
+          transition-transform duration-300
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+          md:static md:translate-x-0 md:w-64 md:flex
+        `}
+        style={{
+          minWidth: "17rem",
+          borderTopRightRadius: 32,
+          borderBottomRightRadius: 32,
+          boxShadow: sidebarOpen ? "0 8px 32px 0 rgba(34,197,94,0.15)" : undefined,
+          background: "linear-gradient(135deg, #f0fdf4 60%, #e0f2f1 100%)",
+          marginTop: sidebarOpen ? 50 : 0,
+          overflowY: "auto", // Make sidebar scrollable
+          maxHeight: "100vh"
+        }}
+      >
+        {/* ProfileSection at the top */}
+        <ProfileSection />
+        <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
+          RealEstate<span className="text-black"> Agent</span>
+        </div>
+        <nav className="flex-grow space-y-1">
+          {menuItems.map((item) => (
+            <NavLink
+              key={item.key}
+              to={item.key}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
+                ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
+              }
+            >
+              <span className="mr-3 w-5 h-5">{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="mt-auto">
+          <hr className="my-2 border-t border-neutral-300" />
+          <button
+            onClick={() => {
+              logout();
+              navigate("/");
+              setSidebarOpen(false);
+            }}
+            className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
           >
-            <span className="mr-3 w-5 h-5">{item.icon}</span>
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="mt-auto">
-        <hr className="my-2 border-t border-neutral-300" />
-        <button
-          onClick={() => {
-            logout();
-            navigate("/");
-          }}
-          className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
-        >
-          <IconLogout className="w-5 h-5 mr-3" />
-          Logout
-        </button>
+            <IconLogout className="w-5 h-5 mr-3" />
+            Logout
+          </button>
+        </div>
       </div>
-    </aside>
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+    </>
   );
 };
 

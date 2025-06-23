@@ -80,6 +80,7 @@ import TermsAndConditions from './pages/TermsAndConditions';
 import BookMySqftPayment from './pages/user/BookMySqftPayment';
 import RegurestionPage from './pages/regurestion/regurestion';
 import OTPPage from './pages/regurestion/OTP';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const AppRoutes: React.FC = () => {
 
@@ -105,11 +106,13 @@ const AppRoutes: React.FC = () => {
       <Route path="/Dcart" element={<DCart /> } />
       <Route path="/Dplans" element={<DPlansPage />} /> 
       <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
+      <Route path="/Dterms" element={<TermsAndConditions />} />
+        <Route path="/Dprivacy" element={<PrivacyPolicy />} />
       
     
 
      </Route>
-<Route path="/terms" element={<TermsAndConditions />} />
+
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
@@ -139,7 +142,8 @@ const AppRoutes: React.FC = () => {
         <Route path="logbookconsultation" element={<LogBookConsultation />} />
         <Route path="bookplotpayment" element={<BookPlotPayment />} />
         <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
-        
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
