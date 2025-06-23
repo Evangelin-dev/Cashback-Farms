@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/defaultlandingpage/defaultlandingcomponents/layout/Navbar";
-import { Layout } from "antd";
 
-const { Footer } = Layout;
+
+import DefaultFooter from "../components/defaultlandingpage/defaultlandingcomponents/layout/Footer";
 
 const DefaultLayout: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
@@ -17,10 +17,8 @@ const DefaultLayout: React.FC = () => {
         <Outlet />
       </main>
       
-      <Footer style={{ textAlign: "center" }}>
-        {/* Your footer content here */}
-        ©2025 Green Heap
-      </Footer>
+     
+      <DefaultFooter/>
     </div>
   );
 };
