@@ -16,7 +16,7 @@ import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
 
 // Pages
-import HomePage from './pages/HomePage';
+// import HomePage from './pages/HomePage';
 import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
 
 import HelpAndSupport from './components/helpandsupport/helpandsupport';
@@ -62,12 +62,25 @@ import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents
 import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
 import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
 import BookConsultation from './components/detailpageandcart/bookconsultation';
-import { DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+// import { DMaterialDetailPage,DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
 import RealMySqft from './pages/realestate/components/realMysqft';
 import ManageMysqft from './pages/admin/ManageMysqft';
+import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
+import DCart from './components/detailpageandcart/cart';
 
+import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
+import DMaterialsStorePage from './components/defaultlandingpage/user/MaterialsStorePage';
+import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
+
+import PostPlots from './pages/realestate/components/PostPlots';
+import BookPlotPayment from './pages/user/BookPlotPayment';
+import TermsAndConditions from './pages/TermsAndConditions';
+import BookMySqftPayment from './pages/user/BookMySqftPayment';
+import RegistrationPage from './pages/registration/registration';
+// import OTPPage from './pages/regurestion/OTP';
+// import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const AppRoutes: React.FC = () => {
 
@@ -80,24 +93,32 @@ const AppRoutes: React.FC = () => {
          
       <Route path="/" element={<DefaultLanding />} />
       <Route path="/D" element={<DefaultLanding />} />
-      <Route path="/Dplots" element={<PlotMarketplacePage />} />
+      <Route path="/Dplots" element={<DPlotMarketplacePage />} />
       <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
-      <Route path="/Dmaterials" element={<MaterialsStorePage />} />
+      <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
       <Route path="/Dservices" element={<DServicesHubPage />} />
-      <Route path="/Dbook-my-sqft" element={<BookMySqftPage />} />
+      <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
       <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
       <Route path="/Dplans" element={<DPlansPage />} /> 
-      <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
+      {/* <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} /> */}
       <Route path="bookconsultation" element={<BookConsultation />} />
-    <Route path="Dmysqft-listing" element={<DMySqftListing />} />
+      {/* <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} /> */}
+      <Route path="/Dcart" element={<DCart /> } />
+      <Route path="/Dplans" element={<DPlansPage />} /> 
+      <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
+      <Route path="/Dterms" element={<TermsAndConditions />} />
+        {/* <Route path="/Dprivacy" element={<PrivacyPolicy />} /> */}
+      
+    
 
      </Route>
 
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
-        <Route path="/home" element={<HomePage />} />
+        {/* <Route path="/home" element={<HomePage />} /> */}
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
+        
         {/* Change /profile to use MyProfile directly */}
         <Route path="/profile" element={<MyProfile />} />
         <Route path="/my-bookings" element={<MyBooking/>} />
@@ -108,8 +129,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/plots/:id" element={<PlotDetailPage />} />
         <Route path="/book-my-sqft" element={<BookMySqftPage />} />
         {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-        <Route path="/Umaterials" element={<MaterialsStorePage />} />
-        <Route path="/Umaterials/:id" element={<MaterialDetailPage />} />
+        <Route path="/materials" element={<MaterialsStorePage />} />
+        <Route path="/materials/:id" element={<MaterialDetailPage />} />
         <Route path="/services" element={<ServicesHubPage />} />
         <Route path="/services/:id" element={<ProfessionalDetailPage />} />
         <Route path="/plans" element={<PlansPage />} /> 
@@ -118,6 +139,11 @@ const AppRoutes: React.FC = () => {
         <Route path="/myprofile" element={<MyProfile />} />
         <Route path="/cart" element={<Cart /> } />
         <Route path="/materialcheckout" element={<MaterialCheckout />} />
+        <Route path="logbookconsultation" element={<LogBookConsultation />} />
+        <Route path="bookplotpayment" element={<BookPlotPayment />} />
+        <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        {/* <Route path="/privacy" element={<PrivacyPolicy />} /> */}
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
@@ -132,14 +158,14 @@ const AppRoutes: React.FC = () => {
       <Route path="/realestate/realprofile" element={<RealProfile />} />
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
       <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-      <Route path="/realestate/post-mysqft" element={<RealMySqft />} />
+      <Route path="post-plots" element={<PostPlots />} />
+      <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
  </Route>
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
-        <Route path="mysqft" element={<ManageMysqft />} />
         <Route path="commercial" element={<ManageCommercialPage />} />
         <Route path="bookings" element={<ManageBookingsPage />} />
         <Route path="payments" element={<ManagePaymentsPage />} />
@@ -148,12 +174,17 @@ const AppRoutes: React.FC = () => {
         <Route path="materials" element={<ManageMaterialsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
+        <Route path="microplot" element={< ManageMysqft/>} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
       
       {/* Fallback for any unmatched route */}
-      <Route path="*" element={<HomePage />} />
+      <Route path="*" element={<LandingPage/>} />
+      <Route path="/registration" element={<RegistrationPage />} /> 
+      {/* <Route path="/OTP" element={<OTPPage />} />  */}
       
+
+
     </Routes>
     
   );
