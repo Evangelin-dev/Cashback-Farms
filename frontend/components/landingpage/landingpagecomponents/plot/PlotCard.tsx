@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Plot, PlotType } from '../../../../types';
 // FIX: Icons are functional components and should be used as JSX tags.
 import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../../../constants.tsx';
-import Button from '../../..//common/Button';
+import Button from '../../../common/Button';
 import CardShell from '../../../common/CardShell';
 
 interface PlotCardProps {

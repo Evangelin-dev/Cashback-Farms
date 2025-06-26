@@ -1,27 +1,58 @@
 import { Card, Form, Input, InputNumber, Modal, Table, Tag } from "antd";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "../../../components/common/Button";
+import apiClient from "@/src/utils/api/apiClient";
 
-const initialPlots = [
-  {
-    key: 1,
-    title: "Sunshine Meadows",
-    owner: "Ravi Kumar",
-    location: "Sector 45, Gurgaon",
-    area: 1800,
-    price: 1200000,
-    status: "Active",
-  },
-];
+type Plot = {
+  key: number;
+  title: string;
+  owner: string;
+  location: string;
+  area: number;
+  price: number;
+  status: string;
+  description: string;
+  images: File[];
+};
 
 const PostPlots: React.FC = () => {
-  const [plots, setPlots] = useState(initialPlots);
+  const [plots, setPlots] = useState<Plot[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    const fetchPlots = async () => {
+      try {
+        const accessToken = localStorage.getItem("access_token");
+        const res = await apiClient.get("/plots", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        console.log("Fetched plots:", res);  
+        // Map API response to table data
+        const mappedPlots = (res || []).map((plot: any) => ({
+          key: plot.id,
+          title: plot.title,
+          owner: plot.owner_name || plot.owner_username,
+          location: plot.location,
+          area: Number(plot.total_area_sqft) || 0,
+          price: Number(plot.price_per_sqft) || 0,
+          status: plot.is_verified ? "Active" : "Inactive",
+          description: "", // or plot.description if available
+          images: [], // or map plot.plot_file if you have images
+        }));
+        setPlots(mappedPlots);
+      } catch (err) {
+        setPlots([]);
+      }
+    };
+    fetchPlots();
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -36,16 +67,52 @@ const PostPlots: React.FC = () => {
     });
   };
 
-  const handleAdd = (values: any) => {
-    setPlots([
-      ...plots,
-      { key: Date.now(), ...values, status: "Active", description, images },
-    ]);
-    setModalVisible(false);
-    form.resetFields();
-    setDescription("");
-    setImages([]);
-    setImagePreviews([]);
+  const handleAdd = async (values: any) => {
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      const payload = {
+        title: values.title,
+        owner_name: values.owner,
+        location: values.location,
+        total_area_sqft: String(values.area),
+        price_per_sqft: String(values.price),
+        description,
+        // Add other fields if needed
+      };
+
+      await apiClient.post("/plots/", payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      // Refresh the plots list after adding
+      const res = await apiClient.get("/plots", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      const mappedPlots = (res.data || []).map((plot: any) => ({
+        key: plot.id,
+        title: plot.title,
+        owner: plot.owner_name || plot.owner_username,
+        location: plot.location,
+        area: Number(plot.total_area_sqft) || 0,
+        price: Number(plot.price_per_sqft) || 0,
+        status: plot.is_verified ? "Active" : "Inactive",
+        description: "",
+        images: [],
+      }));
+      setPlots(mappedPlots);
+
+      setModalVisible(false);
+      form.resetFields();
+      setDescription("");
+      setImages([]);
+      setImagePreviews([]);
+    } catch (err) {
+      alert("Failed to add plot.");
+    }
   };
 
   const handleToggleStatus = (key: number) => {

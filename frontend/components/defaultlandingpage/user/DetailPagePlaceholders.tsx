@@ -7,8 +7,7 @@ const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; bac
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
             <Link to={backLink} className="text-green-600 hover:text-green-800 hover:underline">
-                &larr; {backLinkText}
-            </Link>
+                &larr;             </Link>
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-6">{title}</h1>
         <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -55,7 +54,7 @@ export const DPlotDetailPage: React.FC = () => {
   );
 };
 
-export const MaterialDetailPage: React.FC = () => {
+export const DMaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const material = MOCK_MATERIALS.find(m => m.id === id);
 
@@ -77,9 +76,9 @@ export const MaterialDetailPage: React.FC = () => {
         <div className="mt-6">
             <Button
               variant="primary"
-              onClick={() => navigate(`/cart`)}
+              onClick={() => navigate(`/Dcart`)}
             >
-              Add to Cart (Mock)
+              Request a Call for Order(Mock)
             </Button>
         </div>
     </DDetailPageLayout>

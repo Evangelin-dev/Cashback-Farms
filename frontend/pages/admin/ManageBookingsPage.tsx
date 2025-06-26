@@ -12,7 +12,15 @@ const ManageBookingsPage: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<BookingStatus>(BookingStatus.PENDING_CONFIRMATION);
 
   const getUserName = (userId: string): string => MOCK_USERS.find(u => u.id === userId)?.name || 'Unknown User';
-  const getPlotNumber = (plotId: string): string => MOCK_PLOTS.find(p => p.id === plotId)?.plotNo || 'Unknown Plot';
+  const getPlotNumber = (plotId: string): string => {
+    const plot = MOCK_PLOTS.find(p => p.id === plotId);
+    // Try common property names for plot number
+    if (!plot) return 'Unknown Plot';
+    if ('plotNo' in plot) return (plot as any).plotNo;
+    if ('plotNumber' in plot) return (plot as any).plotNumber;
+    if ('number' in plot) return (plot as any).number;
+    return 'Unknown Plot';
+  };
 
   const openStatusModal = (booking: Booking) => {
     setSelectedBooking(booking);

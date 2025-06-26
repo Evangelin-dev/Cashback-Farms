@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { NAV_LINKS } from '../../../../constants';
 
@@ -6,8 +6,45 @@ interface NavbarProps {
   onAuthClick: () => void;
 }
 
+interface AgentProfile {
+  id: number;
+  user_code: string;
+  first_name: string;
+  last_name: string | null;
+  gender: string | null;
+  date_of_birth: string | null;
+  company_name: string;
+  phone_number: string;
+  company_number: string;
+  email: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  kyc_documents: string | null;
+  gst_number: string | null;
+  license_number: string | null;
+  commission_rate: string;
+}
+
 const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [agent, setAgent] = useState<AgentProfile | null>(null);
+
+  useEffect(() => {
+    // Fetch agent profile from backend
+    fetch('http://127.0.0.1:8000/api/agents/')
+      .then(res => res.json())
+      .then(data => {
+        // If the response is an array, take the first agent
+        if (Array.isArray(data)) {
+          setAgent(data[0]);
+        } else {
+          setAgent(data);
+        }
+      })
+      .catch(() => setAgent(null));
+  }, []);
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -38,14 +75,28 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
             </div>
           </div>
 
-          <div className="hidden md:block">
-            <button
-              onClick={onAuthClick}
-              className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-            >
-              Login / Sign Up
-            </button>
-          </div>
+          {/* Agent Profile Section */}
+          {agent ? (
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="text-sm text-gray-700">
+                <span className="font-semibold">{agent.first_name}</span>
+                <span className="ml-2 text-gray-500">{agent.company_name}</span>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                {agent.first_name ? agent.first_name[0].toUpperCase() : 'A'}
+              </div>
+            </div>
+          ) : (
+            <div className="hidden md:block">
+              <button
+                onClick={onAuthClick}
+                className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Login / Sign Up
+              </button>
+            </div>
+          )}
+
           <div className="-mr-2 flex md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -112,15 +163,24 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 {link.name}
               </NavLink>
             ))}
-            <button
-              className="w-full mt-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              onClick={() => {
-                setIsOpen(false);
-                onAuthClick();
-              }}
-            >
-              Login / Sign Up
-            </button>
+            {agent ? (
+              <div className="flex items-center space-x-2 mt-2">
+                <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                  {agent.first_name ? agent.first_name[0].toUpperCase() : 'A'}
+                </div>
+                <span className="text-sm text-gray-700">{agent.first_name}</span>
+              </div>
+            ) : (
+              <button
+                className="w-full mt-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                onClick={() => {
+                  setIsOpen(false);
+                  onAuthClick();
+                }}
+              >
+                Login / Sign Up
+              </button>
+            )}
           </div>
         </div>
       )}

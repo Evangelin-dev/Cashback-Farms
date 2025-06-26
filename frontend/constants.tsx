@@ -1,4 +1,3 @@
-import React from 'react';
 import { Booking, BookingStatus, BookMySqftPlotInfo, CommercialPropertyInfo, CommercialPropertyType, InvestmentDetails, ListingType, Material, MaterialCategory, PaymentInstallment, PaymentStatus, PaymentType, Plot, PlotType, Professional, PropertyCategory, PropertyListing, ResidentialPropertyType, ServiceType, SiteDetails, SqftUnit, User, UserRole } from './types';
 
 const generateSqftGrid = (rows: number, cols: number, bookedUnits?: {row: number, col: number}[]): SqftUnit[][] => {
@@ -179,8 +178,6 @@ export const IconShoppingCart = (props: React.SVGProps<SVGSVGElement>) => (
     <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zm2 0v8h12V6H4zm10 3a1 1 0 110 2 1 1 0 010-2z" />
   </svg>
 );
-
-// --- Mock Data ---
 export const MOCK_PLOTS: Plot[] = [
   {
     id: 'plot1',
@@ -188,12 +185,13 @@ export const MOCK_PLOTS: Plot[] = [
     location: 'Greenfield Estates, Bangalore',
     price: 5000000,
     area: 2400,
-    imageUrl: 'https://picsum.photos/seed/plot1/400/300',
+    imageUrl: 'https://images.unsplash.com/photo-1587745890135-20db8c79b027?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: PlotType.PUBLIC,
     description: 'A beautiful plot in a rapidly developing area, perfect for your dream home. North-facing with good road access.',
     amenities: ['Water Connection', 'Electricity', 'Gated Community'],
     sqftPrice: 2000,
-    value: 0
+    value: 0,
+    isAvailable: true
   },
   {
     id: 'plot2',
@@ -201,13 +199,14 @@ export const MOCK_PLOTS: Plot[] = [
     location: 'Orchard Avenue, Pune',
     price: 7500000,
     area: 3000,
-    imageUrl: 'https://picsum.photos/seed/plot2/400/300',
+    imageUrl: 'https://images.unsplash.com/photo-1461175827210-5ceac3e39dd2?q=80&w=1933&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: PlotType.VERIFIED,
     description: 'A Greenheap verified plot with all legal checks complete. Ready for immediate construction. Close to schools and hospitals.',
     isFlagship: true,
     amenities: ['24/7 Security', 'Clubhouse Access', 'Paved Roads', 'Park'],
     sqftPrice: 2500,
-    value: 0
+    value: 0,
+    isAvailable: true
   },
   {
     id: 'plot3',
@@ -215,24 +214,26 @@ export const MOCK_PLOTS: Plot[] = [
     location: 'Willow Creek, Chennai',
     price: 6000000,
     area: 2000,
-    imageUrl: 'https://picsum.photos/seed/plot3/400/300',
+    imageUrl: 'https://plus.unsplash.com/premium_photo-1674019235838-df82b9c83f4e?q=80&w=1936&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     type: PlotType.PUBLIC,
     description: 'Peaceful plot located near the river, offering scenic views. Ideal for a weekend getaway home or investment.',
     sqftPrice: 3000,
-    value: 0
+    value: 0,
+    isAvailable: true
   },
    {
      id: 'plot4-bms',
      title: 'Book My SqFt Special Plot',
      location: 'Tech Park Extension, Hyderabad',
-     price: 0, // Price determined by sqft selection
-     area: 5000, // Total area available for sqft booking
-     imageUrl: 'https://picsum.photos/seed/plot4/400/300',
+     price: 0, 
+     area: 5000, 
+     imageUrl: 'https://images.unsplash.com/photo-1586860051507-b798d4821d2a?q=80&w=2125&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
      type: PlotType.VERIFIED,
      description: 'Exclusive Greenheap plot available for "Book My SqFt". Choose your desired area and build your future.',
      sqftPrice: 1800,
      isFlagship: true,
-     value: 0
+     value: 0,
+     isAvailable: true
    },
 ];
 
@@ -245,7 +246,6 @@ export const MOCK_MATERIAL_CATEGORIES: MaterialCategory[] = [
   { id: 'cat6', name: 'Paints & Finishes', imageUrl: 'https://picsum.photos/seed/paints/100/100' },
 ];
 
-
 export let MOCK_USERS: User[] = [
   { id: 'user-001', name: 'Alice Wonderland', email: 'alice@example.com', role: UserRole.USER, createdAt: '2023-01-10' },
   { id: 'user-002', name: 'Bob The Builder', email: 'bob@example.com', role: UserRole.USER, createdAt: '2023-02-15' },
@@ -255,13 +255,13 @@ export let MOCK_USERS: User[] = [
 export let MOCK_PAYMENTS: PaymentInstallment[] = [
   // Payments for Booking B001 (Plot AG-P1-A101)
   { id: 'pay-001', bookingId: 'B001', scheduleName: 'Booking Advance', dueDate: '2024-01-15', amount: 60000, status: PaymentStatus.PAID, paymentType: PaymentType.BOOKING_ADVANCE, paidDate: '2024-01-14', transactionId: 'TXN1001' },
-  { id: 'pay-002', bookingId: 'B001', scheduleName: '1st Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
-  { id: 'pay-003', bookingId: 'B001', scheduleName: '2nd Installment', dueDate: '2024-06-15', amount: 120000, status: PaymentStatus.DUE, paymentType: PaymentType.INSTALLMENT },
-  { id: 'pay-004', bookingId: 'B001', scheduleName: '3rd Installment', dueDate: '2024-09-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
-  { id: 'pay-005', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-12-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-002', bookingId: 'B001', scheduleName: '2st Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
+  { id: 'pay-003', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-06-15', amount: 120000, status: PaymentStatus.DUE, paymentType: PaymentType.INSTALLMENT },
+
+ 
   // Payments for another booking (imaginary)
-  { id: 'pay-006', bookingId: 'B002', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
-  { id: 'pay-007', bookingId: 'B002', scheduleName: '1st Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-004', bookingId: 'B002', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
+  { id: 'pay-005', bookingId: 'B002', scheduleName: '2st Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
 ];
 
 export let MOCK_BOOKINGS: Booking[] = [
@@ -271,7 +271,7 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-001',
     bookingDate: '2024-01-15',
     status: BookingStatus.CONFIRMED,
-    paymentIds: ['pay-001', 'pay-002', 'pay-003', 'pay-004', 'pay-005'],
+    paymentIds: ['pay-001', 'pay-002', 'pay-003',  ],
     investmentDetails: { // Example specific to this booking for user view
         yourInvestment: MOCK_PLOTS.find(p=>p.id === 'AG-P1-A101')?.plotValue || 0,
         cashbackPercentage: 10,
@@ -285,7 +285,7 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-002',
     bookingDate: '2024-02-20',
     status: BookingStatus.PENDING_CONFIRMATION,
-    paymentIds: ['pay-006', 'pay-007']
+    paymentIds: ['pay-004', 'pay-005']
   },
 ];
 
@@ -299,12 +299,13 @@ export let MOCK_SITE_DETAILS: SiteDetails = {
 };
 
 export const MOCK_MATERIALS: Material[] = [
-  { id: 'mat1', name: 'UltraTech Cement PPC', category: 'Cement', price: 380, moq: 50, shippingTime: '2-3 days', vendor: 'Reliable Builders Inc.', imageUrl: 'https://picsum.photos/seed/mat1/300/200', description: 'Portland Pozzolana Cement, ideal for all types of construction.' },
-  { id: 'mat2', name: 'Red Clay Bricks (Class A)', category: 'Bricks & Blocks', price: 8, moq: 1000, shippingTime: '3-5 days', vendor: 'Heritage Bricks Co.', imageUrl: 'https://picsum.photos/seed/mat2/300/200', description: 'High-quality red clay bricks, perfect for strong and durable walls.' },
+  { id: 'mat1', name: 'UltraTech Cement PPC', category: 'Cement', price: 380, moq: 50, shippingTime: '2-3 days', vendor: 'Reliable Builders Inc.', imageUrl: 'https://images.unsplash.com/photo-1645567849531-40dc40ecb2b9?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D300/200', description: 'Portland Pozzolana Cement, ideal for all types of construction.' },
+  { id: 'mat2', name: 'Red Clay Bricks (Class A)', category: 'Bricks & Blocks', price: 8, moq: 1000, shippingTime: '3-5 days', vendor: 'Heritage Bricks Co.', imageUrl: 'https://plus.unsplash.com/premium_photo-1673973366864-d1a7555faa15?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', description: 'High-quality red clay bricks, perfect for strong and durable walls.' },
   { id: 'mat3', name: 'River Sand (Fine Grade)', category: 'Sand & Aggregates', price: 2000, moq: 1, shippingTime: '1-2 days', vendor: 'EarthMovers Ltd.', imageUrl: 'https://picsum.photos/seed/mat3/300/200', description: 'Fine grade river sand suitable for plastering and concrete work. Price per cubic meter.' },
-  { id: 'mat4', name: 'Vitrified Floor Tiles (600x600mm)', category: 'Tiles & Flooring', price: 45, moq: 100, shippingTime: '4-6 days', vendor: 'Elegant Tiles Emporium', imageUrl: 'https://picsum.photos/seed/mat4/300/200', description: 'Glossy finish vitrified tiles for modern interiors. Price per sq. ft.' },
-  { id: 'mat5', name: 'TMT Steel Bars Fe500D', category: 'Steel & TMT Bars', price: 65, moq: 500, shippingTime: '3-5 days', vendor: 'StrongHold Steel Corp.', imageUrl: 'https://picsum.photos/seed/mat5/300/200', description: 'High-strength TMT steel bars for reinforced concrete structures. Price per kg.' },
+  { id: 'mat4', name: 'Vitrified Floor Tiles (600x600mm)', category: 'Tiles & Flooring', price: 45, moq: 100, shippingTime: '4-6 days', vendor: 'Elegant Tiles Emporium', imageUrl: 'https://plus.unsplash.com/premium_photo-1705479742873-f826fe23a01c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', description: 'Glossy finish vitrified tiles for modern interiors. Price per sq. ft.' },
+  { id: 'mat5', name: 'TMT Steel Bars Fe500D', category: 'Steel & TMT Bars', price: 65, moq: 500, shippingTime: '3-5 days', vendor: 'StrongHold Steel Corp.', imageUrl: 'https://plus.unsplash.com/premium_photo-1677172409352-44e6d642c320?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', description: 'High-strength TMT steel bars for reinforced concrete structures. Price per kg.' },
 ];
+
 
 // Helper function to get booking details for user view (similar to old MOCK_BOOKING_DETAILS)
 export const getExtendedBookingDetailsById = (bookingId: string): (Omit<Booking, 'paymentIds'> & {
@@ -497,68 +498,100 @@ export let MOCK_COMMERCIAL_PROPERTIES: CommercialPropertyInfo[] = [
   }
 ];
 
-
 export const MOCK_PROFESSIONALS: Professional[] = [
-  { id: 'prof1', name: 'Ar. Priya Sharma', service: ServiceType.ARCHITECT, rating: 4.8, rate: '₹3000/consultation', imageUrl: 'https://picsum.photos/seed/prof1/300/300', specialization: 'Residential & Sustainable Design', bio: 'Experienced architect focusing on eco-friendly and modern homes.' },
-  { id: 'prof2', name: 'ID. Rahul Verma', service: ServiceType.INTERIOR_DESIGNER, rating: 4.9, rate: '₹200/sqft', imageUrl: 'https://picsum.photos/seed/prof2/300/300', specialization: 'Modern & Minimalist Interiors', bio: 'Transforming spaces with creativity and functionality. Specializes in luxury apartments.' },
-  { id: 'prof3', name: 'Ar. Anjali Reddy', service: ServiceType.ARCHITECT, rating: 4.5, rate: 'Project-based', imageUrl: 'https://picsum.photos/seed/prof3/300/300', specialization: 'Commercial & Office Spaces', bio: 'Innovative architectural solutions for businesses. Proven track record of delivering projects on time.'},
-  { id: 'prof4', name: 'ID. Sameer Khan', service: ServiceType.INTERIOR_DESIGNER, rating: 4.7, rate: '₹2500/consultation + project', imageUrl: 'https://picsum.photos/seed/prof4/300/300', specialization: 'Bohemian & Eclectic Styles', bio: 'Creating unique and personalized interiors that reflect your personality.'},
+  { id: 'prof1', name: 'Ar. Priya Sharma', service: ServiceType.ARCHITECT, rating: 4.8, rate: '₹3000/consultation', imageUrl: 'https://plus.unsplash.com/premium_photo-1661335257817-4552acab9656?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Residential & Sustainable Design', bio: 'Experienced architect focusing on eco-friendly and modern homes.' },
+  { id: 'prof2', name: 'ID. Rahul Verma', service: ServiceType.INTERIOR_DESIGNER, rating: 4.9, rate: '₹200/sqft', imageUrl: 'https://images.unsplash.com/photo-1633605015660-b0f2dbad3bf2?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Modern & Minimalist Interiors', bio: 'Transforming spaces with creativity and functionality. Specializes in luxury apartments.' },
+  { id: 'prof3', name: 'Ar. Anjali Reddy', service: ServiceType.ARCHITECT, rating: 4.5, rate: 'Project-based', imageUrl: 'https://plus.unsplash.com/premium_photo-1682974931776-2b5d5ed24aa0?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Commercial & Office Spaces', bio: 'Innovative architectural solutions for businesses. Proven track record of delivering projects on time.'},
+  { id: 'prof4', name: 'ID. Sameer Khan', service: ServiceType.INTERIOR_DESIGNER, rating: 4.7, rate: '₹2500/consultation + project', imageUrl: 'https://images.unsplash.com/photo-1633605016119-a5b266e4c234?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Bohemian & Eclectic Styles', bio: 'Creating unique and personalized interiors that reflect your personality.'},
   // Buy Services
-  { id: 'buy1', name: 'Builder Projects', service: ServiceType.BUY_SERVICE, rating: 4.6, rate: '₹5000/project', imageUrl: 'https://picsum.photos/seed/buy1/300/300', specialization: 'Residential & Commercial', bio: 'Expert in builder projects for homes and offices.' },
-  { id: 'buy2', name: 'Construction Materials', service: ServiceType.BUY_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/buy2/300/300', specialization: 'All construction materials', bio: 'Supplier of quality construction materials.' },
-  { id: 'buy3', name: 'Property Legal Services', service: ServiceType.BUY_SERVICE, rating: 4.7, rate: '₹2000/case', imageUrl: 'https://picsum.photos/seed/buy3/300/300', specialization: 'Legal documentation', bio: 'Legal expert for property matters.' },
-  { id: 'buy4', name: 'Home Interiors', service: ServiceType.BUY_SERVICE, rating: 4.8, rate: '₹300/sqft', imageUrl: 'https://picsum.photos/seed/buy4/300/300', specialization: 'Modern interiors', bio: 'Interior design for homes and apartments.' },
-  { id: 'buy5', name: 'Plot Maintenance', service: ServiceType.BUY_SERVICE, rating: 4.4, rate: '₹1500/month', imageUrl: 'https://picsum.photos/seed/buy5/300/300', specialization: 'Plot cleaning & maintenance', bio: 'Reliable plot maintenance services.' },
+  { id: 'buy1', name: 'Builder Projects', service: ServiceType.BUY_SERVICE, rating: 4.6, rate: '₹5000/project', imageUrl: 'https://plus.unsplash.com/premium_photo-1683133686509-a84ea0c8de4e?q=80&w=1933&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Residential & Commercial', bio: 'Expert in builder projects for homes and offices.' },
+  { id: 'buy2', name: 'Construction Materials', service: ServiceType.BUY_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://images.unsplash.com/photo-1609867271967-a82f85c48531?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'All construction materials', bio: 'Supplier of quality construction materials.' },
+  { id: 'buy3', name: 'Property Legal Services', service: ServiceType.BUY_SERVICE, rating: 4.7, rate: '₹2000/case', imageUrl: 'https://plus.unsplash.com/premium_photo-1661559051049-f9e147c7a90b?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Legal documentation', bio: 'Legal expert for property matters.' },
+  { id: 'buy4', name: 'Home Interiors', service: ServiceType.BUY_SERVICE, rating: 4.8, rate: '₹300/sqft', imageUrl: 'https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Modern interiors', bio: 'Interior design for homes and apartments.' },
+  { id: 'buy5', name: 'Plot Maintenance', service: ServiceType.BUY_SERVICE, rating: 4.4, rate: '₹1500/month', imageUrl: 'https://plus.unsplash.com/premium_photo-1747908374308-54d1959e0abd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Plot cleaning & maintenance', bio: 'Reliable plot maintenance services.' },
 
   // Sell Services
-  { id: 'sell1', name: 'Property Listing', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹2000/listing', imageUrl: 'https://picsum.photos/seed/sell1/300/300', specialization: 'Online & offline listing', bio: 'Get your property listed for sale.' },
-  { id: 'sell2', name: 'Brokerage Services', service: ServiceType.SELL_SERVICE, rating: 4.3, rate: '2% commission', imageUrl: 'https://picsum.photos/seed/sell2/300/300', specialization: 'Brokerage', bio: 'Professional brokerage for property sales.' },
-  { id: 'sell3', name: 'Resale Assistance', service: ServiceType.SELL_SERVICE, rating: 4.6, rate: '₹3000/transaction', imageUrl: 'https://picsum.photos/seed/sell3/300/300', specialization: 'Resale', bio: 'Assistance with property resale.' },
-  { id: 'sell4', name: 'Land Sale', service: ServiceType.SELL_SERVICE, rating: 4.7, rate: '₹5000/acre', imageUrl: 'https://picsum.photos/seed/sell4/300/300', specialization: 'Land sales', bio: 'Expert in land sales and documentation.' },
-  { id: 'sell5', name: 'Commercial Property Sale', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹10000/property', imageUrl: 'https://picsum.photos/seed/sell5/300/300', specialization: 'Commercial property', bio: 'Sell your commercial property with ease.' },
+  { id: 'sell1', name: 'Property Listing', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹2000/listing', imageUrl: 'https://plus.unsplash.com/premium_photo-1694475725687-8b3d1bab7e2a?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Online & offline listing', bio: 'Get your property listed for sale.' },
+  { id: 'sell2', name: 'Brokerage Services', service: ServiceType.SELL_SERVICE, rating: 4.3, rate: '2% commission', imageUrl: 'https://images.unsplash.com/flagged/photo-1551135049-83f3419ef05c?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Brokerage', bio: 'Professional brokerage for property sales.' },
+  { id: 'sell3', name: 'Resale Assistance', service: ServiceType.SELL_SERVICE, rating: 4.6, rate: '₹3000/transaction', imageUrl: 'https://images.unsplash.com/photo-1577387196112-579d95312c6d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Resale', bio: 'Assistance with property resale.' },
+  { id: 'sell4', name: 'Land Sale', service: ServiceType.SELL_SERVICE, rating: 4.7, rate: '₹5000/acre', imageUrl: 'https://images.unsplash.com/photo-1669003154058-e1876138ac3c?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Land sales', bio: 'Expert in land sales and documentation.' },
+  { id: 'sell5', name: 'Commercial Property Sale', service: ServiceType.SELL_SERVICE, rating: 4.5, rate: '₹10000/property', imageUrl: 'https://plus.unsplash.com/premium_photo-1712083524480-b508a0e4f956?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Commercial property', bio: 'Sell your commercial property with ease.' },
 
   // Commercial Services
-  { id: 'comm1', name: 'Packers and Movers', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.6, rate: '₹5000/move', imageUrl: 'https://picsum.photos/seed/comm1/300/300', specialization: 'Relocation', bio: 'Professional packers and movers for homes and offices.' },
-  { id: 'comm2', name: 'Building Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm2/300/300', specialization: 'All building materials', bio: 'Supplier of commercial building materials.' },
-  { id: 'comm3', name: 'Home Cleaning', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.7, rate: '₹1500/cleaning', imageUrl: 'https://picsum.photos/seed/comm3/300/300', specialization: 'Deep cleaning', bio: 'Home and office cleaning services.' },
-  { id: 'comm4', name: 'Sanitary Kitchen Electric Shop', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.4, rate: '₹500/visit', imageUrl: 'https://picsum.photos/seed/comm4/300/300', specialization: 'Sanitary & kitchen', bio: 'Sanitary, kitchen, and electric shop solutions.' },
-  { id: 'comm5', name: 'Building Planner', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.8, rate: '₹8000/project', imageUrl: 'https://picsum.photos/seed/comm5/300/300', specialization: 'Planning', bio: 'Building planning and consulting.' },
-  { id: 'comm6', name: 'Construction Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://picsum.photos/seed/comm6/300/300', specialization: 'Materials', bio: 'Commercial construction material supplier.' },
+  { id: 'comm1', name: 'Packers and Movers', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.6, rate: '₹5000/move', imageUrl: 'https://plus.unsplash.com/premium_photo-1664300914931-76c0f99a96b8?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Relocation', bio: 'Professional packers and movers for homes and offices.' },
+  { id: 'comm2', name: 'Building Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://images.unsplash.com/photo-1637241612956-b7309005288b?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'All building materials', bio: 'Supplier of commercial building materials.' },
+  { id: 'comm3', name: 'Home Cleaning', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.7, rate: '₹1500/cleaning', imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Deep cleaning', bio: 'Home and office cleaning services.' },
+  { id: 'comm4', name: 'Sanitary Kitchen Electric Shop', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.4, rate: '₹500/visit', imageUrl: 'https://plus.unsplash.com/premium_photo-1728681169090-f513a665d08f?q=80&w=1932&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Sanitary & kitchen', bio: 'Sanitary, kitchen, and electric shop solutions.' },
+  { id: 'comm5', name: 'Building Planner', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.8, rate: '₹8000/project', imageUrl: 'https://plus.unsplash.com/premium_photo-1666299871945-a86eb6814a79?q=80&w=2069&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Planning', bio: 'Building planning and consulting.' },
+  { id: 'comm6', name: 'Construction Materials', service: ServiceType.COMMERCIAL_SERVICE, rating: 4.5, rate: '₹1000/consultation', imageUrl: 'https://images.unsplash.com/photo-1609867271967-a82f85c48531?q=80&w=2071&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D', specialization: 'Materials', bio: 'Commercial construction material supplier.' },
 ];
-export const LocationMarkerIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 inline mr-1", viewBox: "0 0 20 20", fill: "currentColor" },
-    React.createElement('path', { fillRule: "evenodd", d: "M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z", clipRule: "evenodd" })
-  )
-);
-export const CheckBadgeIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 20 20", fill: "currentColor", className: "w-5 h-5 inline text-green-500" },
-    React.createElement('path', { fillRule: "evenodd", d: "M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z", clipRule: "evenodd" })
-  )
-);
-export const AreaIcon: React.FC = () => (
-  React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", className: "h-5 w-5 inline mr-1", fill: "none", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "2" },
-    React.createElement('path', { strokeLinecap: "round", strokeLinejoin: "round", d: "M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" })
-  )
+
+export const LocationMarkerIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    {...props}
+  >
+    <path
+      fillRule="evenodd"
+      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+      clipRule="evenodd"
+    />
+  </svg>
 );
 
-export const RupeeIcon: React.FC = () => (
-  React.createElement('svg', {
-    xmlns: "http://www.w3.org/2000/svg",
-    className: "h-5 w-5 inline mr-1",
-    viewBox: "0 0 20 20",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "1.5" // Adjusted for visual clarity; can be fine-tuned
-  },
-    React.createElement('path', {
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-      // Standard path for Indian Rupee Symbol (₹)
-      // M6 3 H16 (top bar), M6 7 H16 (middle bar), M9 7 V17 (vertical stem), M6 11 H10 (lower horizontal bar on stem)
-      // Simplified for better rendering in small sizes:
-      d: "M6 4h10M6 8h10M8.5 8v8M6 12h5"
-    })
-  )
+export const CheckBadgeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-5 h-5 inline text-green-500"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    {...props}
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+export const AreaIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5"
+    />
+  </svg>
+);
+
+export const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 inline mr-1"
+    viewBox="0 0 20 20"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.5}
+    {...props}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M6 4h10M6 8h10M8.5 8v8M6 12h5"
+    />
+  </svg>
 );
 export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
   id: 'bms-plot-alpha',
@@ -573,9 +606,17 @@ export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
 };
 
 export const NAV_LINKS = [
+  { name: 'Home', path: '/' },
+  { name: 'Plot Marketplace', path: '/plots' },
+  { name: 'Micro Plots', path: `mysqft-listing` },
+  { name: 'Materials Store', path: '/materials' },
+  { name: 'Professional Services', path: '/services' },
+  // { name: 'Dash Board', path: '/dashboard' },
+];
+export const DNAV_LINKS = [
   { name: 'Home', path: '/D' },
   { name: 'Plot Marketplace', path: '/Dplots' },
-  { name: 'Book My SqFt', path: `/Dbook-my-sqft/${MOCK_BMS_PLOT_INFO.id}` },
+  { name: 'Micro Plots', path: `Dmysqft-listing` },
   { name: 'Materials Store', path: '/Dmaterials' },
   { name: 'Professional Services', path: '/Dservices' },
   // { name: 'Dash Board', path: '/dashboard' },
