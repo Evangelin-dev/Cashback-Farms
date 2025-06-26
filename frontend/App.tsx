@@ -62,7 +62,7 @@ import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents
 import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
 import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
 import BookConsultation from './components/detailpageandcart/bookconsultation';
-// import { DMaterialDetailPage,DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+ import { DMaterialDetailPage,DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
 import RealMySqft from './pages/realestate/components/realMysqft';
@@ -79,8 +79,8 @@ import BookPlotPayment from './pages/user/BookPlotPayment';
 import TermsAndConditions from './pages/TermsAndConditions';
 import BookMySqftPayment from './pages/user/BookMySqftPayment';
 import RegistrationPage from './pages/registration/registration';
-// import OTPPage from './pages/regurestion/OTP';
-// import PrivacyPolicy from './pages/PrivacyPolicy';
+import OTPPage from './pages/registration/OTP';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 const AppRoutes: React.FC = () => {
 
@@ -100,14 +100,14 @@ const AppRoutes: React.FC = () => {
       <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
       <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
       <Route path="/Dplans" element={<DPlansPage />} /> 
-      {/* <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} /> */}
+      <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
       <Route path="bookconsultation" element={<BookConsultation />} />
-      {/* <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} /> */}
+      <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
       <Route path="/Dcart" element={<DCart /> } />
       <Route path="/Dplans" element={<DPlansPage />} /> 
       <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
       <Route path="/Dterms" element={<TermsAndConditions />} />
-        {/* <Route path="/Dprivacy" element={<PrivacyPolicy />} /> */}
+        <Route path="/Dprivacy" element={<PrivacyPolicy />} />
       
     
 
@@ -143,7 +143,7 @@ const AppRoutes: React.FC = () => {
         <Route path="bookplotpayment" element={<BookPlotPayment />} />
         <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
         <Route path="/terms" element={<TermsAndConditions />} />
-        {/* <Route path="/privacy" element={<PrivacyPolicy />} /> */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         
       </Route>
 
@@ -181,7 +181,7 @@ const AppRoutes: React.FC = () => {
       {/* Fallback for any unmatched route */}
       {/* <Route path="*" element={<DefaultLanding/>} /> */}
       <Route path="/registration" element={<RegistrationPage />} /> 
-      {/* <Route path="/OTP" element={<OTPPage />} />  */}
+      <Route path="/OTP" element={<OTPPage />} /> 
       <Route path="*" element={<NotFoundPage />} />
 
 
