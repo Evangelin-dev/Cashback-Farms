@@ -1,4 +1,7 @@
+import apiClient from '@/src/utils/api/apiClient';
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 interface AuthModalProps {
@@ -66,7 +69,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [countryOptions, setCountryOptions] = useState<{ code: string; label: string }[]>(DEFAULT_COUNTRY_OPTIONS);
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [redirectLoading, setRedirectLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all')
@@ -101,7 +106,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-  const handleSendOtp = (e: React.FormEvent) => {
+  const handleSendOtp_ = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -126,18 +131,67 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
       }
     }, 900);
   };
+  const handleSendOtp = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+  setLoading(true);
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  if (!input) {
+    setLoading(false);
+    setError('Enter your phone number or email.');
+    return;
+  }
+
+  const isMobileInput = isMobile(input);
+  const isEmailInput = isEmail(input);
+
+  if (!isMobileInput && !isEmailInput) {
+    setLoading(false);
+    setError('Enter a valid phone number or email.');
+    return;
+  }
+
+  const email = isMobileInput ? `${countryCode}${input}` : input;
+
+  try {
+    const res =await apiClient.post('/auth/request-otp/', { email });
+console.log('OTP request response:', res);
+    setOtpSent(true);
+    setSuccess(
+      isMobileInput
+        ? `OTP sent to ${email}`
+        : `Login link sent to ${email}`
+    );
+    setOtp(res?.data?.otp)
+    const token = res?.data?.tokens?.access;
+    localStorage.setItem("token", token);
+  } catch (err: any) {
+    console.error('OTP request error:', err);
+    setError(
+      err.response?.data?.message || 'Failed to send OTP. Please try again.'
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      if (otpInput !== otp) {
-        setError('Invalid OTP.');
-        return;
-      }
+
+    const isMobileInput = isMobile(input);
+    const email = isMobileInput ? `${countryCode}${input}` : input;
+
+    try {
+      const login = await apiClient.post(
+        '/auth/verify-otp/',
+        { email, otp_code: otpInput },
+        { headers: { Authorization: '' } }
+      );
       setMobileVerified(true);
       setSuccess('Verified!');
       if (onAuthSuccess) {
@@ -146,11 +200,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           mobileVerified: true,
         });
       }
+
+      const { access, refresh, user_type } = login.data;
+      localStorage.setItem('access_token', access);
+      localStorage.setItem('refresh_token', refresh);
+
       setTimeout(() => {
-        onClose();
-        navigate('/Landing');
-      }, 800);
-    }, 900);
+        setRedirectLoading(true);
+        setTimeout(() => {
+          setRedirectLoading(false);
+          onClose();
+          console.log('respesponse:', login.data);
+
+          // Check user_type in response and redirect accordingly
+          if (user_type === 'real_estate_agent') {
+            navigate('/realestate/realprofile');
+          } else {
+            navigate('/Landing');
+          }
+        }, 800); // 5 seconds loader
+      },  900); // 900ms delay before redirect
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message || 'Invalid OTP. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleLogin = () => {
