@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { MOCK_PLOTS } from '../../../constants';
-import PlotCard from '../../../components/landingpage/landingpagecomponents/plot/PlotCard';
+
 import { Plot, PlotType } from '../../../types';
 import Button from '../../../components/common/Button.tsx';
+import DPlotCard from '../defaultlandingcomponents/plot/PlotCard.tsx';
 
 const DPlotMarketplacePage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | PlotType>( 'all');
@@ -47,7 +48,7 @@ const DPlotMarketplacePage: React.FC = () => {
       {filteredPlots.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPlots.map(plot => (
-            <PlotCard key={plot.id} plot={plot} />
+            <DPlotCard key={plot.id} plot={plot} />
           ))}
         </div>
       ) : (

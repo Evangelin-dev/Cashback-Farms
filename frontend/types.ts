@@ -1,4 +1,3 @@
-
 export enum PaymentStatus {
   PAID = 'Paid',
   DUE = 'Due',
@@ -10,7 +9,7 @@ export enum PaymentStatus {
 export enum PaymentType {
   BOOKING_ADVANCE = 'Booking Advance',
   INSTALLMENT = 'Installment',
-  OTHER = 'Other'
+  FINAL = 'Final Payment',
 }
 
 export enum UserRole {
@@ -26,6 +25,7 @@ export enum BookingStatus {
 }
 
 export interface Plot {
+  isAvailable: boolean;
   id: string;
   title: string;
   location: string;
@@ -285,6 +285,7 @@ export interface SqftUnit {
   isAvailable: boolean;
   isSelected: boolean;
   isBooked: boolean;
+  imageUrl?: string;
 }
 
 export interface BookMySqftPlotInfo {
@@ -297,23 +298,4 @@ export interface BookMySqftPlotInfo {
   sqftPricePerUnit: number;
   emiOptions: string[];
   initialGrid: SqftUnit[][]; 
-}
-export interface SqftUnit {
-  id: string; 
-  row: number;
-  col: number;
-  isAvailable: boolean;
-  isSelected: boolean;
-  isBooked: boolean;
-}    
-export interface Material {
-  id:string;
-  name: string;
-  category: string;
-  price: number;
-  moq: number; 
-  shippingTime: string;
-  vendor: string;
-  imageUrl:string;
-  description: string;
 }

@@ -7,8 +7,6 @@ import {
   IconInformationCircle,
   IconLogout,
   IconMapPin,
-  IconPlus,
-  IconShieldCheck,
   IconTableCells,
   IconUsers,
   IconWallet,
@@ -23,7 +21,7 @@ interface NavItemProps {
   exact?: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ to, icon, label, exact = false }) => {
+const NavItem: React.FC<NavItemProps & { onClick?: () => void }> = ({ to, icon, label, exact = false, onClick }) => {
   const location = useLocation();
   const isActive = exact ? location.pathname === to : (location.pathname === to || (to !== "/" && location.pathname.startsWith(to)));
 
@@ -32,6 +30,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, exact = false }) => 
       to={to}
       className={`flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
                   ${isActive ? 'bg-primary text-white font-semibold shadow-md' : 'text-black hover:bg-primary hover:text-white'}`}
+      onClick={onClick}
     >
       <span className="mr-3 w-5 h-5">{icon}</span>
       {label}
@@ -146,13 +145,13 @@ const Sidebar: React.FC = () => {
 
   // Sidebar menu items
   const menuItems = [
-    { to: "/", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
+    { to: "/Landing", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
     { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
-    { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Book My SqFt" },
-    { to: "/Umaterials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
+    { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Micro Plots" },
+    { to: "/materials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
     { to: "/services", icon: <IconUsers className="w-5 h-5" />, label: "Professional Services" },
-    { to: "/book-my-sqft/B001", icon: <IconShieldCheck className="w-5 h-5" />, label: "View Plot Details" },
+    // { to: "/book-my-sqft/B001", icon: <IconShieldCheck className="w-5 h-5" />, label: "View Plot Details" },
     // { to: "/refer-earn", icon: <IconPlus className="w-5 h-5" />, label: "Refer & Earn" },
     { to: "/knowledge-base", icon: <IconInformationCircle className="w-5 h-5" />, label: "Knowledge Base" },
     { to: "/help-support", icon: <IconCog className="w-5 h-5" />, label: "Help & Support" },
@@ -162,27 +161,42 @@ const Sidebar: React.FC = () => {
     <>
       {/* Mobile menu button */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 bg-primary text-white p-2 rounded shadow-md"
+        className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-green-500 to-green-700 text-white p-2 rounded-full shadow-lg"
         onClick={() => setSidebarOpen((open) => !open)}
         aria-label="Open sidebar"
+        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      {/* Sidebar as drawer on mobile, static on desktop */}
+      {/* Sidebar as creative side drawer on mobile, static on desktop */}
       <div
         className={`
-          fixed z-40 top-0 left-0 h-full w-64 bg-white text-black flex flex-col p-4 space-y-2 border-r border-neutral-700
-          transition-transform duration-200
+          fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200
+          transition-transform duration-300
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
           md:static md:translate-x-0 md:w-64 md:flex
         `}
-        style={{ minWidth: "16rem" }}
+        style={{
+          minWidth: "17rem",
+          borderTopRightRadius: 32,
+          borderBottomRightRadius: 32,
+          boxShadow: sidebarOpen ? "0 8px 32px 0 rgba(34,197,94,0.15)" : undefined,
+          background: "linear-gradient(135deg, #f0fdf4 60%, #e0f2f1 100%)",
+          marginTop: sidebarOpen ? 60 : 0,
+          overflowY: "auto", // Make sidebar scrollable
+          maxHeight: "100vh"
+        }}
       >
         {/* Profile section at the top */}
         <ProfileSection />
-        <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-700">
+        <div className="text-2xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
+          <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow flex items-center justify-center">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4" />
+            </svg>
+          </span>
           Cashback<span className="text-black">Homes</span>
         </div>
         <nav className="flex-grow space-y-1">
@@ -193,13 +207,13 @@ const Sidebar: React.FC = () => {
               icon={item.icon}
               label={item.label}
               exact={item.exact}
-              {...(sidebarOpen ? { onClick: () => setSidebarOpen(false) } : {})}
+              onClick={() => setSidebarOpen(false)}
             />
           ))}
-          <div className="my-2 border-t border-neutral-700"></div>
+          <div className="my-2 border-t border-green-200"></div>
         </nav>
         <div className="mt-auto">
-          <hr className="my-2 border-t border-neutral-300" />
+          <hr className="my-2 border-t border-green-100" />
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
@@ -212,10 +226,18 @@ const Sidebar: React.FC = () => {
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar-glass {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(16px);
+          }
+        }
+      `}</style>
     </>
   );
 };

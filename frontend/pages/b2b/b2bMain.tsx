@@ -15,33 +15,6 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import "../realestate/AgentProfileSection.css"; // Reuse the same CSS for styling
 
-const menuItems = [
-  {
-    key: "/b2b/products",
-    icon: <IconCollection className="w-5 h-5" />,
-    label: "Manage Products",
-  },
-  {
-    key: "/b2b/orders",
-    icon: <IconMapPin className="w-5 h-5" />,
-    label: "Product Orders",
-  },
-  {
-    key: "/b2b/pricing",
-    icon: <IconRupee className="w-5 h-5" />,
-    label: "Pricing & Offers",
-  },
-  {
-    key: "/b2b/customers",
-    icon: <IconUsers className="w-5 h-5" />,
-    label: "Customers",
-  },
-  {
-    key: "/b2b/wallet",
-    icon: <IconWallet className="w-5 h-5" />,
-    label: "Wallet / Settlement",
-  },
-];
 
 const pageTitles: Record<string, string> = {
   "/b2b/products": "Manage Products",

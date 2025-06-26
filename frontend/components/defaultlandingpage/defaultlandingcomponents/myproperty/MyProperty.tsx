@@ -14,6 +14,8 @@ interface Plot {
   type: PlotType;
   sqftPrice?: number;
   isFlagship?: boolean;
+  isAvailable: boolean;
+  value: number;
 }
 
 const MyProperty: React.FC = () => {
@@ -28,6 +30,8 @@ const MyProperty: React.FC = () => {
     type: PlotType.PUBLIC,
     sqftPrice: undefined,
     isFlagship: false,
+    isAvailable: true,
+    value: 0,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -60,6 +64,8 @@ const MyProperty: React.FC = () => {
       type: PlotType.PUBLIC,
       sqftPrice: undefined,
       isFlagship: false,
+      isAvailable: true,
+      value: 0,
     });
     setImageFile(null);
     setImagePreview('');
