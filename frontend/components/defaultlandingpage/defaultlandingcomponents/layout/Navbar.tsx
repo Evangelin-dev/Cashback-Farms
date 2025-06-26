@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { NAV_LINKS } from '../../../../constants';
+import { DNAV_LINKS } from '../../../../constants';
 import AuthForm from '../../../auth/AuthForm';
 
 interface NavbarProps {
@@ -41,7 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
             </div>
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center space-x-2">
-              {NAV_LINKS.map((link) => (
+              {DNAV_LINKS.map((link) => (
                 <NavLink
                   key={link.name}
                   to={link.path}
@@ -145,7 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 </button>
               </div>
               <div className="flex flex-col gap-2">
-                {NAV_LINKS.map((link) => (
+                {DNAV_LINKS.map((link) => (
                   <NavLink
                     key={link.name}
                     to={link.path}

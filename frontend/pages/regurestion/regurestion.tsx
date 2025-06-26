@@ -6,15 +6,22 @@ const initialForm = {
   company_name: "Green Realty",
   phone_number: "+1234567890",
   company_number: "COMP12345",
+  user_type: "", // Add user_type field
   email: "dhanushvikram11@gmail.com",
 };
+
+const USER_TYPES = [
+  { value: "", label: "Select User Type" },
+  { value: "realestate", label: "Real Estate Agent" },
+  { value: "b2b", label: "B2B Vendor" },
+];
 
 const RegurestionPage: React.FC = () => {
   const [form, setForm] = useState(initialForm);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -88,6 +95,26 @@ const RegurestionPage: React.FC = () => {
                   required
                 />
               </div>
+              {/* User Type Dropdown */}
+              <div className="md:col-span-2">
+                <label className="block text-green-700 font-semibold mb-1">
+                  User Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  name="user_type"
+                  value={form.user_type}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow"
+                >
+                  {USER_TYPES.map(opt => (
+                    <option key={opt.value} value={opt.value} disabled={opt.value === ""}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Email field */}
               <div className="md:col-span-2">
                 <label className="block text-green-700 font-semibold mb-1">Email</label>
                 <input
