@@ -7,7 +7,7 @@ from .views import (
     RealEstateAgentProfileViewSet, RealEstateAgentRegistrationView,
     UserRegistrationView, OTPRequestView, OTPVerificationAndLoginView,
     UserLoginView, UserLogoutView, ReferralNetworkView,
-    SQLFTProjectViewSet, AgentPlotViewSet
+    SQLFTProjectViewSet, AgentPlotViewSet, MicroPlotViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -25,6 +25,8 @@ router.register(r'order-items', OrderItemViewSet)
 router.register(r'agents', RealEstateAgentProfileViewSet)
 router.register(r'sqlft-projects', SQLFTProjectViewSet)
 router.register(r'agent-plots', AgentPlotViewSet, basename='agent-plot')
+router.register(r'micro-plots', MicroPlotViewSet, basename='microplot')
+
 
 
 urlpatterns = [

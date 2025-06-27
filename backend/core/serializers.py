@@ -6,6 +6,8 @@ from .models import (
 )
 from .models import AgentPlot
 from rest_framework import serializers
+from rest_framework import serializers
+from core.models import MicroPlot
 
 # class AgentPlotSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -207,5 +209,14 @@ class AgentPlotSerializer(serializers.ModelSerializer):
         model = AgentPlot
         fields = '__all__'
         read_only_fields = ['listed_by']
+
+
+
+
+class MicroPlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroPlot
+        fields = '__all__'
+        read_only_fields = ['listed_by', 'created_at']
 
 

@@ -13,7 +13,9 @@ from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import AgentPlot
 from .serializers import AgentPlotSerializer
-
+from rest_framework import viewsets, permissions
+from .models import MicroPlot
+from .serializers import MicroPlotSerializer
 
 
 from .models import (
@@ -474,3 +476,11 @@ class AgentPlotViewSet(viewsets.ModelViewSet):
         # Only show plots listed by the logged-in agent
         return AgentPlot.objects.filter(listed_by=self.request.user)
 
+
+class MicroPlotViewSet(viewsets.ModelViewSet):
+    queryset = MicroPlot.objects.all()
+    serializer_class = MicroPlotSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(listed_by=self.request.user)
