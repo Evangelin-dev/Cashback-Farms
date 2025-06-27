@@ -2,8 +2,15 @@
 from rest_framework import serializers
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
-    EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail
+    EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject
 )
+from .models import AgentPlot
+from rest_framework import serializers
+from rest_framework import serializers
+from core.models import MicroPlot
+
+
+
 
 # User and Authentication Serializers
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -165,12 +172,14 @@ class RealEstateAgentProfileSerializer(serializers.ModelSerializer):
 
 
 class PlotInquirySerializer(serializers.ModelSerializer):
-    plot_name = serializers.CharField(source='plot.title', read_only=True)
+    plot_title = serializers.CharField(source='plot.title', read_only=True)
 
     class Meta:
         model = PlotInquiry
-        fields = ['id', 'lead_name', 'contact', 'plot', 'plot_name', 'inquiry', 'status', 'created_at']
-        read_only_fields = ('created_at', 'plot_name')
+        fields = [
+            'id', 'lead_name', 'contact', 'plot', 'plot_title', 'inquiry', 'status', 'created_at'
+        ]
+        read_only_fields = ('created_at', 'plot_title')
 
 
 class ReferralCommissionSerializer(serializers.ModelSerializer):
@@ -191,10 +200,19 @@ class SQLFTProjectSerializer(serializers.ModelSerializer):
             'project_video', 'land_document', 'created_at'
         ]
 
-
-class BankDetailSerializer(serializers.ModelSerializer):
+class AgentPlotSerializer(serializers.ModelSerializer):
     class Meta:
-        model = BankDetail
+        model = AgentPlot
         fields = '__all__'
-        read_only_fields = ['status', 'admin_approval_required', 'user', 'created_at']
+        read_only_fields = ['listed_by']
+
+
+
+
+class MicroPlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MicroPlot
+        fields = '__all__'
+        read_only_fields = ['listed_by', 'created_at']
+
 

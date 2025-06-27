@@ -1,11 +1,12 @@
 # core/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.conf import settings
 import random
 import string
 import datetime
 from django.utils import timezone
+from django.db import models
+from django.conf import settings
 
 
 # User Roles
@@ -284,17 +285,19 @@ class PlotInquiry(models.Model):
     STATUS_CHOICES = [
         ('new', 'New'),
         ('contacted', 'Contacted'),
+        ('interested', 'Interested'),
+        ('not_interested', 'Not Interested'),
         ('closed', 'Closed'),
     ]
-    lead_name = models.CharField(max_length=100)
-    contact = models.CharField(max_length=20)
-    plot = models.ForeignKey('PlotListing', on_delete=models.CASCADE, related_name='inquiries')
+    lead_name = models.CharField(max_length=255)
+    contact = models.CharField(max_length=50)
+    plot = models.ForeignKey(PlotListing, on_delete=models.CASCADE, related_name='inquiries')
     inquiry = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.lead_name} - {self.plot}"
+        return f"{self.lead_name} - {self.plot.title} ({self.status})"
 
 
 class ReferralCommission(models.Model):
@@ -327,22 +330,43 @@ class SQLFTProject(models.Model):
     def __str__(self):
         return self.project_name
 
+class AgentPlot(models.Model):
+    title = models.CharField(max_length=255)
+    owner_name = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(blank=True)
+    images = models.ImageField(upload_to='agent_plots/', blank=True, null=True)
+    listed_by = models.ForeignKey('core.CustomUser', on_delete=models.CASCADE, related_name='agent_plots')
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
-class BankDetail(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-    ]
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bank_details')
-    account_holder_name = models.CharField(max_length=100)
-    account_number = models.CharField(max_length=20)
-    ifsc = models.CharField(max_length=20)
-    bank_name = models.CharField(max_length=100)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    admin_approval_required = models.BooleanField(default=True)
+    def __str__(self):
+        return self.title
+
+
+class MicroPlot(models.Model):
+    listed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    project_name = models.CharField(max_length=255)
+    location = models.TextField()
+    google_map_link = models.URLField(blank=True, null=True)
+    district = models.CharField(max_length=100)
+    project_type = models.CharField(max_length=50, choices=[('Plot', 'Plot'), ('Apartment', 'Apartment')])
+    unit = models.CharField(max_length=20, choices=[('Sqft', 'Sqft'), ('Acre', 'Acre')])
+    sqft_price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField(blank=True)
+
+    layout_pdf = models.FileField(upload_to='microplots/layouts/', blank=True, null=True)
+    image = models.ImageField(upload_to='microplots/images/', blank=True, null=True)
+    video = models.FileField(upload_to='microplots/videos/', blank=True, null=True)
+    land_pdf = models.FileField(upload_to='microplots/land/', blank=True, null=True)
+    land_docs_pdf = models.FileField(upload_to='microplots/docs/', blank=True, null=True)
+
+    amenities = models.JSONField(default=list)  # stores list like ["Gated", "Water Supply"]
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.account_holder_name} - {self.bank_name}"
+        return self.project_name
 

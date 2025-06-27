@@ -11,26 +11,33 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import AgentPlot
+from .serializers import AgentPlotSerializer
+from rest_framework import viewsets, permissions
+from .models import MicroPlot
+from .serializers import MicroPlotSerializer
+from rest_framework.decorators import action
+
+
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail
+    SQLFTProject
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
     CustomUserSerializer, PlotListingSerializer, JointOwnerSerializer,
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
-    ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer
+    ReferralCommissionSerializer, SQLFTProjectSerializer
 )
 
 # --- Authentication and User Management ---
-class UserRegistrationView(APIView):
-    authentication_classes = []  # <--- Add this line
-    permission_classes = [AllowAny]
+class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
+    permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -61,8 +68,7 @@ class UserRegistrationView(APIView):
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class OTPRequestView(APIView):
-    authentication_classes = []  # <--- Add this line
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -98,8 +104,7 @@ class OTPRequestView(APIView):
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class OTPVerificationAndLoginView(APIView):
-    authentication_classes = []  # <--- Add this line
-    permission_classes = [AllowAny]
+    permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         try:
@@ -119,14 +124,14 @@ class OTPVerificationAndLoginView(APIView):
 
             if user.verify_otp(otp_code):
                 refresh = RefreshToken.for_user(user)
-                return Response({"data":{
+                return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "user_id": user.id,
                     "username": user.username,
                     "user_type": user.user_type
-                }}, status=status.HTTP_200_OK)
+                }, status=status.HTTP_200_OK)
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -461,16 +466,28 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
-class BankDetailViewSet(viewsets.ModelViewSet):
-    queryset = BankDetail.objects.all()
-    serializer_class = BankDetailSerializer
-    permission_classes = [IsAuthenticated]
+class AgentPlotViewSet(viewsets.ModelViewSet):
+    queryset = AgentPlot.objects.all()
+    serializer_class = AgentPlotSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-    
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_superuser or user.user_type == UserType.ADMIN:
-            return BankDetail.objects.all()
-        return BankDetail.objects.filter(user=user)
+        serializer.save(listed_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        plot = self.get_object()
+        plot.is_active = not plot.is_active
+        plot.save()
+        return Response({
+            'status': 'toggled',
+            'is_active': plot.is_active
+        }, status=status.HTTP_200_OK)
+
+
+class MicroPlotViewSet(viewsets.ModelViewSet):
+    queryset = MicroPlot.objects.all()
+    serializer_class = MicroPlotSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(listed_by=self.request.user)
