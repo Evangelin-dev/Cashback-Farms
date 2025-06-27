@@ -1,136 +1,86 @@
+import React from 'react';
 
-// import React, { useState } from 'react';
+import PropertyListingCard from '../components/PropertyListingCard';
 
-// import { ListingType, PropertyListing, PropertyCategory, ResidentialPropertyType, CommercialPropertyType } from '../types';
-// import PropertyListingCard from '../components/PropertyListingCard';
-// import Button from '../components/Button';
-// import Card from '../components/Card'; // Added missing import
-// import { IconSearch } from '../constants';
-// import { MOCK_PROPERTY_LISTINGS } from '../constants';
 
-// const HomePage: React.FC = () => {
-//   const [activeListingType, setActiveListingType] = useState<ListingType>(ListingType.BUY);
-//   const [city, setCity] = useState<string>('Bengaluru'); // Default city
-//   const [searchTerm, setSearchTerm] = useState<string>(''); // For locality, project, etc.
-//   const [propertyType, setPropertyType] = useState<string>(''); // ResidentialPropertyType or CommercialPropertyType as string
+// Import or define purchased arrays (replace with real data source as needed)
+const purchasedPlots: any[] = (window as any).MOCK_PURCHASED_PLOTS || [];
+const purchasedMaterials: any[] = (window as any).MOCK_PURCHASED_MATERIALS || [];
+const purchasedServices: any[] = (window as any).MOCK_PURCHASED_SERVICES || [];
 
-//   // Filter properties based on search criteria (simplified for now)
-//   const filteredProperties = MOCK_PROPERTY_LISTINGS.filter((prop: { listingType: ListingType; location: { city: string; locality: string; }; title: string; propertyCategory: PropertyCategory; residentialType: string; commercialType: string; }) => {
-//     const matchesListingType = prop.listingType === activeListingType;
-//     const matchesCity = prop.location.city.toLowerCase().includes(city.toLowerCase());
-//     const matchesSearchTerm = searchTerm === '' || 
-//                               prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//                               prop.location.locality.toLowerCase().includes(searchTerm.toLowerCase());
-//     const matchesPropertyType = propertyType === '' || 
-//                                 (prop.propertyCategory === PropertyCategory.RESIDENTIAL && prop.residentialType === propertyType) ||
-//                                 (prop.propertyCategory === PropertyCategory.COMMERCIAL && prop.commercialType === propertyType) ||
-//                                 (prop.propertyCategory === PropertyCategory.PLOT && propertyType === PropertyCategory.PLOT.toString()); // Added for plot category matching
-
-//     return matchesListingType && matchesCity && matchesSearchTerm && matchesPropertyType;
-//   });
+const HomePage: React.FC = () => {
   
-//   const handleSearch = () => {
-//     // In a real app, this might trigger an API call or more complex filtering
-//     console.log("Searching for:", { activeListingType, city, searchTerm, propertyType });
-//     // The filtering is already happening reactively due to state changes.
-//     // This function can be used for explicit actions if needed.
-//   };
+  
 
-//   return (
-//     <div className="space-y-8">
-//       {/* Hero Search Section */}
-//       <div className="bg-gradient-to-r from-primary-dark via-primary to-primary-light p-6 md:p-10 rounded-lg shadow-xl text-white">
-//         <h1 className="text-3xl md:text-4xl font-bold mb-2 text-center">Find Your Perfect Property</h1>
-//         <p className="text-center text-primary-light/90 mb-6 md:mb-8">Zero Brokerage on Owner Properties. Buy, Sell, Rent with Ease.</p>
+  // If all arrays are empty, render a fallback message so the page is not blank
+  const nothingToShow =
+    purchasedPlots.length === 0 &&
+    purchasedMaterials.length === 0 &&
+    purchasedServices.length === 0;
 
-//         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md max-w-3xl mx-auto">
-//           {/* Buy/Rent Tabs */}
-//           <div className="flex border-b border-neutral-200 mb-4">
-//             {(Object.values(ListingType) as ListingType[]).map(type => (
-//               <button
-//                 key={type}
-//                 onClick={() => setActiveListingType(type)}
-//                 className={`flex-1 py-3 text-sm sm:text-base font-semibold transition-colors duration-150
-//                             ${activeListingType === type 
-//                               ? 'border-b-2 border-primary text-primary' 
-//                               : 'text-neutral-500 hover:text-primary'}`}
-//               >
-//                 {type}
-//               </button>
-//             ))}
-//           </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* --- Purchased Plots Section --- */}
+      {purchasedPlots.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+          <h2 className="text-2xl font-bold text-green-700 mb-4">Your Purchased Plots</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {purchasedPlots.map((plot: any, idx: number) => (
+              <PropertyListingCard key={plot.id || idx} listing={plot} />
+            ))}
+          </div>
+        </section>
+      )}
 
-//           {/* Search Inputs */}
-//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 items-end">
-//             <div>
-//               <label htmlFor="city" className="block text-sm font-medium text-neutral-700 mb-1">City</label>
-//               <select 
-//                 id="city" 
-//                 value={city} 
-//                 onChange={(e) => setCity(e.target.value)}
-//                 className="w-full p-2.5 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
-//               >
-//                 <option value="Bengaluru">Bengaluru</option>
-//                 <option value="Mumbai">Mumbai</option>
-//                 <option value="Delhi">Delhi</option>
-//                 <option value="Pune">Pune</option>
-//               </select>
-//             </div>
-            
-//             <div>
-//               <label htmlFor="searchTerm" className="block text-sm font-medium text-neutral-700 mb-1">Locality / Project / Landmark</label>
-//               <input 
-//                 type="text" 
-//                 id="searchTerm"
-//                 value={searchTerm}
-//                 onChange={(e) => setSearchTerm(e.target.value)}
-//                 placeholder="e.g., Koramangala or Prestige Lakeside"
-//                 className="w-full p-2.5 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-sm"
-//               />
-//             </div>
+      {/* --- Purchased Materials Section --- */}
+      {purchasedMaterials.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+          <h2 className="text-2xl font-bold text-green-700 mb-4">Your Purchased Materials</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {purchasedMaterials.map((item: any, idx: number) => (
+              <div key={item.id || idx} className="bg-white rounded-lg shadow border border-green-100 p-4 flex flex-col">
+                <div className="font-semibold text-green-700">{item.name}</div>
+                <div className="text-sm text-gray-600 mb-2">{item.category}</div>
+                <div className="text-xs text-gray-500 mb-1">Qty: {item.quantity}</div>
+                <div className="text-xs text-gray-500 mb-1">Order ID: {item.orderId}</div>
+                <div className="text-xs text-gray-500">Status: <span className="font-semibold">{item.status}</span></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-//             <div className="sm:col-span-2 lg:col-span-1">
-//                <Button 
-//                 variant="primary" 
-//                 size="lg" 
-//                 className="w-full py-2.5"
-//                 onClick={handleSearch}
-//                 leftIcon={<IconSearch className="w-5 h-5"/>}
-//               >
-//                 Search
-//               </Button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
+      {/* --- Purchased Services Section --- */}
+      {purchasedServices.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+          <h2 className="text-2xl font-bold text-green-700 mb-4">Your Booked Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {purchasedServices.map((svc: any, idx: number) => (
+              <div key={svc.id || idx} className="bg-white rounded-lg shadow border border-green-100 p-4 flex flex-col">
+                <div className="font-semibold text-green-700">{svc.serviceName || svc.name}</div>
+                <div className="text-sm text-gray-600 mb-2">{svc.provider || svc.vendor || svc.company || ''}</div>
+                <div className="text-xs text-gray-500 mb-1">Date: {svc.date || svc.bookedDate || ''}</div>
+                <div className="text-xs text-gray-500 mb-1">Order ID: {svc.orderId || svc.bookingId || ''}</div>
+                <div className="text-xs text-gray-500">Status: <span className="font-semibold">{svc.status}</span></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-//       {/* Property Listings Section */}
-//       <div>
-//         <h2 className="text-2xl font-semibold text-neutral-800 mb-1">
-//             Properties {activeListingType === ListingType.BUY ? "for Sale" : "for Rent"} in {city}
-//         </h2>
-//         <p className="text-neutral-500 mb-6">
-//             {filteredProperties.length > 0 ? `Showing ${filteredProperties.length} properties.` : "No properties match your current filters."}
-//         </p>
+      {/* Fallback if nothing to show */}
+      {nothingToShow && (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
+          <svg className="w-16 h-16 mb-4 text-green-200" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.2" fill="none"/>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6M12 9v6" />
+          </svg>
+          <h2 className="text-xl font-semibold mb-2">No Purchases or Bookings Found</h2>
+          <p className="text-gray-400">You have not purchased any plots, materials, or services yet.</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
-//         {filteredProperties.length > 0 ? (
-//             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-//             {filteredProperties.map((listing: PropertyListing) => (
-//                 <PropertyListingCard key={listing.id} listing={listing} />
-//             ))}
-//             </div>
-//         ) : (
-//             <Card>
-//                 <div className="text-center py-10">
-//                     <IconSearch className="w-16 h-16 text-neutral-300 mx-auto mb-4" />
-//                     <h3 className="text-xl font-semibold text-neutral-700 mb-2">No Properties Found</h3>
-//                     <p className="text-neutral-500">Try adjusting your search filters or check back later.</p>
-//                 </div>
-//             </Card>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default HomePage;
+export default HomePage;

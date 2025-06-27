@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
+import React from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Optional: MUI ThemeProvider and CssBaseline
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 // your custom MUI theme (optional)
 
 // Create a cache instance
@@ -16,7 +16,7 @@ import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
 
 // Pages
-// import HomePage from './pages/HomePage';
+import HomePage from './pages/HomePage';
 import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
 
 import HelpAndSupport from './components/helpandsupport/helpandsupport';
@@ -26,7 +26,13 @@ import PlansPage from './components/landingpage/landingpagecomponents/assistedpl
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
 import MyBooking from './components/mybooking/mybooking';
 
-import AuthModal from '@/components/auth/AuthForm';
+import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
+import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
+import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
+import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
+import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
+import BookConsultation from './components/detailpageandcart/bookconsultation';
 import Cart from './components/detailpageandcart/cart';
 import MyProfile from './components/myprofile/myprofile';
 import MaterialCheckout from "./components/payment/materialcheckout";
@@ -57,36 +63,29 @@ import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
-import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
-import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
-import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
-import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
-import BookConsultation from './components/detailpageandcart/bookconsultation';
- import { DMaterialDetailPage,DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
-import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
-import RealMySqft from './pages/realestate/components/realMysqft';
-import ManageMysqft from './pages/admin/ManageMysqft';
-import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
 import DCart from './components/detailpageandcart/cart';
+import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
+import ManageMysqft from './pages/admin/ManageMysqft';
+import RealMySqft from './pages/realestate/components/realMysqft';
 
 import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
 import DMaterialsStorePage from './components/defaultlandingpage/user/MaterialsStorePage';
 import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
 
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import PostPlots from './pages/realestate/components/PostPlots';
-import BookPlotPayment from './pages/user/BookPlotPayment';
+import OTPPage from './pages/registration/OTP';
+import RegistrationPage from './pages/registration/registration';
 import TermsAndConditions from './pages/TermsAndConditions';
 import BookMySqftPayment from './pages/user/BookMySqftPayment';
-import RegistrationPage from './pages/registration/registration';
-import OTPPage from './pages/registration/OTP';
-import PrivacyPolicy from './pages/PrivacyPolicy';
+import BookPlotPayment from './pages/user/BookPlotPayment';
 
 const AppRoutes: React.FC = () => {
-
   return (
-    
     <Routes>
+      {/* Redirect root path to home page */}
+     
       
          {/* Redirect root path to home page */}
          <Route element={<DefaultLayout />}>
@@ -116,7 +115,7 @@ const AppRoutes: React.FC = () => {
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
-        {/* <Route path="/home" element={<HomePage />} /> */}
+        <Route path="/home" element={<HomePage />} />
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
         
         {/* Change /profile to use MyProfile directly */}
