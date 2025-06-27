@@ -16,6 +16,8 @@ from .serializers import AgentPlotSerializer
 from rest_framework import viewsets, permissions
 from .models import MicroPlot
 from .serializers import MicroPlotSerializer
+from rest_framework.decorators import action
+
 
 
 from .models import (
@@ -467,14 +469,19 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
 class AgentPlotViewSet(viewsets.ModelViewSet):
     queryset = AgentPlot.objects.all()
     serializer_class = AgentPlotSerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(listed_by=self.request.user)
 
-    def get_queryset(self):
-        # Only show plots listed by the logged-in agent
-        return AgentPlot.objects.filter(listed_by=self.request.user)
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        plot = self.get_object()
+        plot.is_active = not plot.is_active
+        plot.save()
+        return Response({
+            'status': 'toggled',
+            'is_active': plot.is_active
+        }, status=status.HTTP_200_OK)
 
 
 class MicroPlotViewSet(viewsets.ModelViewSet):

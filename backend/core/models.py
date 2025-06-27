@@ -340,6 +340,7 @@ class AgentPlot(models.Model):
     images = models.ImageField(upload_to='agent_plots/', blank=True, null=True)
     listed_by = models.ForeignKey('core.CustomUser', on_delete=models.CASCADE, related_name='agent_plots')
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title

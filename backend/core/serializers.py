@@ -9,10 +9,6 @@ from rest_framework import serializers
 from rest_framework import serializers
 from core.models import MicroPlot
 
-# class AgentPlotSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = AgentPlot
-#         fields = '__all__'  # or list specific fields you want to expose
 
 
 
