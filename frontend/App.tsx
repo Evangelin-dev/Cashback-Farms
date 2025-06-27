@@ -3,6 +3,7 @@ import { CacheProvider } from '@emotion/react';
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { css } from '@emotion/react';
 
 // Optional: MUI ThemeProvider and CssBaseline
 import { CssBaseline } from '@mui/material';
