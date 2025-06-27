@@ -7,7 +7,7 @@ from .views import (
     RealEstateAgentProfileViewSet, RealEstateAgentRegistrationView,
     UserRegistrationView, OTPRequestView, OTPVerificationAndLoginView,
     UserLoginView, UserLogoutView, ReferralNetworkView,
-    SQLFTProjectViewSet, PlotInquiryViewSet
+    SQLFTProjectViewSet, PlotInquiryViewSet, BankDetailViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -25,6 +25,7 @@ router.register(r'order-items', OrderItemViewSet)
 router.register(r'agents', RealEstateAgentProfileViewSet)
 router.register(r'sqlft-projects', SQLFTProjectViewSet)
 router.register(r'plot-inquiries', PlotInquiryViewSet)
+router.register(r'bank-details', BankDetailViewSet)
 
 urlpatterns = [
     path('auth/register/', UserRegistrationView.as_view(), name='register'),
