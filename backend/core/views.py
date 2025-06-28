@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth import authenticate
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -415,6 +415,37 @@ class PlotInquiryViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return PlotInquiry.objects.none()
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError as e:
+            return Response({'detail': 'Database integrity error: {}'.format(str(e))},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            return Response({'detail': 'Database error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'detail': 'Unexpected error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except IntegrityError as e:
+            return Response({'detail': 'Database integrity error: {}'.format(str(e))},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            return Response({'detail': 'Database error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'detail': 'Unexpected error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class ReferralNetworkView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -433,24 +464,29 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        try:
-            if self.request.user.user_type == UserType.ADMIN:
-                return SQLFTProject.objects.all()
-            # Filter logic for other user types if needed
-            return SQLFTProject.objects.none()
-        except Exception as e:
-            return SQLFTProject.objects.none()
+        user = self.request.user
+        if user.user_type == UserType.ADMIN:
+            return SQLFTProject.objects.all()
+        return SQLFTProject.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({"data": serializer.data})
 
     def perform_create(self, serializer):
         try:
-            # Custom logic for creating SQLFT projects if needed
             serializer.save()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
     def perform_update(self, serializer):
         try:
-            # Custom logic for updating SQLFT projects if needed
             serializer.save()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
