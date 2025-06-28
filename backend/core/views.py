@@ -99,8 +99,43 @@ class OTPRequestView(APIView):
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# class OTPVerificationAndLoginView(APIView):
+#     authentication_classes = []  # <--- Add this line
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPVerificationSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             otp_code = data.get('otp_code')
+#             user = None
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if user.verify_otp(otp_code):
+#                 user.is_active = True  # activate the user on successful verification
+#                 user.save()
+#                 refresh = RefreshToken.for_user(user)
+#                 return Response({"data":{
+#                     "message": "OTP verified successfully. Login successful.",
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "user_id": user.id,
+#                     "username": user.username,
+#                     "user_type": user.user_type
+#                 }}, status=status.HTTP_200_OK)
+#             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class OTPVerificationAndLoginView(APIView):
-    authentication_classes = []  # <--- Add this line
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -112,6 +147,7 @@ class OTPVerificationAndLoginView(APIView):
             mobile_number = data.get('mobile_number')
             otp_code = data.get('otp_code')
             user = None
+
             if email:
                 user = get_object_or_404(CustomUser, email=email)
             elif mobile_number:
@@ -120,20 +156,24 @@ class OTPVerificationAndLoginView(APIView):
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
 
             if user.verify_otp(otp_code):
-                user.is_active = True  # activate the user on successful verification
+                user.is_active = True
                 user.save()
+
                 refresh = RefreshToken.for_user(user)
-                return Response({"data":{
+                user_data = CustomUserSerializer(user).data
+
+                return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
-                    "user_id": user.id,
-                    "username": user.username,
-                    "user_type": user.user_type
-                }}, status=status.HTTP_200_OK)
+                    "user": user_data
+                }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
