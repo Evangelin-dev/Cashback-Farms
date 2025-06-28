@@ -11,6 +11,8 @@ from django.db import IntegrityError, DatabaseError
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import EmailMessage
+
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
@@ -405,14 +407,40 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             if not username:
                 raise serializers.ValidationError({"username": "Username, email, or mobile number is required."})
 
+            # Step 1: Create user
             user = CustomUser.objects.create_user(
                 username=username,
                 email=email,
                 mobile_number=mobile_number,
                 user_type=UserType.REAL_ESTATE_AGENT,
                 password=password,
+                is_active=False  # ✅ Mark inactive until OTP verified
             )
+
+            # Step 2: Generate OTP
+            otp = user.generate_otp()
+
+            # Step 3: Send OTP via Email
+            if email:
+                try:
+                    from django.core.mail import EmailMessage
+                    from django.conf import settings
+
+                    smtp_user = settings.EMAIL_HOST_USER
+                    smtp_pass = settings.EMAIL_HOST_PASSWORD
+                    email_msg = EmailMessage(
+                        subject="Your OTP Code",
+                        body=f"Dear {username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                        from_email=smtp_user,
+                        to=[email],
+                    )
+                    email_msg.send(fail_silently=False)
+                except Exception as e:
+                    raise serializers.ValidationError({"detail": f"Failed to send OTP email: {e}"})
+
+            # Step 4: Save profile
             serializer.save(user=user)
+
         except IntegrityError:
             raise serializers.ValidationError({"detail": "A user with this email or mobile number already exists."})
         except Exception as e:
