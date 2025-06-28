@@ -119,17 +119,26 @@ class OTPVerificationAndLoginView(APIView):
 
             if user.verify_otp(otp_code):
                 refresh = RefreshToken.for_user(user)
-                return Response({"data":{
+                # Build user dict for response
+                user_data = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "mobile_number": user.mobile_number,
+                    "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
+                }
+                return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
-                    "user_id": user.id,
-                    "username": user.username,
-                    "user_type": user.user_type
-                }}, status=status.HTTP_200_OK)
+                    "user": user_data
+                }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
