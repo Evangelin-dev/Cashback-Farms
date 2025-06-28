@@ -37,11 +37,7 @@ apiClient.interceptors.response.use(
     (response: AxiosResponse): any => response.data,
     (error: AxiosError): Promise<AxiosError> => {
         if (error.response?.status === 401) {
-            // Logout the user and clear credentials
             logout();
-            
-            // Redirect to login page
-            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

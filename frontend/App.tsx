@@ -81,6 +81,8 @@ import BookMySqftPayment from './pages/user/BookMySqftPayment';
 import RegistrationPage from './pages/registration/registration';
 import OTPPage from './pages/registration/OTP';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
+import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 
 const AppRoutes: React.FC = () => {
 
@@ -116,6 +118,7 @@ const AppRoutes: React.FC = () => {
       {/* User Routes */}
       <Route element={<UserLayout />}>
         <Route path="/Landing" element={<LandingPage />} />
+        <Route path="/user-dashboard" element={<UserDashboard/>} />
         {/* <Route path="/home" element={<HomePage />} /> */}
         <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
         
@@ -158,8 +161,9 @@ const AppRoutes: React.FC = () => {
       <Route path="/realestate/realprofile" element={<RealProfile />} />
       <Route path="/realestate/*" element={<RealEstateRoutes />} />
       <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-      <Route path="post-plots" element={<PostPlots />} />
+      <Route path="/realestate/post-plots" element={<PostPlots />} />
       <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
+      <Route path="/realestate/dashboard" element={<Mydashboard />} />
  </Route>
 
       {/* Admin Routes */}

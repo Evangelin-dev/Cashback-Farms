@@ -23,10 +23,12 @@ const PostPlots: React.FC = () => {
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchPlots = async () => {
       try {
+              setIsLoading(true); 
         const accessToken = localStorage.getItem("access_token");
         const res = await apiClient.get("/plots", {
           headers: {
@@ -46,9 +48,11 @@ const PostPlots: React.FC = () => {
           description: "", // or plot.description if available
           images: [], // or map plot.plot_file if you have images
         }));
-        setPlots(mappedPlots);
+        setPlots(mappedPlots.reverse());
       } catch (err) {
         setPlots([]);
+      }finally{
+        setIsLoading(false);
       }
     };
     fetchPlots();
@@ -145,11 +149,6 @@ const PostPlots: React.FC = () => {
       ),
     },
     {
-      title: "Description",
-      dataIndex: "description",
-      render: (desc: string) => desc || "-",
-    },
-    {
       title: "Images",
       dataIndex: "images",
       render: (imgs: File[] | undefined) =>
@@ -236,6 +235,7 @@ const PostPlots: React.FC = () => {
         rowKey="key"
         style={{ borderRadius: 12, overflow: "hidden" }}
         rowClassName={() => "custom-table-row"}
+        loading={isLoading}
       />
       <Modal
         title={

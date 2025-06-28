@@ -94,7 +94,7 @@ function AuthForm({ isOpen, onClose, onAuthSuccess }: AuthFormProps) {
       });
     }
     onClose();
-    navigate('/'); // Navigate to main page after login
+    navigate('/');
   };
 
   if (!isOpen) return null;

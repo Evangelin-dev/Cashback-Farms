@@ -156,7 +156,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
   try {
     const res =await apiClient.post('/auth/request-otp/', { email });
-console.log('OTP request response:', res);
     setOtpSent(true);
     setSuccess(
       isMobileInput
@@ -202,6 +201,7 @@ console.log('OTP request response:', res);
       }
 
       const { access, refresh, user_type } = login.data;
+      console.log(login.data,"lemme see");
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
 
@@ -214,7 +214,7 @@ console.log('OTP request response:', res);
 
           // Check user_type in response and redirect accordingly
           if (user_type === 'real_estate_agent') {
-            navigate('/realestate/realprofile');
+            navigate('/');            
           } else {
             navigate('/Landing');
           }

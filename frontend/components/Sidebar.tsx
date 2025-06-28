@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   IconCog,
   IconCollection,
-  IconDashboard,
   IconInformationCircle,
   IconLogout,
   IconMapPin,
@@ -13,7 +12,7 @@ import {
   generateUserCode
 } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
-
+import { Home ,LayoutDashboard } from "lucide-react";
 interface NavItemProps {
   to: string;
   icon: React.ReactNode;
@@ -140,12 +139,15 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     navigate('/');
   };
 
   // Sidebar menu items
   const menuItems = [
-    { to: "/Landing", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
+    { to: "/Landing", icon: <Home className="w-5 h-5" />, label: "Home", exact: true },
+    { to: "/user-dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard", exact: true },
     { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
     { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Micro Plots" },
