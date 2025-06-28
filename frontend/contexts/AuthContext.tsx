@@ -19,7 +19,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock OTP
-const MOCK_OTP_VALUE = "123456";
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>({
@@ -41,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    // Do nothing - we want to stay logged in
+    setCurrentUser(null);
   };
 
   return (

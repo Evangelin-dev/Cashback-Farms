@@ -16,6 +16,11 @@ import "../AgentProfileSection.css";
 
 const menuItems = [
   {
+    key: "/realestate/dashboard",
+    icon: <IconMapPin className="w-5 h-5" />,
+    label: "My Dashboard",
+  },
+  {
     key: "/realestate/post-plots",
     icon: <IconMapPin className="w-5 h-5" />,
     label: "Post Plots",
@@ -242,6 +247,8 @@ const RealEstateSideNav: React.FC = () => {
         <button
           onClick={() => {
             logout();
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
             navigate("/");
           }}
           className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
@@ -260,6 +267,7 @@ function getRealEstatePageTitle(pathname: string): string {
   if (pathname === "/realestate/commission") return "Commission Dashboard";
   if (pathname === "/realestate/lead-management") return "Lead Management";
   if (pathname === "/realestate/realprofile") return "Agent Profile";
+  if(pathname === "/realestate/dashboard") return "Dashboard";  
   return "RealEstate Agent Panel";
 }
 
