@@ -132,48 +132,49 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     }, 900);
   };
   const handleSendOtp = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError('');
-  setSuccess('');
-  setLoading(true);
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
 
-  if (!input) {
-    setLoading(false);
-    setError('Enter your phone number or email.');
-    return;
-  }
+    if (!input) {
+      setLoading(false);
+      setError('Enter your phone number or email.');
+      return;
+    }
 
-  const isMobileInput = isMobile(input);
-  const isEmailInput = isEmail(input);
+    const isMobileInput = isMobile(input);
+    const isEmailInput = isEmail(input);
 
-  if (!isMobileInput && !isEmailInput) {
-    setLoading(false);
-    setError('Enter a valid phone number or email.');
-    return;
-  }
+    if (!isMobileInput && !isEmailInput) {
+      setLoading(false);
+      setError('Enter a valid phone number or email.');
+      return;
+    }
 
-  const email = isMobileInput ? `${countryCode}${input}` : input;
+    const email = isMobileInput ? `${countryCode}${input}` : input;
 
-  try {
-    const res =await apiClient.post('/auth/request-otp/', { email });
-    setOtpSent(true);
-    setSuccess(
-      isMobileInput
-        ? `OTP sent to ${email}`
-        : `Login link sent to ${email}`
-    );
-    setOtp(res?.data?.otp)
-    const token = res?.data?.tokens?.access;
-    localStorage.setItem("token", token);
-  } catch (err: any) {
-    console.error('OTP request error:', err);
-    setError(
-      err.response?.data?.message || 'Failed to send OTP. Please try again.'
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const res = await apiClient.post('/auth/request-otp/', { email });
+      console.log('OTP request response:', res);
+      setOtpSent(true);
+      setSuccess(
+        isMobileInput
+          ? `OTP sent to ${email}`
+          : `Login link sent to ${email}`
+      );
+      setOtp(res?.data?.otp)
+      const token = res?.data?.tokens?.access;
+      localStorage.setItem("token", token);
+    } catch (err: any) {
+      console.error('OTP request error:', err);
+      setError(
+        err.response?.data?.message || 'Failed to send OTP. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
@@ -200,10 +201,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         });
       }
 
-      const { access, refresh, user_type } = login.data;
-      console.log(login.data,"lemme see");
+      const { access, refresh, user } = login;
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
+      localStorage.setItem('currentUser', JSON.stringify(user));
 
       setTimeout(() => {
         setRedirectLoading(true);
@@ -213,13 +214,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           console.log('respesponse:', login.data);
 
           // Check user_type in response and redirect accordingly
-          if (user_type === 'real_estate_agent') {
-            navigate('/');            
-          } else {
+          if (user.user_type === 'real_estate_agent') {
+            window.location.href = '/realestate/dashboard';
+s          } else {
             navigate('/Landing');
           }
         }, 800); // 5 seconds loader
-      },  900); // 900ms delay before redirect
+      }, 900); // 900ms delay before redirect
     } catch (err: any) {
       setError(
         err.response?.data?.message || 'Invalid OTP. Please try again.'
@@ -273,8 +274,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
               <svg className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-               Your trusted plot booking partner
-            </li>        
+              Your trusted plot booking partner
+            </li>
             <li className="flex items-center text-green-700 text-sm font-semibold animate-fade-in-fast">
               <svg className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -305,21 +306,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           <div className="w-full flex mb-4 border-b border-gray-200 justify-center">
             <button
               onClick={() => setActiveTab('login')}
-              className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${
-                activeTab === 'login'
+              className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${activeTab === 'login'
                   ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-600 hover:text-green-600'
-              }`}
+                }`}
             >
               Login
             </button>
             <button
               onClick={() => setActiveTab('signup')}
-              className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${
-                activeTab === 'signup'
+              className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${activeTab === 'signup'
                   ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
                   : 'text-gray-600 hover:text-green-600'
-              }`}
+                }`}
             >
               Sign Up
             </button>

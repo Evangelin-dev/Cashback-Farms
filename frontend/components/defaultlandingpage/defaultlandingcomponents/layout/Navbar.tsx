@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { DNAV_LINKS } from '../../../../constants';
 import AuthForm from '../../../auth/AuthForm';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavbarProps {
   onAuthClick: () => void;
@@ -10,6 +11,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+   const { currentUser } = useAuth();
 
   return (
     <>
@@ -56,12 +58,29 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                   {link.name}
                 </NavLink>
               ))}
-              <button
-                onClick={() => setShowAuth(true)}
-                className="ml-4 px-5 py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
-              >
-                Login / Sign Up
-              </button>
+                            {currentUser ? (
+                  <button
+                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                  onClick={() => {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('currentUser')
+                    window.location.reload();
+                  }}
+                >
+                  Logout
+                </button>
+               ) : (
+                 <button
+                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setShowAuth(true);
+                  }}
+                >
+                  Login / Sign Up
+                </button>
+               ) }
             </div>
             {/* Mobile Hamburger */}
             <div className="md:hidden flex items-center">
@@ -161,7 +180,19 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     {link.name}
                   </NavLink>
                 ))}
-                <button
+               {currentUser ? (
+                  <button
+                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                  onClick={() => {
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('currentUser')
+                  }}
+                >
+                  Logout
+                </button>
+               ) : (
+                 <button
                   className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
                   onClick={() => {
                     setIsOpen(false);
@@ -170,6 +201,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 >
                   Login / Sign Up
                 </button>
+               ) }
               </div>
             </div>
             <style>{`

@@ -85,7 +85,6 @@ const MyDashboard: React.FC = () => {
         const res = await apiClient.get("/plots", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-
         const mappedProperties: Property[] = (res || []).map((plot: any) => {
           let status: PropertyStatus;
           if (plot.is_available_full) {

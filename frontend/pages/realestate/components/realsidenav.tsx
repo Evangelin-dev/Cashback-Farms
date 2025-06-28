@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   generateUserCode,
@@ -22,13 +22,13 @@ const menuItems = [
     key: "/realestate/dashboard",
     icon: <LayoutDashboard className="w-5 h-5" />,
     label: "My Dashboard",
-  }
-  ,{
+  },
+  {
     key: "/realestate/post-plots",
     icon: <IconMapPin className="w-5 h-5" />,
     label: "Post Plots",
   },
-   {
+  {
     key: "/realestate/post-micro-plots",
     icon: <IconMapPin className="w-5 h-5" />,
     label: "Post Micro Plots",
@@ -55,23 +55,54 @@ const menuItems = [
   },
 ];
 
-// --- ProfileSection copied from RealEstateAgentPanel ---
+// --- ProfileSection with proper currentUser handling ---
 const ProfileSection: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { currentUser } = useAuth();
+  console.log(currentUser, "currentUser in ProfileSection");
+  
   const [profile, setProfile] = useState({
-    name: "Priya Sharma",
-    email: "priya.sharma@email.com",
-    phone: "+91-9123456789",
+    name: "",
+    email: "",
+    phone: "",
     photo: "",
     kycStatus: "Not Verified",
   });
+  
   const [otpSentTo, setOtpSentTo] = useState<"email" | "phone" | null>(null);
   const [otp, setOtp] = useState("");
   const [otpInput, setOtpInput] = useState("");
   const [otpVerified, setOtpVerified] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
   const [showKyc, setShowKyc] = useState(false);
-  const [kycStatus, setKycStatus] = useState(profile.kycStatus);
+  const [kycStatus, setKycStatus] = useState("Not Verified");
   const navigate = useNavigate();
+
+  // Update profile when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      console.log("Updating profile with currentUser:", currentUser);
+      setProfile({
+        name: currentUser.username || "User",
+        email: currentUser.email || "",
+        phone: currentUser.mobile_number || "",
+        photo: "",
+        kycStatus: "Not Verified",
+      });
+      setKycStatus("Not Verified");
+    }
+  }, [currentUser]);
+
+  // Also try to get user from localStorage as fallback
+  useEffect(() => {
+    if (!currentUser) {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        // If you have a way to decode the token or get user info, do it here
+        // Or trigger a re-fetch of user data in your AuthContext
+        console.log("User not loaded but token exists, might need to refresh user data");
+      }
+    }
+  }, [currentUser]);
 
   // KYC simulation
   const handleKyc = () => {
@@ -87,6 +118,7 @@ const ProfileSection: React.FC = () => {
   function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
+  
   const sendOtp = (type: "email" | "phone") => {
     const newOtp = generateOTP();
     setOtp(newOtp);
@@ -96,6 +128,7 @@ const ProfileSection: React.FC = () => {
       alert(`OTP for ${type}: ${newOtp}`);
     }, 300);
   };
+  
   const verifyOtp = () => {
     if (otpInput === otp) {
       setOtpVerified((prev) => ({ ...prev, [otpSentTo!]: true }));
@@ -110,11 +143,32 @@ const ProfileSection: React.FC = () => {
   // Dropdown toggle
   const toggleDropdown = () => setDropdownOpen((open) => !open);
 
+  // Use currentUser directly if available, otherwise use profile state
+  const displayUser = currentUser || profile;
+  const userName = displayUser.username || displayUser.name || "User";
+  const userEmail = displayUser.email || "";
+  const userPhone = displayUser.mobile_number || displayUser.phone || "";
+
   // Generate User Code (using name and a static date for demo)
   const userCode = generateUserCode(
-    profile.name,
+    userName,
     new Date("2024-01-01")
   );
+
+  // Show loading state only if no user data at all
+  if (!currentUser && !profile.name && !profile.email) {
+    return (
+      <div className="relative w-full">
+        <div className="flex items-center gap-3 p-2 rounded-lg" style={{ minHeight: 56 }}>
+          <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+          <div className="flex flex-col min-w-0 flex-1">
+            <div className="h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
+            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full">
@@ -128,13 +182,13 @@ const ProfileSection: React.FC = () => {
             {profile.photo ? (
               <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
-              profile.name[0]
+              userName[0]?.toUpperCase() || "U"
             )}
           </div>
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-primary-light truncate">{profile.name}</span>
-          <span className="text-xs text-gray-500 truncate">{profile.email}</span>
+          <span className="font-semibold text-primary-light truncate">{userName}</span>
+          <span className="text-xs text-gray-500 truncate">{userEmail}</span>
         </div>
         <span className="ml-auto">
           <svg className={`w-5 h-5 text-primary transition-transform ${dropdownOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -155,7 +209,7 @@ const ProfileSection: React.FC = () => {
               {profile.photo ? (
                 <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                profile.name[0]
+                userName[0]?.toUpperCase() || "U"
               )}
             </div>
             {/* Creative User Code display */}
@@ -163,9 +217,9 @@ const ProfileSection: React.FC = () => {
               User Code: <span className="text-primary font-semibold">{userCode}</span>
             </div>
           </div>
-          <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
+          <div className="mt-1 text-lg font-semibold text-primary-light">{userName}</div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.phone}</span>
+            <span>{userPhone || "No phone number"}</span>
             {otpVerified?.phone && (
               <span className="text-green-500 w-4 h-4" title="Verified">
                 <IconCheck className="w-4 h-4" />
@@ -173,7 +227,7 @@ const ProfileSection: React.FC = () => {
             )}
           </div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.email}</span>
+            <span>{userEmail}</span>
             {otpVerified?.email && (
               <span className="text-green-500 w-4 h-4" title="Verified">
                 <IconCheck className="w-4 h-4" />

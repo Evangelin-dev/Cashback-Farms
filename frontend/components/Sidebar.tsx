@@ -38,20 +38,37 @@ const NavItem: React.FC<NavItemProps & { onClick?: () => void }> = ({ to, icon, 
 };
 
 const ProfileSection: React.FC = () => {
-  // Example user profile state (replace with real user data as needed)
-  const [profile] = useState({
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+91 9876543210",
-    photo: "",
-    company: "Cashback Homes",
-    joiningDate: new Date(),
-  });
+  const { currentUser } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Don't use useState for profile - derive it directly from currentUser
+  const profile = {
+    name: currentUser?.username || "User",
+    email: currentUser?.email || "",
+    phone: currentUser?.mobile_number || "",
+    photo: currentUser?.photo || "", // Add this if you have photo in currentUser
+    company: currentUser?.company || "",
+    joiningDate: currentUser?.created_at ? new Date(currentUser.created_at) : new Date(),
+  };
 
   // Generate User Code
   const userCode = generateUserCode(profile.name, profile.joiningDate);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const navigate = useNavigate();
+
+  // Add loading state if needed
+  if (!currentUser) {
+    return (
+      <div className="w-full mb-4 p-4 rounded-lg bg-gray-100 animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+          <div className="flex flex-col gap-2">
+            <div className="h-4 bg-gray-300 rounded w-24"></div>
+            <div className="h-3 bg-gray-300 rounded w-32"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full mb-4">
@@ -64,7 +81,7 @@ const ProfileSection: React.FC = () => {
             {profile.photo ? (
               <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
-              profile.name[0]
+              profile.name[0]?.toUpperCase() || "U"
             )}
           </div>
         </div>
@@ -91,17 +108,21 @@ const ProfileSection: React.FC = () => {
               {profile.photo ? (
                 <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                profile.name[0]
+                profile.name[0]?.toUpperCase() || "U"
               )}
             </div>
           </div>
           <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.phone}</span>
-          </div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.email}</span>
-          </div>
+          {profile.phone && (
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+              <span>{profile.phone}</span>
+            </div>
+          )}
+          {profile.email && (
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+              <span>{profile.email}</span>
+            </div>
+          )}
           <div className="mt-2 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">
             User Code: <span className="text-primary font-semibold">{userCode}</span>
           </div>

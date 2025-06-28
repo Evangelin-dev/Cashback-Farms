@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 
@@ -85,7 +85,8 @@ import Mydashboard from './pages/realestate/components/realestate-section/Mydash
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 
 const AppRoutes: React.FC = () => {
-
+  const { currentUser } = useAuth();
+console.log(currentUser,"curr")
   return (
     
     <Routes>
