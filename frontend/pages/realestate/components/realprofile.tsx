@@ -1,5 +1,3 @@
-import apiClient from "@/src/utils/api/apiClient";
-import { useFormik } from "formik";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,6 +7,8 @@ import {
   IconEdit,
 } from "../../../constants.tsx";
 import "../AgentProfileSection.css";
+import { useFormik } from "formik";
+import apiClient from "@/src/utils/api/apiClient";
 
 const initialProfile = {
   firstName: "",
@@ -751,24 +751,19 @@ const RealProfile: React.FC = () => {
                 <div>
                   <input
                     name="address.town"
-                    value={editProfile.address.town}
-                    onChange={e =>
-                      setEditProfile({
-                        ...editProfile,
-                        address: {
-                          ...editProfile.address,
-                          town: e.target.value,
-                        },
-                      })
-                    }
+                    value={values.address.town}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                     className={`border rounded px-2 py-1 w-full text-xs focus:border-primary transition ${
-                      errors.town ? "border-red-400" : ""
+                      errors.address?.town && touched.address?.town
+                        ? "border-red-400"
+                        : ""
                     }`}
                     readOnly={!editMode}
                   />
-                  {errors.town && (
+                  {touched.address?.town && errors.address?.town && (
                     <span className="text-xs text-red-500">
-                      {errors.town}
+                      {errors.address.town}
                     </span>
                   )}
                 </div>

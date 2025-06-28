@@ -1,58 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Button from '../../../components/common/Button';
+import SqftGrid from '../../../components/defaultlandingpage/defaultlandingcomponents/plot/SqftGrid';
 import { MOCK_BMS_PLOT_INFO } from '../../../constants';
 import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
-import Button from '../../common/Button';
-import SqftGrid from '../defaultlandingcomponents/plot/SqftGrid';
 
 
-
-const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
-  const [idx, setIdx] = useState(0);
-  if (!images.length) return null;
-  return (
-    <div className="w-full flex flex-col items-center mb-8">
-      <div className="relative w-full flex justify-center" style={{ aspectRatio: '16/9', maxHeight: 280 }}>
-        <img
-          src={images[idx]}
-          alt={`carousel-${idx}`}
-          className="rounded-xl shadow-xl object-cover w-full md:w-[420px] h-[280px] transition-all duration-300"
-          style={{ aspectRatio: '16/9', maxHeight: 280 }}
-        />
-        {images.length > 1 && (
-          <>
-            <button
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-9 h-9 flex items-center justify-center z-10"
-              onClick={() => setIdx((idx - 1 + images.length) % images.length)}
-              type="button"
-              tabIndex={0}
-            >
-              &#8592;
-            </button>
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-9 h-9 flex items-center justify-center z-10"
-              onClick={() => setIdx((idx + 1) % images.length)}
-              type="button"
-              tabIndex={0}
-            >
-              &#8594;
-            </button>
-          </>
-        )}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {images.map((_, i) => (
-            <span
-              key={i}
-              className={`w-3 h-3 rounded-full ${i === idx ? 'bg-green-500' : 'bg-white/70 border border-green-400'} inline-block`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const DBookMySqftPage: React.FC = () => {
+  const DBookMySqftPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();
   const navigate = useNavigate();
 
@@ -60,10 +14,9 @@ const DBookMySqftPage: React.FC = () => {
   const [plotInfo, setPlotInfo] = useState<BookMySqftPlotInfo | null>(MOCK_BMS_PLOT_INFO);
   const [grid, setGrid] = useState<SqftUnit[][]>(plotInfo?.initialGrid || []);
   const [selectedUnits, setSelectedUnits] = useState<SqftUnit[]>([]);
-  const [paymentOption, setPaymentOption] = useState("");
-  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+
+
 
   useEffect(() => {
     // Simulate fetching plot data if plotId changes or for initial load
@@ -77,7 +30,7 @@ const DBookMySqftPage: React.FC = () => {
     setSelectedUnits([]); // Reset selection when plot changes
   }, [plotId]);
 
-  const handleUnitSelect = (row: number, col: number) => {
+  const handleUnitSelect = useCallback((row: number, col: number) => {
     setGrid(prevGrid => {
       const newGrid = prevGrid.map(r => r.map(unit => ({ ...unit })));
       const unit = newGrid[row][col];
@@ -91,7 +44,7 @@ const DBookMySqftPage: React.FC = () => {
       }
       return newGrid;
     });
-  };
+  }, []);
 
   if (!plotInfo) {
     return null;
@@ -105,8 +58,7 @@ const DBookMySqftPage: React.FC = () => {
       alert("Please select at least one unit to book.");
       return;
     }
-    // Remove payment option check
-    setShowPaymentPopup(true);
+    setShowLoginPopup(true);
   };
 
   // Use fallback image/video if not present in plotInfo
@@ -119,118 +71,92 @@ const DBookMySqftPage: React.FC = () => {
       ? (plotInfo as any).videoUrl
       : "https://www.w3schools.com/html/mov_bbb.mp4";
 
-  // Example carousel images (replace with real images if available)
-  const carouselImages = [
-    plotImageUrl,
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
-    "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80"
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 py-6 px-2">
-      <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
-        {/* Title at the top */}
-        <h1 className="text-3xl font-extrabold text-green-800 mb-2 mt-4 tracking-tight drop-shadow">
-          {/* ...your page title here... */}
-          Book My SqFt
-        </h1>
-        {/* SqftGrid at the top */}
-        <div className="w-full flex flex-col items-center">
-          {/* Remove Zoom controls */}
-          {/* SqftGrid - larger and zoomable */}
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-green-700">Book My (SqFt,SqYd,SqCm)</h1>
+        <p className="mt-2 text-lg text-gray-600">
+          Select your desired area from <span className="font-semibold">{plotInfo.name}</span> located at {plotInfo.location}.
+        </p>
+      </div>
+
+      {/* ...LandPlotSelector UI if needed... */}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 flex flex-col items-center md:items-start">
+          <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect} />
+        </div>
+        {/* Plot detail card (right) */}
+        <div
+          className="md:col-span-1 bg-white p-6 rounded-lg shadow-lg flex flex-col items-center"
+          style={{ minWidth: 320, maxWidth: 320 }}
+        >
+          {/* Plot image with video on hover, above Booking Summary */}
           <div
-            className="flex justify-center items-center"
-            style={{
-              overflow: 'auto',
-              borderRadius: 12,
-              border: '2px solid #bbf7d0',
-              background: '#fff',
-              marginBottom: 16,
-              width: '100%',
-              minHeight: 350,
+            className="mb-6 w-full flex justify-center"
+            style={{ maxWidth: 320 }}
+            onMouseEnter={e => {
+              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
+              if (video) {
+                video.style.opacity = '1';
+                video.currentTime = 0;
+                video.play();
+              }
+              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
+              if (img) img.style.opacity = '0';
+            }}
+            onMouseLeave={e => {
+              const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
+              if (video) {
+                video.pause();
+                video.style.opacity = '0';
+              }
+              const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
+              if (img) img.style.opacity = '1';
             }}
           >
-            <div style={{ transform: `scale(${zoom})`, transition: 'transform 0.2s' }}>
-              <SqftGrid gridData={grid} onUnitSelect={handleUnitSelect}  unitSize={28} />
-            </div>
-          </div>
-        </div>
-        {/* Carousel outside the summary card */}
-        <div className="w-full flex flex-col items-center">
-          <ImageCarousel images={carouselImages} />
-        </div>
-        {/* Move the summary/info card to the bottom, horizontal layout */}
-        <div className="w-full mt-4 flex flex-col items-center">
-          <div
-            className="md:col-span-1 bg-white p-10 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center md:items-stretch gap-10 w-full max-w-5xl"
-          >
-            {/* Image/Video on hover on the left */}
-            <div
-              className="flex-shrink-0 flex items-center justify-center w-full md:w-[420px]"
-              style={{ position: 'relative', aspectRatio: '16/9', maxHeight: 280 }}
-              onMouseEnter={e => {
-                const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
-                if (video) {
-                  video.style.opacity = '1';
-                  video.currentTime = 0;
-                  video.play();
-                }
-                const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
-                if (img) img.style.opacity = '0';
-              }}
-              onMouseLeave={e => {
-                const video = (e.currentTarget.querySelector('video') as HTMLVideoElement | null);
-                if (video) {
-                  video.pause();
-                  video.style.opacity = '0';
-                }
-                const img = (e.currentTarget.querySelector('img') as HTMLImageElement | null);
-                if (img) img.style.opacity = '1';
-              }}
-            >
+            <div className="relative w-full" style={{ aspectRatio: '16/9', maxHeight: 180 }}>
               <img
                 src={plotImageUrl}
                 alt="Plot"
-                className="rounded-xl shadow-xl object-cover w-full md:w-[420px] h-[280px] transition-opacity duration-200"
-                style={{ aspectRatio: '16/9', maxHeight: 280, position: 'absolute', top: 0, left: 0, opacity: 1, zIndex: 1 }}
+                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
+                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 1, zIndex: 1 }}
               />
               <video
                 src={plotVideoUrl}
                 loop
                 muted
                 playsInline
-                className="rounded-xl shadow-xl object-cover w-full md:w-[420px] h-[280px] transition-opacity duration-200"
-                style={{ aspectRatio: '16/9', maxHeight: 280, position: 'absolute', top: 0, left: 0, opacity: 0, zIndex: 2 }}
+                className="rounded-lg shadow-lg w-full object-cover transition-opacity duration-200"
+                style={{ aspectRatio: '16/9', maxHeight: 180, position: 'absolute', top: 0, left: 0, opacity: 0, zIndex: 2 }}
               />
-              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-sm px-3 py-1 rounded pointer-events-none z-10">
+              <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded pointer-events-none z-10">
                 Hover to preview video
               </div>
             </div>
-            {/* Text and details on the right */}
-            <div className="flex-1 flex flex-col justify-center items-start w-full text-lg">
-              {/* ...existing code... */}
-              <h2 className="text-2xl font-bold text-green-700 mb-4">Booking Summary</h2>
-              <div className="text-gray-700 mb-4 space-y-2">
-                <p><strong>Plot:</strong> {plotInfo.name}</p>
-                <p><strong>Price per Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
-                <p><strong>Selected Units:</strong> {totalSelectedArea}</p>
-                <p className="text-2xl font-bold text-green-600">
-                  Total Cost: ₹{totalCost.toLocaleString('en-IN')}
-                </p>
-              </div>
-              {/* Booking Button */}
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className="w-full mt-6 text-lg py-3"
-                onClick={handleBooking}
-                disabled={totalSelectedArea === 0}
-              >
-                Proceed to Book ({totalSelectedArea} Units)
-              </Button>
-              {totalSelectedArea === 0 && <p className="text-sm text-red-500 text-center mt-3">Please select units from the grid.</p>}
-            </div>
           </div>
+          {/* Booking Summary */}
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Booking Summary</h2>
+          <div className="space-y-3">
+            <p><strong>Plot:</strong> {plotInfo.name}</p>
+            <p><strong>Price per Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+            <p><strong>Selected Units:</strong> {totalSelectedArea}</p>
+            <p className="text-xl font-bold text-green-600">
+              Total Cost: ₹{totalCost.toLocaleString('en-IN')}
+            </p>
+          </div>
+         
+          {/* Booking Button */}
+          <Button 
+            variant="primary" 
+            size="lg" 
+            className="w-full mt-8"
+            onClick={handleBooking}
+            disabled={totalSelectedArea === 0}
+          >
+            Proceed to Book ({totalSelectedArea} Units)
+          </Button>
+          {totalSelectedArea === 0 && <p className="text-xs text-red-500 text-center mt-2">Please select units from the grid.</p>}
         </div>
       </div>
 
@@ -244,11 +170,27 @@ const DBookMySqftPage: React.FC = () => {
             <li>Receive your digital booking receipt.</li>
         </ol>
       </div>
-      {/* BookMySqftPayment as popup */}
-     
+      {/* Popup for login/sign up */}
+      {showLoginPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full flex flex-col items-center animate-fade-in">
+            <svg className="w-16 h-16 text-green-500 mb-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z" />
+            </svg>
+            <div className="text-xl font-bold text-green-700 mb-2 text-center">Please Login / Sign Up</div>
+            <div className="text-gray-600 text-center mb-6">You need to be logged in to continue to checkout.</div>
+            <button
+              className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+              onClick={() => setShowLoginPopup(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default DBookMySqftPage;
-
+   

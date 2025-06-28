@@ -1,3 +1,4 @@
+
 import { Booking, BookingStatus, BookMySqftPlotInfo, CommercialPropertyInfo, CommercialPropertyType, InvestmentDetails, ListingType, Material, MaterialCategory, PaymentInstallment, PaymentStatus, PaymentType, Plot, PlotType, Professional, PropertyCategory, PropertyListing, ResidentialPropertyType, ServiceType, SiteDetails, SqftUnit, User, UserRole } from './types';
 
 const generateSqftGrid = (rows: number, cols: number, bookedUnits?: {row: number, col: number}[]): SqftUnit[][] => {
@@ -190,8 +191,7 @@ export const MOCK_PLOTS: Plot[] = [
     description: 'A beautiful plot in a rapidly developing area, perfect for your dream home. North-facing with good road access.',
     amenities: ['Water Connection', 'Electricity', 'Gated Community'],
     sqftPrice: 2000,
-    value: 0,
-    isAvailable: true
+    value: 0
   },
   {
     id: 'plot2',
@@ -205,8 +205,7 @@ export const MOCK_PLOTS: Plot[] = [
     isFlagship: true,
     amenities: ['24/7 Security', 'Clubhouse Access', 'Paved Roads', 'Park'],
     sqftPrice: 2500,
-    value: 0,
-    isAvailable: true
+    value: 0
   },
   {
     id: 'plot3',
@@ -218,8 +217,7 @@ export const MOCK_PLOTS: Plot[] = [
     type: PlotType.PUBLIC,
     description: 'Peaceful plot located near the river, offering scenic views. Ideal for a weekend getaway home or investment.',
     sqftPrice: 3000,
-    value: 0,
-    isAvailable: true
+    value: 0
   },
    {
      id: 'plot4-bms',
@@ -232,8 +230,7 @@ export const MOCK_PLOTS: Plot[] = [
      description: 'Exclusive Greenheap plot available for "Book My SqFt". Choose your desired area and build your future.',
      sqftPrice: 1800,
      isFlagship: true,
-     value: 0,
-     isAvailable: true
+     value: 0
    },
 ];
 
@@ -255,13 +252,13 @@ export let MOCK_USERS: User[] = [
 export let MOCK_PAYMENTS: PaymentInstallment[] = [
   // Payments for Booking B001 (Plot AG-P1-A101)
   { id: 'pay-001', bookingId: 'B001', scheduleName: 'Booking Advance', dueDate: '2024-01-15', amount: 60000, status: PaymentStatus.PAID, paymentType: PaymentType.BOOKING_ADVANCE, paidDate: '2024-01-14', transactionId: 'TXN1001' },
-  { id: 'pay-002', bookingId: 'B001', scheduleName: '2st Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
-  { id: 'pay-003', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-06-15', amount: 120000, status: PaymentStatus.DUE, paymentType: PaymentType.INSTALLMENT },
-
- 
+  { id: 'pay-002', bookingId: 'B001', scheduleName: '1st Installment', dueDate: '2024-03-15', amount: 120000, status: PaymentStatus.PAID, paymentType: PaymentType.INSTALLMENT, paidDate: '2024-03-10', transactionId: 'TXN1002' },
+  { id: 'pay-003', bookingId: 'B001', scheduleName: '2nd Installment', dueDate: '2024-06-15', amount: 120000, status: PaymentStatus.DUE, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-004', bookingId: 'B001', scheduleName: '3rd Installment', dueDate: '2024-09-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-005', bookingId: 'B001', scheduleName: 'Final Payment', dueDate: '2024-12-15', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
   // Payments for another booking (imaginary)
-  { id: 'pay-004', bookingId: 'B002', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
-  { id: 'pay-005', bookingId: 'B002', scheduleName: '2st Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
+  { id: 'pay-006', bookingId: 'B002', scheduleName: 'Booking Advance', dueDate: '2024-02-20', amount: 75000, status: PaymentStatus.PENDING, paymentType: PaymentType.BOOKING_ADVANCE },
+  { id: 'pay-007', bookingId: 'B002', scheduleName: '1st Installment', dueDate: '2024-04-20', amount: 150000, status: PaymentStatus.UPCOMING, paymentType: PaymentType.INSTALLMENT },
 ];
 
 export let MOCK_BOOKINGS: Booking[] = [
@@ -271,7 +268,7 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-001',
     bookingDate: '2024-01-15',
     status: BookingStatus.CONFIRMED,
-    paymentIds: ['pay-001', 'pay-002', 'pay-003',  ],
+    paymentIds: ['pay-001', 'pay-002', 'pay-003', 'pay-004', 'pay-005'],
     investmentDetails: { // Example specific to this booking for user view
         yourInvestment: MOCK_PLOTS.find(p=>p.id === 'AG-P1-A101')?.plotValue || 0,
         cashbackPercentage: 10,
@@ -285,7 +282,7 @@ export let MOCK_BOOKINGS: Booking[] = [
     userId: 'user-002',
     bookingDate: '2024-02-20',
     status: BookingStatus.PENDING_CONFIRMATION,
-    paymentIds: ['pay-004', 'pay-005']
+    paymentIds: ['pay-006', 'pay-007']
   },
 ];
 
@@ -606,17 +603,9 @@ export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
 };
 
 export const NAV_LINKS = [
-  { name: 'Home', path: '/' },
-  { name: 'Plot Marketplace', path: '/plots' },
-  { name: 'Micro Plots', path: `mysqft-listing` },
-  { name: 'Materials Store', path: '/materials' },
-  { name: 'Professional Services', path: '/services' },
-  // { name: 'Dash Board', path: '/dashboard' },
-];
-export const DNAV_LINKS = [
   { name: 'Home', path: '/D' },
   { name: 'Plot Marketplace', path: '/Dplots' },
-  { name: 'Micro Plots', path: `Dmysqft-listing` },
+  { name: 'Book My SqFt', path: `Dmysqft-listing` },
   { name: 'Materials Store', path: '/Dmaterials' },
   { name: 'Professional Services', path: '/Dservices' },
   // { name: 'Dash Board', path: '/dashboard' },

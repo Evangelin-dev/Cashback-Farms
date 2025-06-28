@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { DNAV_LINKS } from '../../../../constants';
+import { NAV_LINKS } from '../../../../constants';
 import AuthForm from '../../../auth/AuthForm';
 
 interface NavbarProps {
@@ -13,91 +13,80 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
 
   return (
     <>
-      <nav className="bg-white/80 backdrop-blur-lg shadow-md sticky top-0 z-50 border-b border-green-100">
+      <nav className="bg-white shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <div className="flex items-center">
-              <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-                <span className="inline-block w-9 h-9 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow-lg flex items-center justify-center">
-                  <svg
-                    className="w-7 h-7 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4"
-                    />
-                  </svg>
-                </span>
-                <span className="text-2xl font-extrabold text-green-700 tracking-tight drop-shadow">
-                  Cashback Farms
-                </span>
+              <Link to="/" className="flex-shrink-0">
+                <span className="text-2xl font-bold text-green-600">Cashback Farms</span>
               </Link>
             </div>
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center space-x-2">
-              {DNAV_LINKS.map((link) => (
-                <NavLink
-                  key={link.name}
-                  to={link.path}
-                  className={({ isActive }) =>
-                    `px-4 py-2 rounded-xl text-base font-semibold transition-all duration-150 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
-                        : 'text-green-700 hover:bg-green-100 hover:text-green-900'
-                    }`
-                  }
-                >
-                  {link.name}
-                </NavLink>
-              ))}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-4">
+                {NAV_LINKS.map((link) => (
+                  <NavLink
+                    key={link.name}
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `px-3 py-2 rounded-md text-sm font-medium ${
+                        isActive
+                          ? 'bg-green-600 text-white'
+                          : 'text-gray-700 hover:bg-green-500 hover:text-white'
+                      }`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+
+            <div className="hidden md:block">
               <button
                 onClick={() => setShowAuth(true)}
-                className="ml-4 px-5 py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                className="ml-4 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
                 Login / Sign Up
               </button>
             </div>
-            {/* Mobile Hamburger */}
-            <div className="md:hidden flex items-center">
+            <div className="-mr-2 flex md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
                 type="button"
-                className="inline-flex items-center justify-center p-2 rounded-full bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                className="bg-green-600 inline-flex items-center justify-center p-2 rounded-md text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-600 focus:ring-white"
                 aria-controls="mobile-menu"
-                aria-expanded={isOpen}
+                aria-expanded="false"
               >
                 <span className="sr-only">Open main menu</span>
                 {!isOpen ? (
                   <svg
-                    className="h-7 w-7"
+                    className="block h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
                     fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
                     viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      d="M4 7h16M4 12h16M4 17h16"
+                      strokeWidth="2"
+                      d="M4 6h16M4 12h16M4 18h16"
                     />
                   </svg>
                 ) : (
                   <svg
-                    className="h-7 w-7"
+                    className="block h-6 w-6"
+                    xmlns="http://www.w3.org/2000/svg"
                     fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
                     viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
+                      strokeWidth="2"
                       d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
@@ -106,81 +95,36 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
             </div>
           </div>
         </div>
-        {/* Mobile Menu */}
+
         {isOpen && (
-          <div
-            className="fixed inset-0 z-50 bg-black/40 flex"
-            onClick={() => setIsOpen(false)}
-          >
-            {/* Side Drawer */}
-            <div
-              className="ml-auto w-4/5 max-w-xs h-full bg-white shadow-2xl rounded-l-3xl p-6 flex flex-col gap-4 animate-slide-in"
-              onClick={e => e.stopPropagation()}
-              style={{
-                minWidth: 260,
-                minHeight: '100vh',
-                backgroundColor: "#fff", // force solid white
-                boxShadow: '0 8px 32px 0 rgba(34,197,94,0.15), 0 1.5px 6px 0 rgba(0,0,0,0.04)'
-              }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-xl font-bold text-green-700">Menu</span>
-                <button
+          <div className="md:hidden" id="mobile-menu">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {NAV_LINKS.map((link) => (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className="p-2 rounded-full bg-green-100 hover:bg-green-200 text-green-700"
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive
+                        ? 'bg-green-600 text-white'
+                        : 'text-gray-700 hover:bg-green-500 hover:text-white'
+                    }`
+                  }
                 >
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2.2}
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                {DNAV_LINKS.map((link) => (
-                  <NavLink
-                    key={link.name}
-                    to={link.path}
-                    onClick={() => setIsOpen(false)}
-                    className={({ isActive }) =>
-                      `px-4 py-3 rounded-xl text-base font-semibold ${
-                        isActive
-                          ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
-                          : 'text-green-700 hover:bg-green-100 hover:text-green-900'
-                      }`
-                    }
-                  >
-                    {link.name}
-                  </NavLink>
-                ))}
-                <button
-                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setShowAuth(true);
-                  }}
-                >
-                  Login / Sign Up
-                </button>
-              </div>
+                  {link.name}
+                </NavLink>
+              ))}
+              <button
+                className="w-full mt-2 px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                onClick={() => {
+                  setIsOpen(false);
+                  setShowAuth(true);
+                }}
+              >
+                Login / Sign Up
+              </button>
             </div>
-            <style>{`
-              .animate-slide-in {
-                animation: slideInRight 0.35s cubic-bezier(.4,0,.2,1);
-              }
-              @keyframes slideInRight {
-                0% { transform: translateX(100%); opacity: 0.5; }
-                100% { transform: translateX(0); opacity: 1; }
-              }
-            `}</style>
           </div>
         )}
       </nav>

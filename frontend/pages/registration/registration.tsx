@@ -1,6 +1,6 @@
-import apiClient from "@/src/utils/api/apiClient"; // <-- Add this import
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import apiClient from "@/src/utils/api/apiClient"; // <-- Add this import
 
 const initialForm = {
   first_name: "",
@@ -15,9 +15,7 @@ const RegurestionPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -103,23 +101,6 @@ const RegurestionPage: React.FC = () => {
                   className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow"
                   required
                 />
-              </div>
-              {/* User Type Dropdown */}
-              <div className="md:col-span-2">
-                <label className="block text-green-700 font-semibold mb-1">
-                  User Type <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="user_type"
-                  value={(form as any).user_type || ""}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow"
-                >
-                  <option value="" disabled>Select User Type</option>
-                  <option value="realestate">Real Estate Agent</option>
-                  <option value="b2b">B2B Vendor</option>
-                </select>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-green-700 font-semibold mb-1">Email</label>

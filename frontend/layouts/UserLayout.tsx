@@ -1,9 +1,9 @@
+
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
 import { getExtendedBookingDetailsById } from '../constants'; // For dynamic titles
-import Footer from '@/components/defaultlandingpage/defaultlandingcomponents/layout/Footer';
 
 const UserLayout: React.FC = () => {
   const location = useLocation();
@@ -25,7 +25,8 @@ const UserLayout: React.FC = () => {
       pageTitle = "My Profile";
   } else if (location.pathname === '/my-bookings') {
       pageTitle = "My Bookings & Properties";
-  } else if (location.pathname === '/plots') {
+  }
+  else if (location.pathname === '/plots') {
       pageTitle = "Plot Marketplace";
   } else if (location.pathname === '/materials') {
       pageTitle = "Materials Store";
@@ -44,16 +45,11 @@ const UserLayout: React.FC = () => {
     <div className="flex h-screen bg-neutral-100 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Instead of passing className, wrap Header in a div with responsive padding */}
-        <div className="pl-5 md:pl-0">
-          <Header pageTitle={pageTitle} />
-        </div>
+        <Header pageTitle={pageTitle} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-neutral-100 p-4 md:p-6 lg:p-8">
           <Outlet />
-          <Footer/>
         </main>
       </div>
-      {/* Remove style block for .page-title-mobile-pad */}
     </div>
   );
 };
