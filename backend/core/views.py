@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail
+    SQLFTProject, BankDetail, CustomUser
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -86,7 +86,7 @@ class OTPRequestView(APIView):
                     send_mail(
                         subject="Your OTP Code",
                         message=f"Your OTP code is: {otp}",
-                        from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+                        from_email=settings.EMAIL_HOST_USER,  # Uses DEFAULT_FROM_EMAIL from settings
                         recipient_list=[email],
                         fail_silently=False,
                     )
@@ -118,6 +118,8 @@ class OTPVerificationAndLoginView(APIView):
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
 
             if user.verify_otp(otp_code):
+                user.is_active = True  # activate the user on successful verification
+                user.save()
                 refresh = RefreshToken.for_user(user)
                 return Response({"data":{
                     "message": "OTP verified successfully. Login successful.",
@@ -136,10 +138,17 @@ class UserLoginView(APIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            username = request.data.get('username') # Could be email or mobile_number too
+            username = request.data.get('username')  # Could be email or mobile_number too
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
+
             if user:
+                if not user.is_active:
+                    return Response(
+                        {"detail": "Account not active. Please verify OTP."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
                 token, created = Token.objects.get_or_create(user=user)
                 return Response({
                     "message": "Login successful.",
@@ -148,9 +157,14 @@ class UserLoginView(APIView):
                     "username": user.username,
                     "user_type": user.user_type
                 }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
         except Exception as e:
-            return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": f"Internal server error: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserLogoutView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -510,3 +524,20 @@ class BankDetailViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.user_type == UserType.ADMIN:
             return BankDetail.objects.all()
         return BankDetail.objects.filter(user=user)
+
+class UserRegisterView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            otp = user.generate_otp()  # Optional
+            user.send_otp_email(otp) 
+            return Response({
+                "message": "User registered successfully. OTP sent.",
+                "user_id": user.id,
+                "referral_code": user.referral_code
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
