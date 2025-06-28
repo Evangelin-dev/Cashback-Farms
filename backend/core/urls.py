@@ -7,7 +7,7 @@ from .views import (
     RealEstateAgentProfileViewSet, RealEstateAgentRegistrationView,
     UserRegistrationView, OTPRequestView, OTPVerificationAndLoginView,
     UserLoginView, UserLogoutView, ReferralNetworkView,
-    SQLFTProjectViewSet, PlotInquiryViewSet, BankDetailViewSet
+    SQLFTProjectViewSet, PlotInquiryViewSet, BankDetailViewSet, UserRegisterView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -37,5 +37,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('auth/jwt/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/jwt/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('referral/network/', ReferralNetworkView.as_view(), name='referral-network')
+    path('referral/network/', ReferralNetworkView.as_view(), name='referral-network'),
+    path('auth/user-register/', UserRegisterView.as_view(), name='user-register')
 ]
