@@ -145,7 +145,7 @@ const Sidebar: React.FC = () => {
 
   // Sidebar menu items
   const menuItems = [
-    { to: "/Landing", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
+    { to: "/home", icon: <IconDashboard className="w-5 h-5" />, label: "Home", exact: true },
     { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
     { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Micro Plots" },

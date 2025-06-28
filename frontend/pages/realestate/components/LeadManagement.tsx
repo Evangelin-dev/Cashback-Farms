@@ -1,28 +1,13 @@
-import { Card, Select, Table } from "antd";
-import React, { useState } from "react";
+import { Card, Select, Table, message } from "antd";
+import React, { useEffect, useState } from "react";
+import apiClient from "@/src/utils/api/apiClient"; // Adjust the import path if needed
 
-const initialLeads = [
-  {
-    key: 1,
-    name: "Anjali Mehra",
-    contact: "+91-9876543210",
-    plot: "Sunshine Meadows",
-    status: "New",
-  },
-  {
-    key: 2,
-    name: "Vikas Singh",
-    contact: "+91-9123456789",
-    plot: "Sunshine Meadows",
-    status: "Contacted",
-  },
-];
-
-const statusOptions = ["New", "Contacted", "Converted", "Lost"];
+const statusOptions = ["New", "Contacted", "Interested","Converted", "Lost"];
 
 const statusColors: Record<string, string> = {
   New: "#2563eb",
   Contacted: "#22c55e",
+  Interested: "#f59e42",
   Converted: "#059669",
   Lost: "#ef4444",
 };
@@ -30,17 +15,60 @@ const statusColors: Record<string, string> = {
 const statusBgColors: Record<string, string> = {
   New: "#eff6ff",
   Contacted: "#f0fdf4",
+  Interested: "#f59e42",
   Converted: "#ecfdf5",
   Lost: "#fef2f2",
 };
 
 const LeadManagement: React.FC = () => {
-  const [leads, setLeads] = useState(initialLeads);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleStatusChange = (key: number, value: string) => {
-    setLeads(leads.map(lead =>
-      lead.key === key ? { ...lead, status: value } : lead
-    ));
+  useEffect(() => {
+    const fetchLeads = async () => {
+      setLoading(true);
+      try {
+        const accessToken = localStorage.getItem("access_token");
+        const res = await apiClient.get("/plot-inquiries/", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        // Map API response to table format if needed
+        const mappedLeads = (res.data || []).map((lead: any, idx: number) => ({
+          key: lead.id || idx,
+          id: lead.id,
+          name: lead.lead_name || lead.inquirer_name || "N/A",
+          contact: lead.contact || lead.phone || "N/A",
+          plot: lead.plot_title || lead.plot_name || "N/A",
+          inquiry: lead.inquiry || lead.message || "N/A",
+          status: lead.status || "New",
+        }));
+        setLeads(mappedLeads);
+      } catch (err) {
+        setLeads([]);
+        message.error("Failed to fetch leads");
+      }
+      setLoading(false);
+    };
+    fetchLeads();
+  }, []);
+
+  const handleStatusChange = async (key: number, value: string) => {
+    const lead = leads.find((l) => l.key === key);
+    if (!lead) return;
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      await apiClient.patch(`/plot-inquiries/${lead.id}/`, { status: value }, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setLeads(leads.map((l) => (l.key === key ? { ...l, status: value } : l)));
+      message.success("Status updated");
+    } catch (err) {
+      message.error("Failed to update status");
+    }
   };
 
   const columns = [
@@ -71,7 +99,7 @@ const LeadManagement: React.FC = () => {
       render: (status: string, record: any) => (
         <Select
           value={status}
-          onChange={value => handleStatusChange(record.key, value)}
+          onChange={(value) => handleStatusChange(record.key, value)}
           style={{
             width: 148,
             borderRadius: 20,
@@ -91,7 +119,7 @@ const LeadManagement: React.FC = () => {
           optionLabelProp="label"
           bordered={false}
         >
-          {statusOptions.map(opt => (
+          {statusOptions.map((opt) => (
             <Select.Option
               key={opt}
               value={opt}
@@ -171,6 +199,7 @@ const LeadManagement: React.FC = () => {
         pagination={false}
         style={{ borderRadius: 14, overflow: "hidden" }}
         rowClassName={() => "custom-leads-row"}
+        loading={loading}
       />
       <style>
         {`

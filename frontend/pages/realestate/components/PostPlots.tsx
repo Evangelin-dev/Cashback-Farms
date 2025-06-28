@@ -22,10 +22,13 @@ const PostPlots: React.FC = () => {
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     const fetchPlots = async () => {
+      setLoading(true);
+
       try {
         const accessToken = localStorage.getItem("access_token");
         const res = await apiClient.get("/plots", {
@@ -50,6 +53,8 @@ const PostPlots: React.FC = () => {
       } catch (err) {
         setPlots([]);
       }
+      setLoading(false);
+
     };
     fetchPlots();
   }, []);
@@ -236,6 +241,8 @@ const PostPlots: React.FC = () => {
         rowKey="key"
         style={{ borderRadius: 12, overflow: "hidden" }}
         rowClassName={() => "custom-table-row"}
+        loading={loading}
+
       />
       <Modal
         title={

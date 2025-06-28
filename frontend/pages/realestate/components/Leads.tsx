@@ -4,10 +4,12 @@ import apiClient from "@/src/utils/api/apiClient"; // Adjust the import path if 
 
 const Leads: React.FC = () => {
     const [leads, setLeads] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
 
     useEffect(() => {
         const fetchLeads = async () => {
+            setLoading(true);
             try {
                 const accessToken = localStorage.getItem("access_token");
                 const res = await apiClient.get("/plot-inquiries/", {
@@ -18,9 +20,9 @@ const Leads: React.FC = () => {
                 // Map API response to table format if needed
                 const mappedLeads = (res.data || []).map((lead: any, idx: number) => ({
                     key: lead.id || idx,
-                    name: lead.name || lead.inquirer_name || "N/A",
+                    name: lead.lead_name || lead.inquirer_name || "N/A",
                     contact: lead.contact || lead.phone || "N/A",
-                    plot: lead.plot_title || lead.plot || "N/A",
+                    plot: lead.plot_name || lead.plot || "N/A",
                     inquiry: lead.inquiry || lead.message || "N/A",
                     status: lead.status || "New",
                 }));
@@ -28,6 +30,7 @@ const Leads: React.FC = () => {
             } catch (err) {
                 setLeads([]);
             }
+             setLoading(false);
         };
         fetchLeads();
     }, []);
@@ -133,6 +136,7 @@ const Leads: React.FC = () => {
                     overflow: "hidden",
                 }}
                 rowClassName={() => "custom-leads-row"}
+                loading={loading}
             />
             <style>
                 {`
