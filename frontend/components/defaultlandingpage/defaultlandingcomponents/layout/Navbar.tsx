@@ -70,9 +70,9 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                   Logout
                 </button>
               ) : (
-                <div className='flex gap-2'>
+                <div className='flex flex-col md:flex-row md:items-center gap-2'>
                   <button
-                    className="w-full mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                    className="w-full md:w-auto mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition whitespace-nowrap"
                     onClick={() => {
                       setIsOpen(false);
                       setShowAuth(true);
@@ -81,7 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     Login / Sign Up
                   </button>
                   <button
-                    className="w-full mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                    className="w-full md:w-auto mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
                     onClick={() => {
                       navigate('/registration');
                     }}
