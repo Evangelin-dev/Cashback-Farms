@@ -78,7 +78,6 @@ class KYCDocumentSerializer(serializers.ModelSerializer):
 
 class CustomUserSerializer(serializers.ModelSerializer):
     full_mobile_number = serializers.SerializerMethodField()
-    address = serializers.SerializerMethodField()
     kyc_documents = KYCDocumentSerializer(many=True, read_only=True)
 
     class Meta:
@@ -87,13 +86,15 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'id', 'username', 'first_name', 'last_name',
             'gender', 'date_of_birth',
             'country_code', 'mobile_number', 'full_mobile_number',
-            'address', 'kyc_documents',
+            'town', 'city', 'state', 'country',  # 👈 flat fields added here
+            'kyc_documents',
             'email', 'user_type', 'user_code', 'referral_code',
             'is_active', 'is_superuser', 'is_staff', 'last_login', 'date_joined'
         ]
 
     def get_full_mobile_number(self, obj):
         return f"{obj.country_code or ''}{obj.mobile_number or ''}"
+
 
     def get_address(self, obj):
         return {
