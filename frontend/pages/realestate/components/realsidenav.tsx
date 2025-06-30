@@ -89,7 +89,7 @@ const KycModal = ({
               className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm"
             >
               <option value="national_id">National ID</option>
-              <option value="aadhaar_proof">Aadhaar Proof</option>
+              <option value="aadhaar_card">Aadhaar Card</option>
               <option value="passport">Passport</option>
               <option value="pan_card">PAN Card</option>
             </select>

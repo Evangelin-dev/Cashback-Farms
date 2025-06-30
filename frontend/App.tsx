@@ -84,6 +84,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import RealEstateRoute from './components/ProtectedRealEstateRoute';
 
 const AppRoutes: React.FC = () => {
   const { currentUser } = useAuth();
@@ -150,8 +151,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/b2b/*" element={<B2BPanelRoutes />} />
       </Route>
 
+   <Route element={<RealEstateRoute />}>
       <Route element={<RealLayout />}>
-        
         <Route path="/realestate/realprofile" element={<RealProfile />} />
         <Route path="/realestate/*" element={<RealEstateRoutes />} />
         <Route path="/referrealestate" element={<ReferAndEarnReal />} />
@@ -159,7 +160,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
         <Route path="/realestate/dashboard" element={<Mydashboard />} />
       </Route>
-
+</Route>
       
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />

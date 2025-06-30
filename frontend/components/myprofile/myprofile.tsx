@@ -1,28 +1,8 @@
-import apiClient from "@/src/utils/api/apiClient"; // Assuming you have this configured
+import apiClient from "@/src/utils/api/apiClient";
 import React, { useEffect, useState } from "react";
 import { generateUserCode } from "../../constants";
 
-// --- Helper function to map API role to UI role (for display) ---
-const mapApiRoleToUIRole = (apiRole: string): string => {
-  const roleMap: { [key: string]: string } = {
-    real_estate_agent: "Agent",
-    b2b_vendor: "B2B Vendor",
-    plot_buyer: "Plot Buyer",
-    plot_seller: "Plot Seller",
-  };
-  return roleMap[apiRole] || "Plot Buyer";
-};
 
-// --- Helper function to map UI role back to API role (for saving) ---
-const mapUIRoleToApiRole = (uiRole: string): string => {
-  const roleMap: { [key: string]: string } = {
-    Agent: "real_estate_agent",
-    "B2B Vendor": "b2b_vendor",
-    "Plot Buyer": "plot_buyer",
-    "Plot Seller": "plot_seller",
-  };
-  return roleMap[uiRole] || "plot_buyer";
-};
 
 const mockRecentPurchases = [
   { id: "r1", name: "Serene Valley Plot", date: "2024-05-10" },
@@ -60,7 +40,10 @@ const MyProfile: React.FC = () => {
     phone: "",
     countryCode: "+91",
     photo: "",
-    address: { town: "", city: "", state: "", country: "" },
+    town: "",
+    city: "",
+    state: "",
+    country: "",
     dob: "",
     gender: "",
     joiningDate: new Date(),
@@ -76,10 +59,7 @@ const MyProfile: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profileAnim, setProfileAnim] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-
-  // State for real KYC status
   const [kycStatus, setKycStatus] = useState<string>("Not Verified");
-
   const [countryCodes, setCountryCodes] = useState<{ code: string; label: string; flag: string }[]>([]);
 
   const userCode = generateUserCode(
@@ -87,7 +67,6 @@ const MyProfile: React.FC = () => {
     profile.joiningDate
   );
 
-  // --- Combined useEffect to fetch both Profile and KYC Status ---
   useEffect(() => {
     const fetchAllData = async () => {
       setIsLoading(true);
@@ -100,20 +79,16 @@ const MyProfile: React.FC = () => {
       const headers = { Authorization: `Bearer ${accessToken}` };
 
       try {
-        // Fetch profile and kyc status concurrently
         const [profileRes, kycRes] = await Promise.all([
           apiClient.get("/user/profile/", { headers }),
           apiClient.get("/user/kyc/status/", { headers }).catch(err => {
-            // If KYC status returns 404, it means not submitted yet. Treat as a valid, non-error state.
             if (err.response && err.response.status === 404) {
               return { data: { status: "Not Verified" } };
             }
-            // For other errors, re-throw to be caught by the main catch block
             throw err;
           })
         ]);
-        console.log(profileRes)
-        // Process Profile Data
+        
         if (profileRes) {
           const user = profileRes;
           const loadedProfile = {
@@ -123,16 +98,14 @@ const MyProfile: React.FC = () => {
             phone: user.mobile_number || "",
             countryCode: user.country_code || "+91",
             photo: user.photo_url || "",
-            address: {
-              town: user.address?.town || "",
-              city: user.address?.city || "",
-              state: user.address?.state || "",
-              country: user.address?.country || "",
-            },
+            town: user.town || "",
+            city: user.city || "",
+            state: user.state || "",
+            country: user.country || "",
             dob: user.date_of_birth || "",
             gender: user.gender || "",
             joiningDate: user.date_joined ? new Date(user.date_joined) : new Date(),
-            role: mapApiRoleToUIRole(user.user_type),
+            role: user.user_type,
             aadharFile: null,
             panFile: null,
             aadharFileName: user.aadhar_filename || "",
@@ -142,9 +115,8 @@ const MyProfile: React.FC = () => {
           setEditProfile(loadedProfile);
         }
 
-        // Process KYC Status Data
-        if (kycRes.data && kycRes.data.status) {
-          setKycStatus(kycRes.data.status);
+        if (kycRes && kycRes.status) {
+          setKycStatus(kycRes.status);
         }
 
       } catch (error) {
@@ -158,7 +130,6 @@ const MyProfile: React.FC = () => {
     fetchAllData();
   }, []);
 
-  // Fetch country codes (no changes)
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all?fields=idd,name,flags")
       .then(res => res.json())
@@ -168,9 +139,8 @@ const MyProfile: React.FC = () => {
       }).catch(() => { setCountryCodes([{ code: "+91", label: "India", flag: "🇮🇳" }, { code: "+1", label: "USA", flag: "🇺🇸" }, { code: "+44", label: "UK", flag: "🇬🇧" }]); });
   }, []);
 
-  const validate = () => { /* ... (validation logic remains the same) ... */ return {}; };
+  const validate = () => { return {}; };
 
-  // --- UPDATED handleSave function to use PUT and send all data ---
   const handleSave = async () => {
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -182,7 +152,6 @@ const MyProfile: React.FC = () => {
     setErrors({});
     const accessToken = localStorage.getItem("access_token");
 
-    // Construct the payload as a plain JavaScript object first
     const payload = {
       first_name: editProfile.firstName,
       last_name: editProfile.lastName,
@@ -191,26 +160,23 @@ const MyProfile: React.FC = () => {
       country_code: editProfile.countryCode,
       gender: editProfile.gender,
       date_of_birth: editProfile.dob,
-      user_type: mapUIRoleToApiRole(editProfile.role), // Map role back to API key
-      town: editProfile.address.town,
-      city: editProfile.address.city,
-      state: editProfile.address.state,
-      country: editProfile.address.country,
+      user_type: editProfile.role,
+      town: editProfile.town,
+      city: editProfile.city,
+      state: editProfile.state,
+      country: editProfile.country,
     };
 
     try {
-      // Use PUT to update the profile with the payload
       await apiClient.put('/user/profile/', payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json', // Since we are not sending files here, JSON is correct
+          'Content-Type': 'application/json',
         },
       });
 
-      // Update the main profile state to reflect the changes
       setProfile(editProfile);
 
-      // Success animation
       setShowPopup(true);
       setTimeout(() => setShowPopup(false), 2000);
 
@@ -251,7 +217,6 @@ const MyProfile: React.FC = () => {
             <div className="mt-2 text-sm text-gray-600 font-mono bg-gray-100 px-4 py-1 rounded shadow-sm">User Code: <span className="text-primary font-semibold">{userCode}</span></div>
           </div>
           <form className="space-y-5 animate-slidein" onSubmit={e => { e.preventDefault(); handleSave(); }}>
-            {/* Form fields remain the same */}
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-xs text-gray-500 mb-1">First Name</label><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.firstName ? "border-red-400" : ""}`} value={editProfile.firstName} onChange={e => setEditProfile({ ...editProfile, firstName: e.target.value })} placeholder="First Name" required />{errors.firstName && <span className="text-xs text-red-500">{errors.firstName}</span>}</div>
               <div><label className="block text-xs text-gray-500 mb-1">Last Name</label><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.lastName ? "border-red-400" : ""}`} value={editProfile.lastName} onChange={e => setEditProfile({ ...editProfile, lastName: e.target.value })} placeholder="Last Name" required />{errors.lastName && <span className="text-xs text-red-500">{errors.lastName}</span>}</div>
@@ -260,25 +225,23 @@ const MyProfile: React.FC = () => {
               <div><label className="block text-xs text-gray-500 mb-1">Gender</label><select className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.gender ? "border-red-400" : ""}`} value={editProfile.gender} onChange={e => setEditProfile({ ...editProfile, gender: e.target.value })} required><option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>{errors.gender && <span className="text-xs text-red-500">{errors.gender}</span>}</div>
               <div><label className="block text-xs text-gray-500 mb-1">Date of Birth</label><input type="date" className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.dob ? "border-red-400" : ""}`} value={editProfile.dob} onChange={e => setEditProfile({ ...editProfile, dob: e.target.value })} required />{errors.dob && <span className="text-xs text-red-500">{errors.dob}</span>}</div>
             </div>
-            <div><label className="block text-xs text-gray-500 mb-1">Email</label><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.email ? "border-red-400" : ""}`} value={editProfile.email} onChange={e => setEditProfile({ ...editProfile, email: e.target.value })} placeholder="Email" required type="email" />{errors.email && <span className="text-xs text-red-500">{errors.email}</span>}</div>
+            <div><label className="block text-xs text-gray-500 mb-1">Email</label><input disabled className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.email ? "border-red-400" : ""}`} value={editProfile.email} onChange={e => setEditProfile({ ...editProfile, email: e.target.value })} placeholder="Email" required type="email" />{errors.email && <span className="text-xs text-red-500">{errors.email}</span>}</div>
             <div className="grid grid-cols-2 gap-4">
               <div><label className="block text-xs text-gray-500 mb-1">Phone Number</label><div className="flex gap-2"><select className="border rounded px-2 py-2 bg-white text-base focus:border-primary transition" value={editProfile.countryCode} onChange={e => setEditProfile({ ...editProfile, countryCode: e.target.value })} required>{countryCodes.map(c => (<option key={c.code + c.label} value={c.code}>{c.code}</option>))}</select><input className={`border rounded px-2 py-2 text-base focus:border-primary transition ${errors.phone ? "border-red-400" : ""}`} value={editProfile.phone} onChange={e => setEditProfile({ ...editProfile, phone: e.target.value })} placeholder="Phone Number" required maxLength={10} pattern="\d*" /></div>{errors.phone && <span className="text-xs text-red-500">{errors.phone}</span>}</div>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Address</label>
               <div className="grid grid-cols-2 gap-4">
-                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.town ? "border-red-400" : ""}`} value={editProfile.address.town} onChange={e => setEditProfile({ ...editProfile, address: { ...editProfile.address, town: e.target.value } })} placeholder="Town" required />{errors.town && <span className="text-xs text-red-500">{errors.town}</span>}</div>
-                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.city ? "border-red-400" : ""}`} value={editProfile.address.city} onChange={e => setEditProfile({ ...editProfile, address: { ...editProfile.address, city: e.target.value } })} placeholder="City" required />{errors.city && <span className="text-xs text-red-500">{errors.city}</span>}</div>
-                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.state ? "border-red-400" : ""}`} value={editProfile.address.state} onChange={e => setEditProfile({ ...editProfile, address: { ...editProfile.address, state: e.target.value } })} placeholder="State" required />{errors.state && <span className="text-xs text-red-500">{errors.state}</span>}</div>
-                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.country ? "border-red-400" : ""}`} value={editProfile.address.country} onChange={e => setEditProfile({ ...editProfile, address: { ...editProfile.address, country: e.target.value } })} placeholder="Country" required />{errors.country && <span className="text-xs text-red-500">{errors.country}</span>}</div>
+                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.town ? "border-red-400" : ""}`} value={editProfile.town} onChange={e => setEditProfile({ ...editProfile, town: e.target.value })} placeholder="Town" required />{errors.town && <span className="text-xs text-red-500">{errors.town}</span>}</div>
+                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.city ? "border-red-400" : ""}`} value={editProfile.city} onChange={e => setEditProfile({ ...editProfile, city: e.target.value })} placeholder="City" required />{errors.city && <span className="text-xs text-red-500">{errors.city}</span>}</div>
+                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.state ? "border-red-400" : ""}`} value={editProfile.state} onChange={e => setEditProfile({ ...editProfile, state: e.target.value })} placeholder="State" required />{errors.state && <span className="text-xs text-red-500">{errors.state}</span>}</div>
+                <div><input className={`border rounded px-3 py-2 w-full text-base focus:border-primary transition ${errors.country ? "border-red-400" : ""}`} value={editProfile.country} onChange={e => setEditProfile({ ...editProfile, country: e.target.value })} placeholder="Country" required />{errors.country && <span className="text-xs text-red-500">{errors.country}</span>}</div>
               </div>
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Role</label>
               <input type="text" disabled value={editProfile.role} className="border rounded px-3 py-2 w-full text-base bg-gray-100" />
             </div>
-
-            {/* KYC Status Display */}
             <div className="flex flex-col gap-1 mt-2">
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500">KYC Status:</span>
@@ -287,7 +250,6 @@ const MyProfile: React.FC = () => {
                 </span>
               </div>
             </div>
-
             <div className="flex gap-2 mt-6">
               <button type="submit" className="bg-primary text-white px-6 py-2 rounded text-base font-semibold shadow-lg hover:scale-105 transition-transform duration-200" disabled={isLoading}>{isLoading ? "Saving..." : "Save Profile"}</button>
               <button type="button" className="bg-gray-200 text-gray-700 px-6 py-2 rounded text-base font-semibold shadow hover:scale-105 transition-transform duration-200" onClick={() => setEditProfile(profile)}>Cancel</button>
@@ -315,7 +277,6 @@ const MyProfile: React.FC = () => {
               ))}
             </ul>
           </div>
-          {/* --- Ad Content Card --- */}
           <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 flex flex-col items-center justify-center">
             <div className="w-full flex flex-col items-center">
               <img

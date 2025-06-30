@@ -307,8 +307,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             <button
               onClick={() => setActiveTab('login')}
               className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${activeTab === 'login'
-                  ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                  : 'text-gray-600 hover:text-green-600'
+                ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
+                : 'text-gray-600 hover:text-green-600'
                 }`}
             >
               Login
@@ -316,8 +316,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
             <button
               onClick={() => setActiveTab('signup')}
               className={`w-1/2 py-2 text-base font-semibold transition-all duration-200 ${activeTab === 'signup'
-                  ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                  : 'text-gray-600 hover:text-green-600'
+                ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
+                : 'text-gray-600 hover:text-green-600'
                 }`}
             >
               Sign Up
@@ -396,6 +396,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 </button>
               </form>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                setOtpSent(false);
+                setError('');
+                setSuccess('');
+              }}
+              className="mt-4 text-xs text-gray-500 hover:text-green-600 hover:underline font-semibold"
+            >
+              Entered wrong email or phone? Go Back
+            </button>
           </div>
           {/* Terms and Conditions at the bottom */}
           <div className="absolute left-0 right-0 bottom-4 text-xs text-center text-gray-500 w-full animate-fade-in-fast">
