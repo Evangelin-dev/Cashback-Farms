@@ -65,9 +65,10 @@ class KYCDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = ['status', 'upload_date']
 
     def create(self, validated_data):
-        # Automatically set the user from request context
-        user = self.context['request'].user
-        return KYCDocument.objects.create(user=user, **validated_data)
+        # Remove user from validated_data if it's already there
+        validated_data['user'] = self.context['request'].user
+        return KYCDocument.objects.create(**validated_data)
+
 
 # class CustomUserSerializer(serializers.ModelSerializer):
 #     class Meta:
