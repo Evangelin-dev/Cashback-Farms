@@ -11,11 +11,13 @@ from django.db import IntegrityError, DatabaseError
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import EmailMessage
+
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail
+    SQLFTProject, BankDetail, CustomUser
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -86,7 +88,7 @@ class OTPRequestView(APIView):
                     send_mail(
                         subject="Your OTP Code",
                         message=f"Your OTP code is: {otp}",
-                        from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+                        from_email=settings.EMAIL_HOST_USER,  # Uses DEFAULT_FROM_EMAIL from settings
                         recipient_list=[email],
                         fail_silently=False,
                     )
@@ -97,8 +99,43 @@ class OTPRequestView(APIView):
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# class OTPVerificationAndLoginView(APIView):
+#     authentication_classes = []  # <--- Add this line
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPVerificationSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             otp_code = data.get('otp_code')
+#             user = None
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if user.verify_otp(otp_code):
+#                 user.is_active = True  # activate the user on successful verification
+#                 user.save()
+#                 refresh = RefreshToken.for_user(user)
+#                 return Response({"data":{
+#                     "message": "OTP verified successfully. Login successful.",
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "user_id": user.id,
+#                     "username": user.username,
+#                     "user_type": user.user_type
+#                 }}, status=status.HTTP_200_OK)
+#             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class OTPVerificationAndLoginView(APIView):
-    authentication_classes = []  # <--- Add this line
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -110,6 +147,7 @@ class OTPVerificationAndLoginView(APIView):
             mobile_number = data.get('mobile_number')
             otp_code = data.get('otp_code')
             user = None
+
             if email:
                 user = get_object_or_404(CustomUser, email=email)
             elif mobile_number:
@@ -118,28 +156,41 @@ class OTPVerificationAndLoginView(APIView):
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
 
             if user.verify_otp(otp_code):
+                user.is_active = True
+                user.save()
+
                 refresh = RefreshToken.for_user(user)
-                return Response({"data":{
+                user_data = CustomUserSerializer(user).data
+
+                return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
-                    "user_id": user.id,
-                    "username": user.username,
-                    "user_type": user.user_type
-                }}, status=status.HTTP_200_OK)
+                    "user": user_data
+                }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         try:
-            username = request.data.get('username') # Could be email or mobile_number too
+            username = request.data.get('username')  # Could be email or mobile_number too
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
+
             if user:
+                if not user.is_active:
+                    return Response(
+                        {"detail": "Account not active. Please verify OTP."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
                 token, created = Token.objects.get_or_create(user=user)
                 return Response({
                     "message": "Login successful.",
@@ -148,9 +199,14 @@ class UserLoginView(APIView):
                     "username": user.username,
                     "user_type": user.user_type
                 }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
         except Exception as e:
-            return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": f"Internal server error: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserLogoutView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -391,14 +447,40 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             if not username:
                 raise serializers.ValidationError({"username": "Username, email, or mobile number is required."})
 
+            # Step 1: Create user
             user = CustomUser.objects.create_user(
                 username=username,
                 email=email,
                 mobile_number=mobile_number,
                 user_type=UserType.REAL_ESTATE_AGENT,
                 password=password,
+                is_active=False  # ✅ Mark inactive until OTP verified
             )
+
+            # Step 2: Generate OTP
+            otp = user.generate_otp()
+
+            # Step 3: Send OTP via Email
+            if email:
+                try:
+                    from django.core.mail import EmailMessage
+                    from django.conf import settings
+
+                    smtp_user = settings.EMAIL_HOST_USER
+                    smtp_pass = settings.EMAIL_HOST_PASSWORD
+                    email_msg = EmailMessage(
+                        subject="Your OTP Code",
+                        body=f"Dear {username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                        from_email=smtp_user,
+                        to=[email],
+                    )
+                    email_msg.send(fail_silently=False)
+                except Exception as e:
+                    raise serializers.ValidationError({"detail": f"Failed to send OTP email: {e}"})
+
+            # Step 4: Save profile
             serializer.save(user=user)
+
         except IntegrityError:
             raise serializers.ValidationError({"detail": "A user with this email or mobile number already exists."})
         except Exception as e:
@@ -510,3 +592,20 @@ class BankDetailViewSet(viewsets.ModelViewSet):
         if user.is_superuser or user.user_type == UserType.ADMIN:
             return BankDetail.objects.all()
         return BankDetail.objects.filter(user=user)
+
+class UserRegisterView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            otp = user.generate_otp()  # Optional
+            user.send_otp_email(otp) 
+            return Response({
+                "message": "User registered successfully. OTP sent.",
+                "user_id": user.id,
+                "referral_code": user.referral_code
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
