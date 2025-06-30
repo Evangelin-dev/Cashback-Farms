@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name='KYCDocument',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('document_type', models.CharField(choices=[('national_id', 'National ID'), ('address_proof', 'Address Proof'), ('passport', 'Passport')], max_length=50)),
+                ('document_type', models.CharField(choices=[('national_id', 'National ID'), ('address_proof', 'Address Proof'), ('passport', 'Passport'),('aadhaar_card', 'Aadhaar'), ('pan_card','Pan Card')], max_length=50)),
                 ('file', models.FileField(upload_to='kyc_documents/')),
                 ('status', models.CharField(choices=[('submitted', 'Submitted'), ('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='submitted', max_length=20)),
                 ('upload_date', models.DateTimeField(auto_now_add=True)),
