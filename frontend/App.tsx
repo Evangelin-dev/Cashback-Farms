@@ -62,7 +62,7 @@ import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents
 import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
 import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
 import BookConsultation from './components/detailpageandcart/bookconsultation';
- import { DMaterialDetailPage,DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
+import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
 import RealMySqft from './pages/realestate/components/realMysqft';
@@ -83,91 +83,84 @@ import OTPPage from './pages/registration/OTP';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const AppRoutes: React.FC = () => {
   const { currentUser } = useAuth();
-console.log(currentUser,"curr")
+  console.log(currentUser, "curr")
   return (
-    
+
     <Routes>
-      
-         {/* Redirect root path to home page */}
-         <Route element={<DefaultLayout />}>
-         
-      <Route path="/" element={<DefaultLanding />} />
-      <Route path="/D" element={<DefaultLanding />} />
-      <Route path="/Dplots" element={<DPlotMarketplacePage />} />
-      <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
-      <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
-      <Route path="/Dservices" element={<DServicesHubPage />} />
-      <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
-      <Route path="/Dpaymentvai" element={<DPaymentVai/>} />
-      <Route path="/Dplans" element={<DPlansPage />} /> 
-      <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
-      <Route path="bookconsultation" element={<BookConsultation />} />
-      <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
-      <Route path="/Dcart" element={<DCart /> } />
-      <Route path="/Dplans" element={<DPlansPage />} /> 
-      <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
-      <Route path="/Dterms" element={<TermsAndConditions />} />
+      <Route element={<DefaultLayout />}>
+        <Route path="/" element={<DefaultLanding />} />
+        <Route path="/D" element={<DefaultLanding />} />
+        <Route path="/Dplots" element={<DPlotMarketplacePage />} />
+        <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
+        <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
+        <Route path="/Dservices" element={<DServicesHubPage />} />
+        <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
+        <Route path="/Dpaymentvai" element={<DPaymentVai />} />
+        <Route path="/Dplans" element={<DPlansPage />} />
+        <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
+        <Route path="bookconsultation" element={<BookConsultation />} />
+        <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
+        <Route path="/Dcart" element={<DCart />} />
+        <Route path="/Dplans" element={<DPlansPage />} />
+        <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
+        <Route path="/Dterms" element={<TermsAndConditions />} />
         <Route path="/Dprivacy" element={<PrivacyPolicy />} />
+      </Route>
+
       
-    
-
-     </Route>
-
-      {/* User Routes */}
-      <Route element={<UserLayout />}>
-        <Route path="/Landing" element={<LandingPage />} />
-        <Route path="/user-dashboard" element={<UserDashboard/>} />
-        {/* <Route path="/home" element={<HomePage />} /> */}
-        <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />
-        
-        {/* Change /profile to use MyProfile directly */}
-        <Route path="/profile" element={<MyProfile />} />
-        <Route path="/my-bookings" element={<MyBooking/>} />
-        <Route path="/refer-earn" element={<ReferAndEarn/>} />
-        <Route path="/knowledge-base" element={<KnowledgeBase/>} />
-        <Route path="/help-support" element={<HelpAndSupport/>} />
-        <Route path="/plots" element={<PlotMarketplacePage />} />
-        <Route path="/plots/:id" element={<PlotDetailPage />} />
-        <Route path="/book-my-sqft" element={<BookMySqftPage />} />
-        {/* Redirect /book-my-sqft to a default BMS plot if no ID specified */}
-        <Route path="/materials" element={<MaterialsStorePage />} />
-        <Route path="/materials/:id" element={<MaterialDetailPage />} />
-        <Route path="/services" element={<ServicesHubPage />} />
-        <Route path="/services/:id" element={<ProfessionalDetailPage />} />
-        <Route path="/plans" element={<PlansPage />} /> 
-        <Route path="/paymentvai" element={<PaymentVai />} /> {/* PaymentVai route */}
-        <Route path="/mysqft-listing" element={<MySqftListing />} />
-        <Route path="/myprofile" element={<MyProfile />} />
-        <Route path="/cart" element={<Cart /> } />
-        <Route path="/materialcheckout" element={<MaterialCheckout />} />
-        <Route path="logbookconsultation" element={<LogBookConsultation />} />
-        <Route path="bookplotpayment" element={<BookPlotPayment />} />
-        <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
-        <Route path="/terms" element={<TermsAndConditions />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        
+      <Route element={<ProtectedRoute />}>
+        <Route element={<UserLayout />}>
+          <Route path="/Landing" element={<LandingPage />} />
+          <Route path="/user-dashboard" element={<UserDashboard />} />
+          <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />          
+          <Route path="/profile" element={<MyProfile />} />
+          <Route path="/my-bookings" element={<MyBooking />} />
+          <Route path="/refer-earn" element={<ReferAndEarn />} />
+          <Route path="/knowledge-base" element={<KnowledgeBase />} />
+          <Route path="/help-support" element={<HelpAndSupport />} />
+          <Route path="/plots" element={<PlotMarketplacePage />} />
+          <Route path="/plots/:id" element={<PlotDetailPage />} />
+          <Route path="/book-my-sqft" element={<BookMySqftPage />} />
+          
+          <Route path="/materials" element={<MaterialsStorePage />} />
+          <Route path="/materials/:id" element={<MaterialDetailPage />} />
+          <Route path="/services" element={<ServicesHubPage />} />
+          <Route path="/services/:id" element={<ProfessionalDetailPage />} />
+          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/paymentvai" element={<PaymentVai />} /> 
+          <Route path="/mysqft-listing" element={<MySqftListing />} />
+          <Route path="/myprofile" element={<MyProfile />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/materialcheckout" element={<MaterialCheckout />} />
+          <Route path="logbookconsultation" element={<LogBookConsultation />} />
+          <Route path="bookplotpayment" element={<BookPlotPayment />} />
+          <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
+          <Route path="/terms" element={<TermsAndConditions />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+        </Route>
       </Route>
 
-<Route element={<B2BLayout />}>
-      {/* B2B Vendor Panel Route */}
-      <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
-      <Route path="/b2b/*" element={<B2BPanelRoutes />} />
+      <Route element={<B2BLayout />}>
+        
+        <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
+        <Route path="/b2b/*" element={<B2BPanelRoutes />} />
       </Route>
 
- <Route element={<RealLayout />}>
-      {/* RealEstate Agent Panel Route */}
-      <Route path="/realestate/realprofile" element={<RealProfile />} />
-      <Route path="/realestate/*" element={<RealEstateRoutes />} />
-      <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-      <Route path="/realestate/post-plots" element={<PostPlots />} />
-      <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
-      <Route path="/realestate/dashboard" element={<Mydashboard />} />
- </Route>
+      <Route element={<RealLayout />}>
+        
+        <Route path="/realestate/realprofile" element={<RealProfile />} />
+        <Route path="/realestate/*" element={<RealEstateRoutes />} />
+        <Route path="/referrealestate" element={<ReferAndEarnReal />} />
+        <Route path="/realestate/post-plots" element={<PostPlots />} />
+        <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
+        <Route path="/realestate/dashboard" element={<Mydashboard />} />
+      </Route>
 
-      {/* Admin Routes */}
+      
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
@@ -179,34 +172,34 @@ console.log(currentUser,"curr")
         <Route path="materials" element={<ManageMaterialsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
-        <Route path="microplot" element={< ManageMysqft/>} />
+        <Route path="microplot" element={< ManageMysqft />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
+
       
-      {/* Fallback for any unmatched route */}
-      {/* <Route path="*" element={<DefaultLanding/>} /> */}
-      <Route path="/registration" element={<RegistrationPage />} /> 
-      <Route path="/OTP" element={<OTPPage />} /> 
+      
+      <Route path="/registration" element={<RegistrationPage />} />
+      <Route path="/OTP" element={<OTPPage />} />
       <Route path="*" element={<NotFoundPage />} />
 
 
     </Routes>
-    
+
   );
 };
 
 const App: React.FC = () => {
- 
+
   return (
-       <CacheProvider value={emotionCache}>
-      
-        <CssBaseline />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      
+    <CacheProvider value={emotionCache}>
+
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+
     </CacheProvider>
   );
 };

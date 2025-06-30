@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { DNAV_LINKS } from '../../../../constants';
 import AuthForm from '../../../auth/AuthForm';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,8 +11,8 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
-   const { currentUser } = useAuth();
-
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
   return (
     <>
       <nav className="bg-white/80 backdrop-blur-lg shadow-md sticky top-0 z-50 border-b border-green-100">
@@ -48,18 +48,17 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                   key={link.name}
                   to={link.path}
                   className={({ isActive }) =>
-                    `px-4 py-2 rounded-xl text-base font-semibold transition-all duration-150 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
-                        : 'text-green-700 hover:bg-green-100 hover:text-green-900'
+                    `px-4 py-2 rounded-xl text-base font-semibold transition-all duration-150 ${isActive
+                      ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
+                      : 'text-green-700 hover:bg-green-100 hover:text-green-900'
                     }`
                   }
                 >
                   {link.name}
                 </NavLink>
               ))}
-                            {currentUser ? (
-                  <button
+              {currentUser ? (
+                <button
                   className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
                   onClick={() => {
                     localStorage.removeItem('access_token');
@@ -70,17 +69,27 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                 >
                   Logout
                 </button>
-               ) : (
-                 <button
-                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setShowAuth(true);
-                  }}
-                >
-                  Login / Sign Up
-                </button>
-               ) }
+              ) : (
+                <div className='flex gap-2'>
+                  <button
+                    className="w-full mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                    onClick={() => {
+                      setIsOpen(false);
+                      setShowAuth(true);
+                    }}
+                  >
+                    Login / Sign Up
+                  </button>
+                  <button
+                    className="w-full mt-2 px-4 text-sm py-2 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                    onClick={() => {
+                      navigate('/registration');
+                    }}
+                  >
+                    Registration
+                  </button>
+                </div>
+              )}
             </div>
             {/* Mobile Hamburger */}
             <div className="md:hidden flex items-center">
@@ -170,38 +179,47 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     to={link.path}
                     onClick={() => setIsOpen(false)}
                     className={({ isActive }) =>
-                      `px-4 py-3 rounded-xl text-base font-semibold ${
-                        isActive
-                          ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
-                          : 'text-green-700 hover:bg-green-100 hover:text-green-900'
+                      `px-4 py-3 rounded-xl text-base font-semibold ${isActive
+                        ? 'bg-gradient-to-r from-green-500 to-green-700 text-white shadow'
+                        : 'text-green-700 hover:bg-green-100 hover:text-green-900'
                       }`
                     }
                   >
                     {link.name}
                   </NavLink>
                 ))}
-               {currentUser ? (
+                {currentUser ? (
                   <button
-                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
-                  onClick={() => {
-                    localStorage.removeItem('access_token');
-                    localStorage.removeItem('refresh_token');
-                    localStorage.removeItem('currentUser')
-                  }}
-                >
-                  Logout
-                </button>
-               ) : (
-                 <button
-                  className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
-                  onClick={() => {
-                    setIsOpen(false);
-                    setShowAuth(true);
-                  }}
-                >
-                  Login / Sign Up
-                </button>
-               ) }
+                    className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                    onClick={() => {
+                      localStorage.removeItem('access_token');
+                      localStorage.removeItem('refresh_token');
+                      localStorage.removeItem('currentUser')
+                    }}
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <div className='flex'>
+                    <button
+                      className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                      onClick={() => {
+                        setIsOpen(false);
+                        setShowAuth(true);
+                      }}
+                    >
+                      Login / Sign Up
+                    </button>
+                    <button
+                      className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                      onClick={() => {
+                        navigate('/registration');
+                      }}
+                    >
+                      Registration
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <style>{`
