@@ -1,5 +1,4 @@
 import apiClient from '@/src/utils/api/apiClient';
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -107,7 +106,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
       });
   }, []);
 
-  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,10 +143,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
       const token = res?.data?.tokens?.access;
       localStorage.setItem("token", token);
     } catch (err: any) {
-      console.error('OTP request error:', err);
-      setError(
-        err.response?.data?.message || 'Failed to send OTP. Please try again.'
-      );
+       console.error('OTP request error:', err.response); 
+
+      // --- THIS IS THE DEFINITIVE FIX ---
+
+      // 1. Safely access the 'detail' property from the path shown in your error log.
+      const serverDetail = err?.response?.data?.detail;
+
+      // 2. Check if we successfully got that specific string.
+      if (typeof serverDetail === 'string' && serverDetail.includes("No CustomUser matches")) {
+        // 3. If it's the "user not found" error, set the user-friendly message.
+        setError("No account found. Please check your email or sign up.");
+      } else {
+        // 4. If the error is something else, or if the structure is unexpected for any reason,
+        // show a more informative generic error. This is our safety net.
+        setError("An unexpected server error occurred. Please try again.");
+      }
+      // --- END OF FIX ---
+
     } finally {
       setLoading(false);
     }
