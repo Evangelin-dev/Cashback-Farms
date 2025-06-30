@@ -426,6 +426,8 @@ class KYCDocument(models.Model):
         ('national_id', 'National ID'),
         ('address_proof', 'Address Proof'),
         ('passport', 'Passport'),
+        ('aadhaar_card', 'Aadhaar'),
+        ('pan_card','Pan Card'),
         # add more if needed
     ]
 
