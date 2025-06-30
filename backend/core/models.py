@@ -6,6 +6,7 @@ import random
 import string
 import datetime
 from django.utils import timezone
+from django.core.mail import EmailMessage
 
 
 # User Roles
@@ -36,6 +37,8 @@ class CustomUser(AbstractUser):
     user_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
+
+    is_active = models.BooleanField(default=False)
 
     # Add related_name to avoid clashes with auth.User.groups and auth.User.user_permissions
     groups = models.ManyToManyField(
@@ -78,6 +81,24 @@ class CustomUser(AbstractUser):
             # Log or handle the error as needed
             print(f"Error generating OTP: {e}")
             return None
+
+    def send_otp_email(self, otp):
+        try:
+            if self.email:
+                # smtp_user = "azeema224143@gmail.com"
+                # smtp_pass = "buwqswksuljoxjvm"
+                smtp_user = settings.EMAIL_HOST_USER
+                smtp_pass = settings.EMAIL_HOST_PASSWORD
+
+                email_msg = EmailMessage(
+                    subject="Your OTP Code",
+                    body=f"Your OTP code is: {otp}",
+                    from_email=smtp_user,
+                    to=[self.email],
+                )
+                email_msg.send(fail_silently=False)
+        except Exception as e:
+            print(f"Error sending OTP email: {e}")
 
     def verify_otp(self, otp_code):
         try:
