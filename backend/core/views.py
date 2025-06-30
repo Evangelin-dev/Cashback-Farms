@@ -767,11 +767,11 @@ class KYCSubmitView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    def post(self, request):
-        serializer = KYCDocumentSerializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = KYCDocumentSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(user=request.user)
-            return Response({"message": "KYC submitted successfully.", "status": "submitted"}, status=201)
+            return Response({'message': 'KYC submitted successfully'}, status=201)
         return Response(serializer.errors, status=400)
 
 
