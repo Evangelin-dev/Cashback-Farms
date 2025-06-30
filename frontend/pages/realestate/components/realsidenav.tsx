@@ -12,159 +12,275 @@ import {
   IconRupee,
   IconUsers,
 } from "../../../constants.tsx";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, UploadCloud, X } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
+import apiClient from "@/src/utils/api/apiClient"; // Make sure this path is correct
 import "../AgentProfileSection.css";
 
 // Menu items for real estate agent panel
 const menuItems = [
-  {
-    key: "/realestate/dashboard",
-    icon: <LayoutDashboard className="w-5 h-5" />,
-    label: "My Dashboard",
-  },
-  {
-    key: "/realestate/post-plots",
-    icon: <IconMapPin className="w-5 h-5" />,
-    label: "Post Plots",
-  },
-  {
-    key: "/realestate/post-micro-plots",
-    icon: <IconMapPin className="w-5 h-5" />,
-    label: "Post Micro Plots",
-  },
-  {
-    key: "/realestate/leads",
-    icon: <IconUsers className="w-5 h-5" />,
-    label: "Plot Inquiries & Leads",
-  },
-  {
-    key: "/realestate/commission",
-    icon: <IconRupee className="w-5 h-5" />,
-    label: "Commission Dashboard",
-  },
-  {
-    key: "/realestate/lead-management",
-    icon: <IconCollection className="w-5 h-5" />,
-    label: "Lead Management",
-  },
-  {
-    key: "/referrealestate",
-    icon: <IconPlus className="w-5 h-5" />,
-    label: "Refer and Earn",
-  },
+    // ... (menu items remain unchanged)
+    { key: "/realestate/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard" },
+    { key: "/realestate/post-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Plots" },
+    { key: "/realestate/post-micro-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Micro Plots" },
+    { key: "/realestate/leads", icon: <IconUsers className="w-5 h-5" />, label: "Plot Inquiries & Leads" },
+    { key: "/realestate/commission", icon: <IconRupee className="w-5 h-5" />, label: "Commission Dashboard" },
+    { key: "/realestate/lead-management", icon: <IconCollection className="w-5 h-5" />, label: "Lead Management" },
+    { key: "/referrealestate", icon: <IconPlus className="w-5 h-5" />, label: "Refer and Earn" },
 ];
 
-// --- ProfileSection with proper currentUser handling ---
+// --- KYC Submission Modal Component ---
+const KycModal = ({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (docType: string, file: File) => Promise<void>;
+}) => {
+  const [docType, setDocType] = useState("national_id");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      setError("Please select a file to upload.");
+      return;
+    }
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(docType, file);
+      // The parent component will handle closing on success
+    } catch (apiError: any) {
+      setError(apiError.message || "An unknown error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-adminpop">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition"
+          aria-label="Close"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Submit KYC Document</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Document Type
+            </label>
+            <select
+              value={docType}
+              onChange={(e) => setDocType(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm"
+            >
+              <option value="national_id">National ID</option>
+              <option value="aadhaar_proof">Aadhaar Proof</option>
+              <option value="passport">Passport</option>
+              <option value="pan_card">PAN Card</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Upload File
+            </label>
+            <label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-xl appearance-none cursor-pointer hover:border-primary">
+              <span className="flex items-center space-x-2">
+                <UploadCloud className="w-6 h-6 text-gray-500" />
+                <span className="font-medium text-gray-600">
+                  {file ? file.name : "Click to upload a file"}
+                </span>
+              </span>
+              <input type="file" onChange={handleFileChange} className="hidden" />
+            </label>
+          </div>
+          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          <button
+            type="submit"
+            disabled={isSubmitting || !file}
+            className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-green-500 to-primary text-white font-bold text-lg shadow-lg hover:from-green-600 hover:to-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? "Submitting..." : "Submit for Verification"}
+          </button>
+        </form>
+      </div>
+      <style>{`@keyframes adminpop {0%{transform:scale(.8) rotate(-5deg);opacity:0}60%{transform:scale(1.05) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}.animate-adminpop{animation:adminpop .6s cubic-bezier(.68,-.55,.27,1.55)}`}</style>
+    </div>
+  );
+};
+
+// --- ProfileSection with Integrated KYC Logic ---
 const ProfileSection: React.FC = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { currentUser } = useAuth();
-  console.log(currentUser, "currentUser in ProfileSection");
-  
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    photo: "",
-    kycStatus: "Not Verified",
-  });
-  
-  const [otpSentTo, setOtpSentTo] = useState<"email" | "phone" | null>(null);
-  const [otp, setOtp] = useState("");
-  const [otpInput, setOtpInput] = useState("");
-  const [otpVerified, setOtpVerified] = useState<{ email: boolean; phone: boolean }>({ email: false, phone: false });
-  const [showKyc, setShowKyc] = useState(false);
-  const [kycStatus, setKycStatus] = useState("Not Verified");
   const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [profile, setProfile] = useState({ name: "", email: "", phone: "", photo: "" });
+  const [kycStatus, setKycStatus] = useState("Not Verified");
+  const [hasKycDocuments, setHasKycDocuments] = useState(false);
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [kycDataLoaded, setKycDataLoaded] = useState(false);
 
-  // Update profile when currentUser changes
   useEffect(() => {
-    if (currentUser) {
-      console.log("Updating profile with currentUser:", currentUser);
-      setProfile({
-        name: currentUser.username || "User",
-        email: currentUser.email || "",
-        phone: currentUser.mobile_number || "",
-        photo: "",
-        kycStatus: "Not Verified",
-      });
-      setKycStatus("Not Verified");
-    }
-  }, [currentUser]);
-
-  // Also try to get user from localStorage as fallback
-  useEffect(() => {
-    if (!currentUser) {
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        // If you have a way to decode the token or get user info, do it here
-        // Or trigger a re-fetch of user data in your AuthContext
-        console.log("User not loaded but token exists, might need to refresh user data");
+    const fetchData = async () => {
+      setIsLoading(true);
+      setKycDataLoaded(false);
+      
+      const accessToken = localStorage.getItem("access_token");      
+      if (!accessToken) {
+        setIsLoading(false);
+        setKycDataLoaded(true);
+        return;
       }
+      
+      const headers = { Authorization: `Bearer ${accessToken}` };
+      
+      try {
+        const [profileRes, kycRes] = await Promise.all([
+          apiClient.get("/user/profile/", { headers }),
+          apiClient.get("/user/kyc/status/", { headers }),
+        ]);
+
+        if (profileRes.data) {
+          setProfile({
+            name: profileRes.username || "User",
+            email: profileRes.email || "",
+            phone: profileRes.mobile_number || "",
+            photo: "",
+          });
+        }
+
+        if (kycRes) {
+          const documents = kycRes.documents || [];
+          const status = kycRes.status;
+          
+          // Set hasKycDocuments based on whether documents array has items
+          const documentsExist = Array.isArray(documents) && documents.length > 0;
+          setHasKycDocuments(documentsExist);
+          
+          if (documentsExist) {
+            // If documents exist, use the status from API
+            setKycStatus(status || "Pending");
+          } else {
+            // If no documents, always show "Not Verified"
+            setKycStatus("Not Verified");
+          }
+        } else {
+          setKycStatus("Not Verified");
+          setHasKycDocuments(false);
+        }
+
+      } catch (error) {
+        console.error("=== API CALL FAILED ===", error);
+        console.error("Error response:", error.response?.data);
+        setKycStatus("Not Verified");
+        setHasKycDocuments(false);
+      } finally {
+        setKycDataLoaded(true);
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+const handleKycSubmit = async (docType: string, file: File) => {
+  const accessToken = localStorage.getItem("access_token");
+  if (!accessToken) throw new Error("Authentication token not found.");
+
+  const formData = new FormData();
+  formData.append("document_type", docType);
+  formData.append("file", file);
+
+  try {
+    await apiClient.post("/user/kyc/submit/", formData, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    
+    alert("KYC document submitted successfully! Status is now pending review.");
+    setShowKycModal(false);
+    
+    // Refetch KYC data to get the latest status
+    try {
+      const kycRes = await apiClient.get("/user/kyc/status/", { 
+        headers: { Authorization: `Bearer ${accessToken}` } 
+      });
+      
+      if (kycRes) {
+        const documents = kycRes.documents || [];
+        const status = kycRes.status;
+        
+        const documentsExist = Array.isArray(documents) && documents.length > 0;
+        setHasKycDocuments(documentsExist);
+        
+        if (documentsExist) {
+          setKycStatus(status || "Pending");
+        } else {
+          setKycStatus("Not Verified");
+        }
+      }
+    } catch (refetchError) {
+      console.error("Failed to refetch KYC status:", refetchError);
+      // Fallback: set expected values
+      setKycStatus("Pending");
+      setHasKycDocuments(true);
     }
-  }, [currentUser]);
-
-  // KYC simulation
-  const handleKyc = () => {
-    setShowKyc(true);
-    setTimeout(() => {
-      setKycStatus("Verified");
-      setProfile((p) => ({ ...p, kycStatus: "Verified" }));
-      setShowKyc(false);
-    }, 2000);
-  };
-
-  // OTP simulation
-  function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    
+  } catch (error: any) {
+    console.error("KYC submission failed:", error);
+    const errorMessage = error.response?.data?.detail || "KYC submission failed. Please try again.";
+    throw new Error(errorMessage);
   }
-  
-  const sendOtp = (type: "email" | "phone") => {
-    const newOtp = generateOTP();
-    setOtp(newOtp);
-    setOtpSentTo(type);
-    setOtpInput("");
-    setTimeout(() => {
-      alert(`OTP for ${type}: ${newOtp}`);
-    }, 300);
-  };
-  
-  const verifyOtp = () => {
-    if (otpInput === otp) {
-      setOtpVerified((prev) => ({ ...prev, [otpSentTo!]: true }));
-      setOtpSentTo(null);
-      setOtp("");
-      setOtpInput("");
-    } else {
-      alert("Invalid OTP");
-    }
-  };
+};
 
-  // Dropdown toggle
-  const toggleDropdown = () => setDropdownOpen((open) => !open);
-
-  // Use currentUser directly if available, otherwise use profile state
   const displayUser = currentUser || profile;
   const userName = displayUser.username || displayUser.name || "User";
   const userEmail = displayUser.email || "";
-  const userPhone = displayUser.mobile_number || displayUser.phone || "";
+  const userCode = generateUserCode(userName, new Date("2024-01-01"));
 
-  // Generate User Code (using name and a static date for demo)
-  const userCode = generateUserCode(
-    userName,
-    new Date("2024-01-01")
-  );
+  const getKycDisplay = () => {
+    switch (kycStatus) {
+      case "approved":
+        return <span className="text-green-600 font-semibold flex items-center gap-2 text-sm"><IconCheck className="w-5 h-5 animate-bounce" /> Verified</span>;
+      case "pending":
+        return <span className="text-yellow-600 font-semibold flex items-center gap-2 text-sm"><IconAlertCircle className="w-5 h-5 animate-pulse" /> Pending Review</span>;
+      case "rejected":
+        return <span className="text-red-600 font-semibold flex items-center gap-2 text-sm"><IconAlertCircle className="w-5 h-5" /> Rejected</span>;
+      default:
+        return <span className="text-red-600 font-semibold flex items-center gap-2 text-sm"><IconAlertCircle className="w-5 h-5 animate-pulse" /> Not Verified</span>;
+    }
+  };
 
-  // Show loading state only if no user data at all
-  if (!currentUser && !profile.name && !profile.email) {
+  // FIXED LOGIC: Show verify button only when:
+  // 1. KYC data has been loaded from API AND
+  // 2. (No documents exist OR status is "Rejected")
+  const shouldShowVerifyButton = kycDataLoaded && (!hasKycDocuments || kycStatus === "Rejected");
+
+
+  if (isLoading) {
     return (
-      <div className="relative w-full">
-        <div className="flex items-center gap-3 p-2 rounded-lg" style={{ minHeight: 56 }}>
-          <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <div className="h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
-            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
-          </div>
+      <div className="flex items-center gap-3 p-2 rounded-lg" style={{ minHeight: 56 }}>
+        <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+        <div className="flex flex-col min-w-0 flex-1">
+          <div className="h-4 bg-gray-200 rounded animate-pulse mb-1"></div>
+          <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
         </div>
       </div>
     );
@@ -172,19 +288,16 @@ const ProfileSection: React.FC = () => {
 
   return (
     <div className="relative w-full">
+      {/* KYC Modal */}
+      {showKycModal && <KycModal onClose={() => setShowKycModal(false)} onSubmit={handleKycSubmit} />}
+
       <div
         className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-primary/10 transition"
-        onClick={toggleDropdown}
+        onClick={() => setDropdownOpen(o => !o)}
         style={{ minHeight: 56 }}
       >
-        <div className="relative">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-primary agent-photo">
-            {profile.photo ? (
-              <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
-            ) : (
-              userName[0]?.toUpperCase() || "U"
-            )}
-          </div>
+        <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-primary agent-photo">
+          {profile.photo ? <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" /> : (userName[0]?.toUpperCase() || "U")}
         </div>
         <div className="flex flex-col min-w-0">
           <span className="font-semibold text-primary-light truncate">{userName}</span>
@@ -196,191 +309,93 @@ const ProfileSection: React.FC = () => {
           </svg>
         </span>
       </div>
-      {/* Dropdown */}
-      <div
-        className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${
-          dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
-        }`}
-        style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
-      >
+
+      {/* Dropdown Menu */}
+      <div className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${dropdownOpen ? "scale-y-100 opacity-100" : "scale-y-95 opacity-0 pointer-events-none"}`}>
         <div className="p-4 flex flex-col items-center">
-          <div className="relative mb-2">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden agent-photo border-4 border-primary">
-              {profile.photo ? (
-                <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                userName[0]?.toUpperCase() || "U"
-              )}
+            <div className="mt-1 text-lg font-semibold text-primary-light">{userName}</div>
+            <div className="text-xs text-gray-500 mb-2">{userEmail}</div>
+            
+            {/* KYC Status Section */}
+            <div className="w-full flex flex-col items-center mt-4 mb-2">
+                <div className="flex flex-col items-center w-full px-2 py-2 bg-neutral-100 rounded-lg border border-neutral-200">
+                    <span className="text-xs text-gray-500 mb-1 tracking-wide">KYC Status</span>
+                    {!kycDataLoaded ? (
+                        <div className="text-sm text-gray-500 animate-pulse">Loading...</div>
+                    ) : (
+                        <>
+                            {getKycDisplay()}
+                            {shouldShowVerifyButton && (
+                                <button
+                                    className="mt-2 px-4 py-1 text-xs bg-primary text-white rounded hover:bg-primary-dark transition animate-kyc-btn"
+                                    onClick={() => setShowKycModal(true)}
+                                >
+                                    {kycStatus === "Rejected" ? "Re-submit KYC" : "Verify KYC"}
+                                </button>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
-            {/* Creative User Code display */}
-            <div className="mt-2 text-sm text-gray-600 font-mono bg-gray-100 px-4 py-1 rounded shadow-sm">
-              User Code: <span className="text-primary font-semibold">{userCode}</span>
-            </div>
-          </div>
-          <div className="mt-1 text-lg font-semibold text-primary-light">{userName}</div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{userPhone || "No phone number"}</span>
-            {otpVerified?.phone && (
-              <span className="text-green-500 w-4 h-4" title="Verified">
-                <IconCheck className="w-4 h-4" />
-              </span>
-            )}
-          </div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{userEmail}</span>
-            {otpVerified?.email && (
-              <span className="text-green-500 w-4 h-4" title="Verified">
-                <IconCheck className="w-4 h-4" />
-              </span>
-            )}
-          </div>
-          <div className="w-full flex flex-col items-center mt-4 mb-2">
-            <div className="flex flex-col items-center w-full px-2 py-2 bg-neutral-100 rounded-lg border border-neutral-200">
-              <span className="text-xs text-gray-500 mb-1 tracking-wide">KYC Status</span>
-              {kycStatus === "Verified" ? (
-                <span className="text-green-600 font-semibold flex items-center gap-2 text-sm mb-1" title="Verified">
-                  <IconCheck className="w-5 h-5 animate-bounce" />
-                  Verified
-                </span>
-              ) : (
-                <span className="text-red-600 font-semibold flex items-center gap-2 text-sm mb-1" title="Not Verified">
-                  <IconAlertCircle className="w-5 h-5 animate-pulse" />
-                  Not Verified
-                </span>
-              )}
-              {kycStatus !== "Verified" && (
-                <button
-                  className="mt-2 px-4 py-1 text-xs bg-primary text-white rounded hover:bg-primary-dark transition animate-kyc-btn"
-                  onClick={handleKyc}
-                  disabled={showKyc}
-                >
-                  {showKyc ? (
-                    <span className="flex items-center gap-1">
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                      </svg>
-                      Verifying...
-                    </span>
-                  ) : (
-                    "Verify KYC"
-                  )}
-                </button>
-              )}
-            </div>
-          </div>
-          <button
-            className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
-            onClick={() => {
-              setDropdownOpen(false);
-              navigate("/realestate/realprofile");
-            }}
-          >
-            <IconEdit className="w-4 h-4" />
-            Edit Profile
-          </button>
+            
+            <button
+                className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
+                onClick={() => { setDropdownOpen(false); navigate("/realestate/realprofile"); }}
+            >
+                <IconEdit className="w-4 h-4" /> Edit Profile
+            </button>
         </div>
       </div>
-      {/* Overlay for dropdown */}
-      {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-10"
-          style={{ background: "transparent" }}
-          onClick={() => setDropdownOpen(false)}
-        />
-      )}
+
+      {dropdownOpen && <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />}
     </div>
   );
 };
 
+// --- Main Sidebar Component ---
 const RealSideNav: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Helper for mobile: close sidebar after navigation
-  const handleNavClick = () => {
-    setSidebarOpen(false);
-  };
-
   return (
     <>
-      {/* Mobile menu button */}
       <button
         className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-green-500 to-green-700 text-white p-2 rounded-full shadow-lg"
-        onClick={() => setSidebarOpen((open) => !open)}
+        onClick={() => setSidebarOpen(true)}
         aria-label="Open sidebar"
-        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
       >
-        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
+        <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
       </button>
-      {/* Sidebar as creative side drawer on mobile, static on desktop */}
-      <div
-        className={`
-          fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200
-          transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:static md:translate-x-0 md:w-64 md:flex
-        `}
-        style={{
-          minWidth: "17rem",
-          borderTopRightRadius: 32,
-          borderBottomRightRadius: 32,
-          boxShadow: sidebarOpen ? "0 8px 32px 0 rgba(34,197,94,0.15)" : undefined,
-          background: "linear-gradient(135deg, #f0fdf4 60%, #e0f2f1 100%)",
-          marginTop: sidebarOpen ? 50 : 0,
-          overflowY: "auto", // Make sidebar scrollable
-          maxHeight: "100vh"
-        }}
-      >
-        {/* ProfileSection at the top */}
+
+      <div className={`fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static`}>
         <ProfileSection />
         <div className="text-2xl font-bold text-primary-light py-4 px-2 mb-4 border-b border-neutral-200">
           RealEstate<span className="text-black"> Agent</span>
         </div>
-        <nav className="flex-grow space-y-1">
+        <nav className="flex-grow space-y-1 overflow-y-auto">
           {menuItems.map((item) => (
             <NavLink
-              key={item.key}
-              to={item.key}
-              onClick={handleNavClick}
-              className={({ isActive }) =>
-                `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md
-                ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`
-              }
+              key={item.key} to={item.key} onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) => `flex items-center px-4 py-3 text-sm transition-colors duration-150 rounded-md ${isActive || location.pathname === item.key ? "bg-primary text-white font-semibold shadow-md" : "text-black hover:bg-primary hover:text-white"}`}
             >
-              <span className="mr-3 w-5 h-5">{item.icon}</span>
-              {item.label}
+              <span className="mr-3 w-5 h-5">{item.icon}</span> {item.label}
             </NavLink>
           ))}
         </nav>
         <div className="mt-auto">
           <hr className="my-2 border-t border-neutral-300" />
           <button
-            onClick={() => {
-              logout();
-              localStorage.removeItem('access_token');
-              localStorage.removeItem('refresh_token');
-              navigate("/");
-              setSidebarOpen(false);
-            }}
+            onClick={() => { logout(); navigate("/"); setSidebarOpen(false); }}
             className="flex items-center w-full px-4 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white transition-colors duration-150 rounded-md"
           >
-            <IconLogout className="w-5 h-5 mr-3" />
-            Logout
+            <IconLogout className="w-5 h-5 mr-3" /> Logout
           </button>
         </div>
       </div>
-      {/* Overlay for mobile sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+
+      {sidebarOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
     </>
   );
 };

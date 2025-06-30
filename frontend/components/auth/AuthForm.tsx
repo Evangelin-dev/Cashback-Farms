@@ -216,7 +216,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           // Check user_type in response and redirect accordingly
           if (user.user_type === 'real_estate_agent') {
             window.location.href = '/realestate/dashboard';
-s          } else {
+          } else {
             navigate('/Landing');
           }
         }, 800); // 5 seconds loader
