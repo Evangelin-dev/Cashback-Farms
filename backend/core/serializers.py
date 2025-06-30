@@ -2,7 +2,8 @@
 from rest_framework import serializers
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
-    EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail
+    EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
+    KYCDocument, FAQ, SupportTicket, Inquiry
 )
 
 # User and Authentication Serializers
@@ -57,12 +58,49 @@ class OTPVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Either email or mobile number is required for OTP verification.")
         return data
 
+class KYCDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KYCDocument
+        fields = ['id', 'document_type', 'file', 'status', 'upload_date']
+        read_only_fields = ['status', 'upload_date']
+
+    def create(self, validated_data):
+        # Automatically set the user from request context
+        user = self.context['request'].user
+        return KYCDocument.objects.create(user=user, **validated_data)
+
+# class CustomUserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CustomUser
+#         fields = ('id', 'username', 'email', 'mobile_number', 'user_type', 'is_staff', 'is_active')
+#         read_only_fields = ('user_type', 'is_staff', 'is_active')
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    full_mobile_number = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
+    kyc_documents = KYCDocumentSerializer(many=True, read_only=True)
+
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'mobile_number', 'user_type', 'is_staff', 'is_active')
-        read_only_fields = ('user_type', 'is_staff', 'is_active')
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'gender', 'date_of_birth',
+            'country_code', 'mobile_number', 'full_mobile_number',
+            'address', 'kyc_documents',
+            'email', 'user_type', 'user_code', 'referral_code',
+            'is_active', 'is_superuser', 'is_staff', 'last_login', 'date_joined'
+        ]
+
+    def get_full_mobile_number(self, obj):
+        return f"{obj.country_code or ''}{obj.mobile_number or ''}"
+
+    def get_address(self, obj):
+        return {
+            "town": obj.town,
+            "city": obj.city,
+            "state": obj.state,
+            "country": obj.country,
+        }
 
 
 # Core Models Serializers
@@ -198,3 +236,20 @@ class BankDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['status', 'admin_approval_required', 'user', 'created_at']
 
+
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = '__all__'
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+class InquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inquiry
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at']
