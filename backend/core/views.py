@@ -833,13 +833,13 @@ class KYCUpdateView(APIView):
             return Response({"detail": "KYC document not found."}, status=404)
 
 class MicroPlotListView(generics.ListAPIView):
-    queryset = PlotListing.objects.filter(available_sqft_for_investment__gt=0)
-    serializer_class = PlotListingSerializer
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 class MicroPlotDetailView(generics.RetrieveAPIView):
-    queryset = PlotListing.objects.filter(available_sqft_for_investment__gt=0)
-    serializer_class = PlotListingSerializer
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 class IsOwnerOrAdmin(permissions.BasePermission):
