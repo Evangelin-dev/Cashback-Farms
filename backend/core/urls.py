@@ -11,7 +11,7 @@ from .views import (
     KYCSubmitView, KYCStatusView, KYCUpdateView, MicroPlotListView, MicroPlotDetailView, FAQViewSet,
     MaterialProductViewSet, SupportTicketViewSet, PlotPurchaseListView, PlotPurchaseCreateView, MicroPlotPurchaseListView, MicroPlotPurchaseCreateView,
     MaterialPurchaseListView, MaterialPurchaseCreateView, ServiceOrderListView, ServiceOrderCreateView,SubmitPlotInquiry, SubmitMicroPlotInquiry, 
-    SubmitMaterialInquiry, SubmitServiceInquiry
+    SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -75,5 +75,8 @@ urlpatterns = [
     path('inquiry/plot/', SubmitPlotInquiry.as_view(), name='inquiry-plot'),
     path('inquiry/micro-plot/', SubmitMicroPlotInquiry.as_view(), name='inquiry-micro-plot'),
     path('inquiry/material/', SubmitMaterialInquiry.as_view(), name='inquiry-material'),
-    path('inquiry/service/', SubmitServiceInquiry.as_view(), name='inquiry-service'),    
+    path('inquiry/service/', SubmitServiceInquiry.as_view(), name='inquiry-service'),
+    path('bookings/', AllBookingListView.as_view(), name='all-bookings'),
+    path('bookings/my/', MyBookingListView.as_view(), name='my-bookings'),
+    path('bookings/client/<int:client_id>/', BookingByClientIDView.as_view(), name='bookings-by-client'),
 ]
