@@ -360,7 +360,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 {error && <div className="text-red-500 text-xs mb-2 animate-shake">{error}</div>}
                 {success && <div className="text-green-600 text-xs mb-2 animate-fade-in-fast">{success}</div>}
                 <button type="submit" className={`w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 shadow transition-all duration-200 text-base flex items-center justify-center gap-2 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`} disabled={loading}>{loading && <span className="loader mr-2"></span>}Verify & Proceed</button>
-                <button type="button" onClick={() => { setOtpSent(false); setError(''); setSuccgit branch -ress(''); }} className="mt-4 text-xs text-gray-500 hover:text-green-600 hover:underline font-semibold">Go Back</button>
+                <button type="button" onClick={() => { setOtpSent(false); setError(''); setSuccess(''); }} className="mt-4 text-xs text-gray-500 hover:text-green-600 hover:underline font-semibold">Go Back</button>
               </form>
             )}
           </div>
