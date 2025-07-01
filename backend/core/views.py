@@ -19,7 +19,7 @@ from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework import generics
 from decimal import Decimal
-
+from django.db.models import Q
 
 
 
@@ -281,19 +281,20 @@ class UserLogoutView(APIView):
             return Response({"detail": f"Logout failed: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --- Core Model ViewSets ---
-class PlotListingViewSet(viewsets.ModelViewSet):  # Use ModelViewSet for full CRUD
+class PlotListingViewSet(viewsets.ModelViewSet):
     serializer_class = PlotListingSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
-    filterset_fields = ['location', 'price_per_sqft', 'is_available_full', 'is_verified']  # ✅ fixed fields
+    filterset_fields = ['location', 'price_per_sqft', 'is_available_full', 'is_verified']
     search_fields = ['title', 'location']
     ordering_fields = ['price_per_sqft', 'created_at']
 
     def get_queryset(self):
         user = self.request.user
         if user.user_type == 'real_estate_agent':
-            return PlotListing.objects.filter(listed_by_agent=user)
+            # Show plots listed or owned by this agent
+            return PlotListing.objects.filter(Q(listed_by_agent=user) | Q(owner=user))
         return PlotListing.objects.all()
 
     def perform_create(self, serializer):
