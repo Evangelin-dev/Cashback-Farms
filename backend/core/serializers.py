@@ -115,7 +115,6 @@ class JointOwnerSerializer(serializers.ModelSerializer):
         fields = ('id', 'owner', 'owner_username', 'owner_email', 'share_percentage')
         read_only_fields = ('owner_username', 'owner_email')
 
-
 class PlotListingSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source='owner.username', read_only=True)
     listed_by_agent_username = serializers.CharField(source='listed_by_agent.username', read_only=True)
@@ -130,7 +129,7 @@ class PlotListingSerializer(serializers.ModelSerializer):
             'owner_username', 'listed_by_agent_username', 'joint_owners'
         ]
         read_only_fields = (
-            'owner',  # <--- add this
+            'owner',
             'is_verified', 'available_sqft_for_investment', 'joint_owners',
             'owner_username', 'listed_by_agent_username'
         )
