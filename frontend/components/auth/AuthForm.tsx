@@ -210,13 +210,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           setRedirectLoading(false);
           onClose();
 
-          if (user.user_type === 'real_estate_agent') {
+           if (user.user_type === 'real_estate_agent') {
             window.location.href = '/realestate/dashboard';
-          }if (user.user_type === 'client') {
+          } else if (user.user_type === 'client' || user.user_type === 'b2b_vendor') {
             window.location.href = '/user-dashboard';
-          } 
-          else {
-            navigate('/Landing');
+          } else {
+            // Default fallback for any other user type or if user_type is null
+            window.location.href = '/';
           }
         }, 800);
       }, 900);
