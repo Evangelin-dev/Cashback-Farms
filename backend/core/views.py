@@ -247,8 +247,14 @@ class OTPVerificationAndLoginView(APIView):
                 user.save()
 
                 refresh = RefreshToken.for_user(user)
-                user_data = CustomUserSerializer(user).data
-
+                # Build user dict for response
+                user_data = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "mobile_number": user.mobile_number,
+                    "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
+                }
                 return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
