@@ -124,11 +124,11 @@ const Navbar: React.FC = () => {
 
         {/* --- FULL MOBILE MENU (SLIDE-OUT PANEL) --- */}
         {isOpen && (
-          <div className="md:hidden" id="mobile-menu">
+          <div className="md:hidden bg-white" id="mobile-menu">
             {/* Click-away overlay */}
-            <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setIsOpen(false)}></div>
+            <div className="fixed  bg-white inset-0 z-40 bg-black/40" onClick={() => setIsOpen(false)}></div>
             {/* Menu Panel */}
-            <div className="fixed inset-y-0 right-0 z-50 w-4/5 max-w-xs h-full bg-white shadow-2xl rounded-l-3xl p-6 flex flex-col gap-4 animate-slide-in" onClick={e => e.stopPropagation()}>
+            <div className="fixed bg-white inset-y-0 right-0 z-50 w-4/5 max-w-xs h-full bg-white shadow-2xl rounded-l-3xl p-6 flex flex-col gap-4 animate-slide-in" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xl font-bold text-green-700">Menu</span>
                 <button onClick={() => setIsOpen(false)} className="p-2 rounded-full bg-green-100 hover:bg-green-200 text-green-700">
@@ -136,7 +136,7 @@ const Navbar: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-2 flex-grow">
+              <div className="flex bg-white flex-col gap-2 flex-grow">
                 {/* Standard navigation links */}
                 {DNAV_LINKS.map((link) => (
                   <NavLink key={link.name} to={link.path} onClick={() => setIsOpen(false)} className={({ isActive }) => `px-4 py-3 rounded-xl text-base font-semibold ${isActive ? 'bg-green-600 text-white shadow' : 'text-green-700 hover:bg-green-100'}`}>
