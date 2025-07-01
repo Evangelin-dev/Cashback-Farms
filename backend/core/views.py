@@ -20,6 +20,7 @@ from django.db import transaction
 from rest_framework import generics
 from decimal import Decimal
 from django.db.models import Q
+from django.conf import settings
 
 
 
@@ -39,38 +40,63 @@ from .serializers import (
 
 # --- Authentication and User Management ---
 class UserRegistrationView(APIView):
-    authentication_classes = []  # <--- Add this line
+    authentication_classes = []
     permission_classes = [AllowAny]
-    queryset = CustomUser.objects.all()
     serializer_class = UserRegistrationSerializer
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         referral_code = request.data.get('referral_code')
         referred_by = None
+
         if referral_code:
             referred_by = CustomUser.objects.filter(referral_code=referral_code).first()
+
         try:
+            # Create user
             user = serializer.save(
                 user_type=validated_data.get('user_type', UserType.CLIENT),
-                referred_by=referred_by
+                referred_by=referred_by,
+                is_active=False  # ✅ Deactivate until OTP is verified
             )
-            user.generate_otp()
-            headers = self.get_success_headers(serializer.data)
+
+            # Generate OTP
+            otp = user.generate_otp()
+
+            # Send OTP via email
+            email = validated_data.get('email')
+            if email:
+                smtp_user = settings.EMAIL_HOST_USER
+                email_msg = EmailMessage(
+                    subject="Your OTP Code",
+                    body=f"Dear {user.username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                    from_email=smtp_user,
+                    to=[email],
+                )
+                email_msg.send(fail_silently=False)
+
             return Response(
-                {"message": "User registered successfully. OTP sent for verification.", "user_id": user.id, "referral_code": user.referral_code},
-                status=status.HTTP_201_CREATED,
-                headers=headers
+                {
+                    "message": "User registered successfully. OTP sent for verification.",
+                    "user_id": user.id,
+                    "referral_code": user.referral_code
+                },
+                status=status.HTTP_201_CREATED
             )
+
         except IntegrityError:
             return Response(
                 {"detail": "A user with this email or mobile number already exists."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": f"Internal server error: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 # class OTPRequestView(APIView):
 #     authentication_classes = []  # <--- Add this line
