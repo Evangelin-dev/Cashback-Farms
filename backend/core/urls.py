@@ -43,7 +43,7 @@ support_ticket = SupportTicketViewSet.as_view({
 
 
 urlpatterns = [
-    path('auth/register/', UserRegistrationView.as_view(), name='register'),
+    path('client/register/', UserRegistrationView.as_view(), name='register'),
     path('auth/request-otp/', OTPRequestView.as_view(), name='request-otp'),
     path('auth/verify-otp/', OTPVerificationAndLoginView.as_view(), name='verify-otp'),
     path('auth/login/', UserLoginView.as_view(), name='login'),
