@@ -612,6 +612,8 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             email = self.request.data.get('email')
             mobile_number = self.request.data.get('mobile_number')
             password = self.request.data.get('password')
+            user_type = data.get('user_type')
+
 
             if not username:
                 raise serializers.ValidationError({"username": "Username, email, or mobile number is required."})
@@ -621,7 +623,7 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
                 username=username,
                 email=email,
                 mobile_number=mobile_number,
-                user_type=UserType.REAL_ESTATE_AGENT,
+                user_type=user_type,
                 password=password,
                 is_active=False  # ✅ Mark inactive until OTP verified
             )
