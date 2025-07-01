@@ -117,7 +117,7 @@ const AppRoutes: React.FC = () => {
         <Route element={<UserLayout />}>
           <Route path="/Landing" element={<LandingPage />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
-          <Route path="/book-my-sqft/:bookingId" element={<PlotBookingDetailsPage />} />          
+          <Route path="/book-my-sqft/:id" element={<PlotBookingDetailsPage />} />          
           <Route path="/profile" element={<MyProfile />} />
           <Route path="/my-bookings" element={<MyBooking />} />
           <Route path="/refer-earn" element={<ReferAndEarn />} />

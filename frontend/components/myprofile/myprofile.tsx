@@ -71,6 +71,7 @@ const MyProfile: React.FC = () => {
     const fetchAllData = async () => {
       setIsLoading(true);
       const accessToken = localStorage.getItem("access_token");
+      console.log(accessToken, "accessToken");
       if (!accessToken) {
         setIsLoading(false);
         return;
@@ -88,7 +89,7 @@ const MyProfile: React.FC = () => {
             throw err;
           })
         ]);
-        
+        console.log(profileRes, "profileRes");
         if (profileRes) {
           const user = profileRes;
           const loadedProfile = {
