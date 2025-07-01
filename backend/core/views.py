@@ -21,6 +21,8 @@ from rest_framework import generics
 from decimal import Decimal
 from django.db.models import Q
 from django.conf import settings
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+
 
 
 
@@ -1163,3 +1165,27 @@ class SubmitServiceInquiry(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=201)
+
+class AllBookingListView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        bookings = Booking.objects.all().order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class MyBookingListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        bookings = Booking.objects.filter(client=request.user).order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class BookingByClientIDView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, client_id):
+        bookings = Booking.objects.filter(client_id=client_id).order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)

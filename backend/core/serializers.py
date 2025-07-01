@@ -13,7 +13,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'mobile_number', 'password', 'confirm_password', 'user_type')
+        fields = (
+            'id', 'username', 'email', 'mobile_number', 'password', 'confirm_password',
+            'user_type', 'first_name', 'last_name', 'gender', 'date_of_birth',
+            'town', 'city', 'state', 'country'
+        )
         extra_kwargs = {
             'username': {'required': False},
             'email': {'required': False},
@@ -30,14 +34,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('confirm_password')
+
         user = CustomUser.objects.create_user(
             username=validated_data.get('username') or validated_data.get('email') or validated_data.get('mobile_number'),
             email=validated_data.get('email'),
             mobile_number=validated_data.get('mobile_number'),
-            user_type=validated_data.get('user_type', UserType.CLIENT), # Default to client if not specified
-            password=validated_data['password']
+            user_type=validated_data.get('user_type', UserType.CLIENT),
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name'),
+            last_name=validated_data.get('last_name'),
+            gender=validated_data.get('gender'),
+            date_of_birth=validated_data.get('date_of_birth'),
+            town=validated_data.get('town'),
+            city=validated_data.get('city'),
+            state=validated_data.get('state'),
+            country=validated_data.get('country')
         )
         return user
+
 
 class OTPRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
