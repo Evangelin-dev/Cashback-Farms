@@ -602,6 +602,8 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         try:
+            data = self.request.data
+
             username = self.request.data.get('username') or self.request.data.get('email') or self.request.data.get('mobile_number')
             email = self.request.data.get('email')
             mobile_number = self.request.data.get('mobile_number')
