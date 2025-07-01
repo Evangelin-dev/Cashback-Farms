@@ -9,7 +9,7 @@ interface IForm {
   phone_number: string;
   company_number: string;
   email: string;
-  user_type: 'realestate' | 'b2b' | ''; // More specific type
+  user_type: 'real_estate_agent' | 'b2b_vendor' | '';
 }
 
 const initialForm: IForm = {
@@ -46,7 +46,7 @@ const RegistrationPage: React.FC = () => {
 
       // On success, switch to the OTP form
       setShowOtpForm(true);
-
+console.log(form,'form')
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || "Registration failed. Please check your details.";
       setError(errorMessage);
@@ -128,10 +128,10 @@ const RegistrationPage: React.FC = () => {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-green-700 font-semibold mb-1">User Type <span className="text-red-500">*</span></label>
-                    <select name="user_type" value={form.user_type} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow">
+                      <select name="user_type" value={form.user_type} onChange={handleChange} required className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow">
                       <option value="" disabled>Select User Type</option>
-                      <option value="realestate">Real Estate Agent</option>
-                      <option value="b2b">B2B Vendor</option>
+                      <option value="real_estate_agent">Real Estate Agent</option>
+                      <option value="b2b_vendor">B2B Vendor</option>
                     </select>
                   </div>
                   <div className="md:col-span-2">
