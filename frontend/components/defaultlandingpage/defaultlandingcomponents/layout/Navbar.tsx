@@ -194,15 +194,16 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                     onClick={() => {
                       localStorage.removeItem('access_token');
                       localStorage.removeItem('refresh_token');
-                      localStorage.removeItem('currentUser')
+                      localStorage.removeItem('currentUser');
+                      window.location.reload();
                     }}
                   >
                     Logout
                   </button>
                 ) : (
-                  <div className='flex'>
+                  <div className='flex gap-2'>
                     <button
-                      className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                      className="w-full mt-2 px-4 py-1 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
                       onClick={() => {
                         setIsOpen(false);
                         setShowAuth(true);
@@ -211,7 +212,7 @@ const Navbar: React.FC<NavbarProps> = ({ onAuthClick }) => {
                       Login / Sign Up
                     </button>
                     <button
-                      className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
+                      className="w-full mt-2 px-4 py-1 rounded-xl font-bold text-white bg-gradient-to-r from-green-500 to-green-700 shadow hover:from-green-600 hover:to-green-800 transition"
                       onClick={() => {
                         navigate('/registration');
                       }}
