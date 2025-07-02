@@ -12,7 +12,7 @@ from .views import (
     MaterialProductViewSet, SupportTicketViewSet, PlotPurchaseListView, PlotPurchaseCreateView, MicroPlotPurchaseListView, MicroPlotPurchaseCreateView,
     MaterialPurchaseListView, MaterialPurchaseCreateView, ServiceOrderListView, ServiceOrderCreateView,SubmitPlotInquiry, SubmitMicroPlotInquiry, 
     SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
-    PublicPlotListView, PublicMicroPlotListView,
+    PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView
 )
 from rest_framework_simplejwt.views import (
@@ -89,5 +89,8 @@ urlpatterns = [
     path('public/micro-plots/<int:pk>/', PublicMicroPlotDetailView.as_view(), name='public-micro-plot-detail'),
     path('public/services/', PublicServiceListView.as_view(), name='public-service-list'),
     path('public/services/<int:pk>/', PublicServiceDetailView.as_view(), name='public-service-detail'),
+    path('bookings/my/', MyBookingListView.as_view(), name='my-bookings'),
+    path('my-payments/', MyPaymentsView.as_view(), name='my-payments'),
+
 
 ]
