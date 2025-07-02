@@ -7,10 +7,10 @@ export interface ResponseInterface {
 
 
 const logout = () => {
-
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('currentUser');
+    window.location.href = '/';
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     // document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     // document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
