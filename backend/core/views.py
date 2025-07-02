@@ -1199,3 +1199,81 @@ class BookingByClientIDView(APIView):
         bookings = Booking.objects.filter(client_id=client_id).order_by('-booking_date')
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data, status=200)
+
+class PublicPlotListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        plots = PlotListing.objects.all()
+        serializer = PlotListingSerializer(plots, many=True)
+        return Response(serializer.data, status=200)
+
+class PublicPlotDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        plot = get_object_or_404(PlotListing, pk=pk)
+        serializer = PlotListingSerializer(plot)
+        return Response(serializer.data, status=200)
+
+class PublicMicroPlotListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        micro_plots = PlotListing.objects.filter(is_available_full=False, is_verified=True)
+        serializer = PlotListingSerializer(micro_plots, many=True)
+        return Response(serializer.data)
+
+class PublicMicroPlotDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            micro_plot = PlotListing.objects.get(pk=pk, is_available_full=False, is_verified=True)
+        except PlotListing.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=404)
+        serializer = PlotListingSerializer(micro_plot)
+        return Response(serializer.data)
+
+class PublicMaterialListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        materials = EcommerceProduct.objects.filter(category='material', is_active=True)
+        serializer = EcommerceProductSerializer(materials, many=True)
+        return Response(serializer.data)
+
+class PublicMaterialDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        material = get_object_or_404(EcommerceProduct, pk=pk, category='material', is_active=True)
+        serializer = EcommerceProductSerializer(material)
+        return Response(serializer.data)
+
+class PublicMaterialDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        material = get_object_or_404(EcommerceProduct, pk=pk, category='material', is_active=True)
+        serializer = EcommerceProductSerializer(material)
+        return Response(serializer.data, status=200)
+
+class PublicServiceListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        services = EcommerceProduct.objects.filter(category='service')
+        serializer = EcommerceProductSerializer(services, many=True)
+        return Response(serializer.data)
+
+class PublicServiceDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            service = EcommerceProduct.objects.get(pk=pk, category='service')
+        except EcommerceProduct.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=404)
+        serializer = EcommerceProductSerializer(service)
+        return Response(serializer.data)
