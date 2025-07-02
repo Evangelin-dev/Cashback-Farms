@@ -97,7 +97,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<DefaultLanding />} />
         <Route path="/D" element={<DefaultLanding />} />
         <Route path="/Dplots" element={<DPlotMarketplacePage />} />
-        <Route path="/Dbook-my-sqft/:bookingId" element={<DPlotBookingDetailsPage />} />
+        <Route path="/Dbook-my-sqft/:plotId" element={<DPlotBookingDetailsPage />} />
         <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
         <Route path="/Dservices" element={<DServicesHubPage />} />
         <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />

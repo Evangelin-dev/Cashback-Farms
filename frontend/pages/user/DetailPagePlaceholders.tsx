@@ -5,6 +5,7 @@ import apiClient from '@/src/utils/api/apiClient'; // <-- Make sure this path is
 
 // MOCK_MATERIALS is no longer needed, but we keep the others for the other components in this file
 import { MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants';
+import { FaSpinner } from 'react-icons/fa';
 
 // --- TYPE DEFINITION for the API data ---
 type Material = {
@@ -122,23 +123,38 @@ export const MaterialDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-        <DetailPageLayout title="Loading Details..." backLink="/materials" backLinkText="Back to Materials Store">
-            <div className="text-center py-10">Loading...</div>
-        </DetailPageLayout>
+      <DetailPageLayout 
+        title="Loading Material..." 
+        backLink="/Dmaterials" 
+        backLinkText="Back to Materials Store"
+      >
+          <div className="flex justify-center items-center py-16">
+              <FaSpinner className="animate-spin text-green-600 text-4xl" />
+          </div>
+      </DetailPageLayout>
     );
   }
 
   if (error || !material) {
     return (
-        <DetailPageLayout title="Error" backLink="/materials" backLinkText="Back to Materials Store">
-            <p className="text-red-500">{error}</p>
-        </DetailPageLayout>
+      <DetailPageLayout 
+        title="Material Not Found" 
+        backLink="/Dmaterials" 
+        backLinkText="Back to Materials Store"
+      >
+          <p>{error}</p>
+      </DetailPageLayout>
     );
   }
 
+
   // Once data is loaded successfully, render the details
   return (
-    <DetailPageLayout title={material.name} backLink="/materials" backLinkText="Back to Materials Store">
+    <DetailPageLayout 
+      title={material.name} 
+      backLink="/Dmaterials" 
+      backLinkText="Back to Materials Store"
+    >
         <div className="mb-6 bg-gray-100 rounded-lg p-6 flex justify-center items-center h-64">
             {/* Your API does not provide an image, so we show a placeholder. */}
             <span className="text-gray-500">Image Not Available</span>
