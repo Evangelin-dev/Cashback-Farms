@@ -11,7 +11,9 @@ from .views import (
     KYCSubmitView, KYCStatusView, KYCUpdateView, MicroPlotListView, MicroPlotDetailView, FAQViewSet,
     MaterialProductViewSet, SupportTicketViewSet, PlotPurchaseListView, PlotPurchaseCreateView, MicroPlotPurchaseListView, MicroPlotPurchaseCreateView,
     MaterialPurchaseListView, MaterialPurchaseCreateView, ServiceOrderListView, ServiceOrderCreateView,SubmitPlotInquiry, SubmitMicroPlotInquiry, 
-    SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView
+    SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
+    PublicPlotListView, PublicMicroPlotListView,
+    PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -79,4 +81,13 @@ urlpatterns = [
     path('bookings/', AllBookingListView.as_view(), name='all-bookings'),
     path('bookings/my/', MyBookingListView.as_view(), name='my-bookings'),
     path('bookings/client/<int:client_id>/', BookingByClientIDView.as_view(), name='bookings-by-client'),
+    path('public/plots/', PublicPlotListView.as_view(), name='public-plot-list'),
+    path('public/plots/<int:pk>/', PublicPlotDetailView.as_view(), name='public-plot-detail'),
+    path('public/materials/', PublicMaterialListView.as_view(), name='public-materials'),
+    path('public/materials/<int:pk>/', PublicMaterialDetailView.as_view(), name='public-material-detail'),
+    path('public/micro-plots/', PublicMicroPlotListView.as_view(), name='public-micro-plot-list'),
+    path('public/micro-plots/<int:pk>/', PublicMicroPlotDetailView.as_view(), name='public-micro-plot-detail'),
+    path('public/services/', PublicServiceListView.as_view(), name='public-service-list'),
+    path('public/services/<int:pk>/', PublicServiceDetailView.as_view(), name='public-service-detail'),
+
 ]
