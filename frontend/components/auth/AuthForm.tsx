@@ -1,8 +1,7 @@
 import apiClient from '@/src/utils/api/apiClient';
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import {DEFAULT_COUNTRY_OPTIONS} from "@/components/countryCode";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,38 +22,6 @@ const isEmail = (input: string) =>
 const isMobile = (input: string) =>
   /^[6-9]\d{9}$/.test(input);
 
-const DEFAULT_COUNTRY_OPTIONS = [
-  { code: '+91', label: '🇮🇳 +91' },
-  { code: '+1', label: '🇺🇸 +1' },
-  { code: '+44', label: '🇬🇧 +44' },
-  { code: '+61', label: '🇦🇺 +61' },
-  { code: '+81', label: '🇯🇵 +81' },
-  { code: '+971', label: '🇦🇪 +971' },
-  { code: '+49', label: '🇩🇪 +49' },
-  { code: '+33', label: '🇫🇷 +33' },
-  { code: '+7', label: '🇷🇺 +7' },
-  { code: '+86', label: '🇨🇳 +86' },
-  { code: '+880', label: '🇧🇩 +880' },
-  { code: '+92', label: '🇵🇰 +92' },
-  { code: '+94', label: '🇱🇰 +94' },
-  { code: '+966', label: '🇸🇦 +966' },
-  { code: '+973', label: '🇧🇭 +973' },
-  { code: '+974', label: '🇶🇦 +974' },
-  { code: '+65', label: '🇸🇬 +65' },
-  { code: '+60', label: '🇲🇾 +60' },
-  { code: '+62', label: '🇮🇩 +62' },
-  { code: '+63', label: '🇵🇭 +63' },
-  { code: '+852', label: '🇭🇰 +852' },
-  { code: '+82', label: '🇰🇷 +82' },
-  { code: '+34', label: '🇪🇸 +34' },
-  { code: '+39', label: '🇮🇹 +39' },
-  { code: '+351', label: '🇵🇹 +351' },
-  { code: '+55', label: '🇧🇷 +55' },
-  { code: '+27', label: '🇿🇦 +27' },
-  { code: '+234', label: '🇳🇬 +234' },
-  { code: '+20', label: '🇪🇬 +20' },
-  { code: '+254', label: '🇰🇪 +254' },
-];
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
@@ -71,7 +38,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
   const [showTerms, setShowTerms] = useState(false);
   const [redirectLoading, setRedirectLoading] = useState(false);
   const navigate = useNavigate();
-  const dispatch = useDispatch();
 
   const [signupData, setSignupData] = useState({
     firstName: "",
@@ -146,22 +112,27 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
       return;
     }
 
-    const email = isMobileInput ? `${countryCode}${input}` : input;
+    let payload;
+    let successIdentifier;
+    if (isMobileInput) {
+        successIdentifier = `${countryCode}${input}`;
+        payload = { mobile_number: successIdentifier };
+    } else { // isEmailInput
+        successIdentifier = input;
+        payload = { email: successIdentifier };
+    }
 
     try {
-      const res = await apiClient.post('/auth/request-otp/', { email });
-      console.log('OTP request response:', res);
+      const res = await apiClient.post('/auth/request-otp/', payload);
       setOtpSent(true);
       setSuccess(
         isMobileInput
-          ? `OTP sent to ${email}`
-          : `Login link sent to ${email}`
+          ? `OTP sent to ${successIdentifier}`
+          : `Login link sent to ${successIdentifier}`
       );
       setOtp(res?.data?.otp)
     }  catch (err: any) {
-      console.error('OTP request error:', err);
       const errorDetail = err.response?.data?.detail;
-
       if (errorDetail && errorDetail.includes('No CustomUser matches the given query')) {
         setError('User with this email or phone number does not exist.');
       } else {
@@ -182,12 +153,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     setLoading(true);
 
     const isMobileInput = isMobile(input);
-    const email = isMobileInput ? `${countryCode}${input}` : input;
+
+    let payload;
+    if (isMobileInput) {
+        payload = {
+            mobile_number: `${countryCode}${input}`,
+            otp_code: otpInput
+        };
+    } else { // isEmailInput
+        payload = {
+            email: input,
+            otp_code: otpInput
+        };
+    }
 
     try {
       const login = await apiClient.post(
         '/auth/verify-otp/',
-        { email, otp_code: otpInput },
+        payload,
         { headers: { Authorization: '' } }
       );
       setMobileVerified(true);
@@ -199,7 +182,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         });
       }
 
-      const { access, refresh, user } = login;
+      const { access, refresh, user } = login; // Corrected: access data property
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       localStorage.setItem('currentUser', JSON.stringify(user));
@@ -215,7 +198,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           } else if (user.user_type === 'client' || user.user_type === 'b2b_vendor') {
             window.location.href = '/user-dashboard';
           } else {
-            // Default fallback for any other user type or if user_type is null
             window.location.href = '/';
           }
         }, 800);
@@ -264,7 +246,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         gender: signupData.gender,
         date_of_birth: signupData.dob,
         email: signupData.email,
-        mobile_number: signupData.phone,
+        mobile_number:  `${countryCode}${signupData.phone}`,
         town: signupData.town,
         city: signupData.city,
         state: signupData.state,
@@ -276,12 +258,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
     try {
         await apiClient.post('/client/register/', payload);
-        
-        // On success, set up the component for OTP verification
-        setInput(signupData.email); // Use email for OTP verification
+        setInput(signupData.email);
         setOtpSent(true);
         setSuccess('Registration successful! Please check your email for an OTP to continue.');
-
     } catch (err: any) {
         const responseError = err.response?.data;
         if (typeof responseError === 'object' && responseError !== null) {
@@ -324,7 +303,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           
           <div className="w-full flex flex-col items-center flex-1">
             {!otpSent ? (
-              // Show Login or Signup form based on tab
               activeTab === 'login' ? (
                 <form className="space-y-4 w-full flex flex-col items-center animate-fade-in-fast" onSubmit={handleSendOtp}>
                   <div className="w-full flex items-center mb-2">
@@ -353,9 +331,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                 </form>
               )
             ) : (
-              // Show OTP form for BOTH login and signup flows
               <form className="space-y-4 w-full flex flex-col items-center animate-fade-in-fast" onSubmit={handleVerifyOtp}>
-                <p className='text-sm text-gray-600 text-center'>An OTP has been sent to <br/><span className='font-semibold text-green-700'>{input}</span>.</p>
+                <p className='text-sm text-gray-600 text-center'>An OTP has been sent to <br/><span className='font-semibold text-green-700'>{isMobile(input) ? `${countryCode}${input}` : input}</span>.</p>
                 <input type="text" placeholder="Enter OTP" className="w-full px-3 py-2 border rounded-lg mb-2 text-base text-center focus:ring-2 focus:ring-green-200 transition-all duration-200" value={otpInput} onChange={e => setOtpInput(e.target.value)} autoFocus/>
                 {error && <div className="text-red-500 text-xs mb-2 animate-shake">{error}</div>}
                 {success && <div className="text-green-600 text-xs mb-2 animate-fade-in-fast">{success}</div>}
