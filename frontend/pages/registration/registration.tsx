@@ -1,6 +1,7 @@
 import apiClient from "@/src/utils/api/apiClient";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {DEFAULT_COUNTRY_OPTIONS} from "@/components/countryCode";
 
 // --- Interfaces for better type safety ---
 interface IForm {
@@ -26,27 +27,30 @@ const RegistrationPage: React.FC = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showOtpForm, setShowOtpForm] = useState(false); // <-- State to control which form is visible
+  const [showOtpForm, setShowOtpForm] = useState(false);
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
+  const [companyCountryCode, setCompanyCountryCode] = useState("+91");
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setError(null); // Clear error on new input
+    setError(null);
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // --- Step 1: Handle the initial registration submission to get an OTP ---
   const handleRegistrationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    try {
-      // This API call should trigger the backend to send an OTP
-      await apiClient.post("agents/register/", form);
+    const payload = {
+        ...form,
+        mobile_number: `${phoneCountryCode}${form.phone_number}`,
+        company_number: `${companyCountryCode}${form.company_number}`,
+    };
 
-      // On success, switch to the OTP form
+    try {
+      await apiClient.post("agents/register/", payload);
       setShowOtpForm(true);
-console.log(form,'form')
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || "Registration failed. Please check your details.";
       setError(errorMessage);
@@ -55,26 +59,22 @@ console.log(form,'form')
     }
   };
 
-  // --- Step 2: Handle the OTP verification ---
   const handleOtpVerifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      // The verification API needs the email and the entered OTP
       const payload = {
         email: form.email,
         otp_code: otp,
       };
       
-      // IMPORTANT: Replace 'agents/verify-otp/' with your actual verification endpoint
       await apiClient.post("auth/verify-otp/", payload);
 
-      // On successful verification, show success and navigate
       alert("Verification successful! You will be redirected.");
       setTimeout(() => {
-        navigate("/"); // Navigate to home or login page
+        navigate("/");
       }, 800);
 
     } catch (err: any) {
@@ -85,22 +85,17 @@ console.log(form,'form')
     }
   };
 
-
-  // --- The Main Render Logic ---
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 py-12 px-4">
       <div className="w-full max-w-xl rounded-3xl shadow-2xl bg-white/70 backdrop-blur-lg border border-green-200 p-10 relative overflow-hidden">
         
-        {/* Decorative Background Elements */}
         <div className="absolute inset-0 pointer-events-none z-0">
           <div className="absolute -top-16 -left-16 w-72 h-72 bg-gradient-to-br from-green-200 via-green-100 to-white opacity-40 rounded-full blur-2xl" />
           <div className="absolute -bottom-16 -right-16 w-72 h-72 bg-gradient-to-tr from-green-300 via-green-100 to-white opacity-30 rounded-full blur-2xl" />
         </div>
 
         <div className="relative z-10">
-          {/* --- Conditional Rendering: Show OTP form or Registration form --- */}
           {!showOtpForm ? (
-            // --- REGISTRATION FORM ---
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-green-700 text-center mb-2 drop-shadow-lg">
                 Create Your Account
@@ -120,11 +115,21 @@ console.log(form,'form')
                   </div>
                   <div>
                     <label className="block text-green-700 font-semibold mb-1">Phone Number</label>
-                    <input type="tel" name="phone_number" value={form.phone_number} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
+                    <div className="flex">
+                        <select value={phoneCountryCode} onChange={(e) => setPhoneCountryCode(e.target.value)} className="px-2 rounded-l-xl border-l border-t border-b border-green-200 bg-white/70 focus:outline-none shadow">
+                            {DEFAULT_COUNTRY_OPTIONS.map(c => <option key={`phone-${c.code}`} value={c.code}>{c.label}</option>)}
+                        </select>
+                        <input type="tel" name="phone_number" value={form.phone_number} onChange={handleChange} className="w-full px-4 py-2 rounded-r-xl border-r border-t border-b border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-green-700 font-semibold mb-1">Company Number</label>
-                    <input type="text" name="company_number" value={form.company_number} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
+                    <div className="flex">
+                        <select value={companyCountryCode} onChange={(e) => setCompanyCountryCode(e.target.value)} className="px-2 rounded-l-xl border-l border-t border-b border-green-200 bg-white/70 focus:outline-none shadow">
+                            {DEFAULT_COUNTRY_OPTIONS.map(c => <option key={`company-${c.code}`} value={c.code}>{c.label}</option>)}
+                        </select>
+                        <input type="text" name="company_number" value={form.company_number} onChange={handleChange} className="w-full px-4 py-2 rounded-r-xl border-r border-t border-b border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
+                    </div>
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-green-700 font-semibold mb-1">User Type <span className="text-red-500">*</span></label>
@@ -146,7 +151,6 @@ console.log(form,'form')
               </form>
             </div>
           ) : (
-            // --- OTP VERIFICATION FORM ---
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-green-700 text-center mb-2 drop-shadow-lg">
                 Verify Your Email
@@ -183,4 +187,4 @@ console.log(form,'form')
   );
 };
 
-export default RegistrationPage; // Note: Renamed from RegurestionPage for correctness
+export default RegistrationPage;

@@ -1,7 +1,7 @@
 // This is a simplified version of your component, focused on fetching and displaying a single plot.
 // Helper components like PlotImageVideo and PlotOverviewDocs are assumed to be in the same file or imported.
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../../src/utils/api/apiClient';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/Card';
@@ -99,7 +99,7 @@ const DPlotBookingDetailsPage: React.FC = () => {
 
   // 2. GET THE CURRENT USER FROM THE AUTH CONTEXT
   const { currentUser } = useAuth();
-
+  const navigate = useNavigate();
   useEffect(() => {
     if (!plotId) {
       setError("No Plot ID provided in the URL.");
@@ -145,9 +145,7 @@ const DPlotBookingDetailsPage: React.FC = () => {
       // If no user is logged in, show the popup
       setShowLoginPopup(true);
     } else {
-      // If user is logged in, proceed with the action
-      // (For now, just an alert, but this could navigate to a checkout page)
-      alert('Action successful! (Proceed to next step)');
+      navigate(`/book-my-sqft/${plotId}`);
     }
   };
 
