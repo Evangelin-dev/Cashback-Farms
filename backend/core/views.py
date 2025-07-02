@@ -21,7 +21,7 @@ from rest_framework import generics
 from decimal import Decimal
 from django.db.models import Q
 from django.conf import settings
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 
 
@@ -841,7 +841,7 @@ class KYCUpdateView(APIView):
 class MicroPlotListView(generics.ListAPIView):
     queryset = SQLFTProject.objects.all()
     serializer_class = SQLFTProjectSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
 class MicroPlotDetailView(generics.RetrieveAPIView):
     queryset = SQLFTProject.objects.all()
@@ -1000,7 +1000,7 @@ class MicroPlotPurchaseCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MaterialPurchaseListView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         orders = Order.objects.filter(client=request.user, items__product__category='material').distinct()
