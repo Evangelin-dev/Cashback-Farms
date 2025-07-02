@@ -22,7 +22,7 @@ const RealEstateRoute: React.FC = () => {
     return <Navigate to="/" replace />;
   }
 
-  if (currentUser.user_type !== 'real_estate_agent') {
+  if (currentUser.user_type !== 'real_estate_agent' && currentUser.user_type !== 'b2b_vendor') {
     console.warn("Access Denied: User is not a real estate agent. Redirecting to user dashboard.");
     return <Navigate to="/user-dashboard" replace />;
   }

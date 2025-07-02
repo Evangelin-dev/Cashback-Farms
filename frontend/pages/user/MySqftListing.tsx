@@ -116,7 +116,7 @@ console.log(res,'res')
             </div>
             <button
               className="w-full mt-auto bg-primary text-white font-semibold px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-light"
-              onClick={() => navigate(`/book-my-sqft/${plot.id}`)} // Updated navigation to a dynamic route
+              onClick={() => navigate(`/mysqft-listing/${plot.id}`)} // Updated navigation to a dynamic route
             >
               View Details & Book
             </button>

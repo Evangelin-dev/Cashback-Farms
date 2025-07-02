@@ -85,6 +85,7 @@ import Mydashboard from './pages/realestate/components/realestate-section/Mydash
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import RealEstateRoute from './components/ProtectedRealEstateRoute';
+import PlotDetailsPage from './pages/user/DetailMySqftListing';
 
 const AppRoutes: React.FC = () => {
   const { currentUser } = useAuth();
@@ -112,12 +113,12 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dprivacy" element={<PrivacyPolicy />} />
       </Route>
 
-      
+
       <Route element={<ProtectedRoute />}>
         <Route element={<UserLayout />}>
           <Route path="/Landing" element={<LandingPage />} />
           <Route path="/user-dashboard" element={<UserDashboard />} />
-          <Route path="/book-my-sqft/:id" element={<PlotBookingDetailsPage />} />          
+          <Route path="/book-my-sqft/:id" element={<PlotBookingDetailsPage />} />
           <Route path="/profile" element={<MyProfile />} />
           <Route path="/my-bookings" element={<MyBooking />} />
           <Route path="/refer-earn" element={<ReferAndEarn />} />
@@ -126,14 +127,15 @@ const AppRoutes: React.FC = () => {
           <Route path="/plots" element={<PlotMarketplacePage />} />
           <Route path="/plots/:id" element={<PlotDetailPage />} />
           <Route path="/book-my-sqft" element={<BookMySqftPage />} />
-          
+
           <Route path="/materials" element={<MaterialsStorePage />} />
           <Route path="/materials/:id" element={<MaterialDetailPage />} />l
           <Route path="/services" element={<ServicesHubPage />} />
           <Route path="/services/:id" element={<ProfessionalDetailPage />} />
           <Route path="/plans" element={<PlansPage />} />
-          <Route path="/paymentvai" element={<PaymentVai />} /> 
+          <Route path="/paymentvai" element={<PaymentVai />} />
           <Route path="/mysqft-listing" element={<MySqftListing />} />
+          <Route path="/mysqft-listing/:id" element={<PlotDetailsPage />} />
           <Route path="/myprofile" element={<MyProfile />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/materialcheckout" element={<MaterialCheckout />} />
@@ -146,22 +148,22 @@ const AppRoutes: React.FC = () => {
       </Route>
 
       <Route element={<B2BLayout />}>
-        
+
         <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
         <Route path="/b2b/*" element={<B2BPanelRoutes />} />
       </Route>
 
-   <Route element={<RealEstateRoute />}>
-      <Route element={<RealLayout />}>
-        <Route path="/realestate/realprofile" element={<RealProfile />} />
-        <Route path="/realestate/*" element={<RealEstateRoutes />} />
-        <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-        <Route path="/realestate/post-plots" element={<PostPlots />} />
-        <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
-        <Route path="/realestate/dashboard" element={<Mydashboard />} />
+      <Route element={<RealEstateRoute />}>
+        <Route element={<RealLayout />}>
+          <Route path="/realestate/realprofile" element={<RealProfile />} />
+          <Route path="/realestate/*" element={<RealEstateRoutes />} />
+          <Route path="/referrealestate" element={<ReferAndEarnReal />} />
+          <Route path="/realestate/post-plots" element={<PostPlots />} />
+          <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
+          <Route path="/realestate/dashboard" element={<Mydashboard />} />
+        </Route>
       </Route>
-</Route>
-      
+
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
@@ -177,8 +179,8 @@ const AppRoutes: React.FC = () => {
         <Route index element={<AdminDashboardPage />} />
       </Route>
 
-      
-      
+
+
       <Route path="/registration" element={<RegistrationPage />} />
       <Route path="/OTP" element={<OTPPage />} />
       <Route path="*" element={<NotFoundPage />} />

@@ -50,6 +50,7 @@ const PostPlots: React.FC = () => {
         }));
         setPlots(mappedPlots.reverse());
       } catch (err) {
+        console.error("Error fetching plots:", err);
         setPlots([]);
       }finally{
         setIsLoading(false);
@@ -96,7 +97,7 @@ const PostPlots: React.FC = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      const mappedPlots = (res.data || []).map((plot: any) => ({
+      const mappedPlots = (res || []).map((plot: any) => ({
         key: plot.id,
         title: plot.title,
         owner: plot.owner_name || plot.owner_username,
@@ -107,7 +108,7 @@ const PostPlots: React.FC = () => {
         description: "",
         images: [],
       }));
-      setPlots(mappedPlots);
+      setPlots(mappedPlots.reverse());
 
       setModalVisible(false);
       form.resetFields();
@@ -115,6 +116,7 @@ const PostPlots: React.FC = () => {
       setImages([]);
       setImagePreviews([]);
     } catch (err) {
+      console.error("Error adding plot:", err);
       alert("Failed to add plot.");
     }
   };
