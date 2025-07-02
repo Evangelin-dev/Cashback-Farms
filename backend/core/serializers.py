@@ -268,3 +268,12 @@ class InquirySerializer(serializers.ModelSerializer):
         model = Inquiry
         fields = '__all__'
         read_only_fields = ['user', 'created_at']
+
+class PaymentTransactionSerializer(serializers.Serializer):
+    transaction_id = serializers.CharField()
+    type = serializers.CharField()
+    description = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    date = serializers.DateTimeField()
+    status = serializers.CharField()
+

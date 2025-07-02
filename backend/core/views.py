@@ -37,7 +37,7 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer,
 )
 
 # --- Authentication and User Management ---
@@ -1277,3 +1277,55 @@ class PublicServiceDetailView(APIView):
             return Response({'detail': 'Not found'}, status=404)
         serializer = EcommerceProductSerializer(service)
         return Response(serializer.data)
+
+class MyBookingListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        bookings = Booking.objects.filter(client=user)
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class MyPaymentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        transactions = []
+
+        # Add plot & micro-plot bookings
+        bookings = Booking.objects.filter(client=user)
+        for booking in bookings:
+            if booking.booking_type == 'full_plot':
+                trans_type = "plot_purchase"
+                description = f"Full Plot Booking: {booking.plot_listing.title}"
+            else:
+                trans_type = "micro_plot_purchase"
+                description = f"Micro Plot Investment: {booking.plot_listing.title} ({booking.booked_area_sqft} sqft)"
+
+            transactions.append({
+                "transaction_id": f"BOOKING-{booking.id}",
+                "type": trans_type,
+                "description": description,
+                "amount": booking.total_price,
+                "date": booking.booking_date,
+                "status": booking.status
+            })
+
+        # Add material/service orders
+        orders = Order.objects.filter(client=user)
+        for order in orders:
+            product_names = ", ".join([item.product.title for item in order.items.all()])
+            order_type = 'material_purchase' if order.category == 'material' else 'service_purchase'
+            transactions.append({
+                "transaction_id": f"ORDER-{order.id}",
+                "type": order_type,
+                "description": f"Order for {product_names}",
+                "amount": order.total_price,
+                "date": order.created_at,
+                "status": order.status
+            })
+
+        serializer = PaymentTransactionSerializer(transactions, many=True)
+        return Response(serializer.data, status=200)
