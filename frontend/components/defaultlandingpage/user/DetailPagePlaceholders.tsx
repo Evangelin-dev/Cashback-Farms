@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Button from '../../../components/common/Button';
-import { MOCK_MATERIALS, MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../../constants';
+import apiClient from '../../../src/utils/api/apiClient'; // <-- Make sure this path is correct
+import { Plot, Material, Professional } from '../../../types'; // <-- Make sure all types are imported
+import { FaSpinner } from 'react-icons/fa';
+import { MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../../constants'; // Mock data for other components
 
+// --- Layout Component (Unchanged) ---
 const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
             <Link to={backLink} className="text-green-600 hover:text-green-800 hover:underline">
-                &larr;             </Link>
+                ← {backLinkText}
+            </Link>
         </div>
         <h1 className="text-3xl font-bold text-gray-800 mb-6">{title}</h1>
         <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -16,6 +21,7 @@ const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; bac
     </div>
 );
 
+// --- Plot Detail Page (Unchanged) ---
 export const DPlotDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const plot = MOCK_PLOTS.find(p => p.id === id);
@@ -54,22 +60,77 @@ export const DPlotDetailPage: React.FC = () => {
   );
 };
 
+// --- Material Detail Page (Refactored for Live Data) ---
 export const DMaterialDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const material = MOCK_MATERIALS.find(m => m.id === id);
+  const navigate = useNavigate();
 
-  const navigate = useNavigate(); // <-- useNavigate for navigation
+  const [material, setMaterial] = useState<Material | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!material) {
-    return <DDetailPageLayout title="Material Not Found" backLink="/materials" backLinkText="Back to Materials Store"><p>The material you are looking for does not exist.</p></DDetailPageLayout>;
+  useEffect(() => {
+    if (!id) {
+        setIsLoading(false);
+        setError("No material ID found in URL.");
+        return;
+    }
+    
+    const fetchMaterial = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await apiClient.get(`/public/materials/${id}/`);
+            const apiMaterial = response;
+
+            const mappedMaterial: Material = {
+              id: apiMaterial.id,
+              name: apiMaterial.name,
+              description: apiMaterial.description || 'No description available.',
+              price: Number(apiMaterial.price),
+              vendor: apiMaterial.vendor_username,
+              category: apiMaterial.category,
+              stockQuantity: apiMaterial.stock_quantity,
+              imageUrl: apiMaterial.image_url || `https://picsum.photos/seed/${apiMaterial.name}/600/400`,
+              moq: 0,
+              shippingTime: ''
+            };
+            setMaterial(mappedMaterial);
+        } catch (err) {
+            console.error("Failed to fetch material:", err);
+            setError("The material you are looking for does not exist or could not be loaded.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchMaterial();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <DDetailPageLayout title="Loading Material..." backLink="/materials" backLinkText="Back to Materials Store">
+          <div className="flex justify-center items-center py-16">
+              <FaSpinner className="animate-spin text-green-600 text-4xl" />
+          </div>
+      </DDetailPageLayout>
+    );
   }
+
+  if (error || !material) {
+    return (
+      <DDetailPageLayout title="Material Not Found" backLink="/materials" backLinkText="Back to Materials Store">
+          <p>{error}</p>
+      </DDetailPageLayout>
+    );
+  }
+
   return (
     <DDetailPageLayout title={material.name} backLink="/materials" backLinkText="Back to Materials Store">
         <img src={material.imageUrl} alt={material.name} className="w-full h-64 object-contain rounded-md mb-6 bg-gray-100 p-4" />
-        <p className="text-gray-700 mb-2"><span className="font-semibold">Category:</span> {material.category}</p>
+        <p className="text-gray-700 mb-2 capitalize"><span className="font-semibold">Category:</span> {material.category}</p>
         <p className="text-gray-700 mb-2"><span className="font-semibold">Price:</span> ₹{material.price.toLocaleString('en-IN')}</p>
-        <p className="text-gray-700 mb-2"><span className="font-semibold">Minimum Order Quantity (MOQ):</span> {material.moq}</p>
-        <p className="text-gray-700 mb-2"><span className="font-semibold">Estimated Shipping Time:</span> {material.shippingTime}</p>
+        <p className="text-gray-700 mb-2"><span className="font-semibold">Available Stock:</span> {material.stockQuantity} units</p>
         <p className="text-gray-700 mb-4"><span className="font-semibold">Vendor:</span> {material.vendor}</p>
         <h3 className="text-xl font-semibold mt-4 mb-2">Description</h3>
         <p className="text-gray-600 whitespace-pre-line mb-4">{material.description}</p>
@@ -78,13 +139,14 @@ export const DMaterialDetailPage: React.FC = () => {
               variant="primary"
               onClick={() => navigate(`/Dcart`)}
             >
-              Request a Call for Order(Mock)
+              Request a Call for Order
             </Button>
         </div>
     </DDetailPageLayout>
   );
 };
 
+// --- Professional Detail Page (Unchanged) ---
 export const DProfessionalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const professional = MOCK_PROFESSIONALS.find(p => p.id === id);

@@ -250,6 +250,7 @@ export interface Material {
   category: string;
   price: number;
   moq: number; 
+  stockQuantity: number;
   shippingTime: string;
   vendor: string;
   imageUrl:string;
