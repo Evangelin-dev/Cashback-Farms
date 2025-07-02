@@ -158,7 +158,7 @@ const PlotDetailsPage: React.FC = () => {
                   <span>{new Date(plot.created_at).toLocaleDateString()}</span>
                 </li>
               </ul>
-              <Link to={`/book-my-sqft`}>
+              <Link to={`/micro-plots/${plot.id}`}>
               <Button  className="w-full mt-6 bg-green-600 text-white font-bold py-5 rounded-lg hover:bg-green-700 transition-colors duration-300 text-lg">
                 Book This Plot Now
               </Button>

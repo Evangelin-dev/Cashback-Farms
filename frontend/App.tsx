@@ -100,7 +100,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dbook-my-sqft/:plotId" element={<DPlotBookingDetailsPage />} />
         <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
         <Route path="/Dservices" element={<DServicesHubPage />} />
-        <Route path="/Dbook-my-sqft" element={<DBookMySqftPage />} />
+         <Route path="/micro-plots/:id" element={<DBookMySqftPage />} />
         <Route path="/Dpaymentvai" element={<DPaymentVai />} />
         <Route path="/Dplans" element={<DPlansPage />} />
         <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
