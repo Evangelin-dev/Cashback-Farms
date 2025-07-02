@@ -43,7 +43,7 @@ const PlotMarketplacePage: React.FC = () => {
           amenities: apiPlot.joint_owners.length > 0 ? ['Joint Ownership'] : [],
         }));
         
-        setPlots(formattedPlots);
+        setPlots(formattedPlots.reverse());
       } catch (err) {
         setError('Failed to fetch plots. Please try again later.');
         console.error(err);
