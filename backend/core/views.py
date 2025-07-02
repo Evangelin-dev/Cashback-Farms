@@ -1216,23 +1216,21 @@ class PublicPlotDetailView(APIView):
         serializer = PlotListingSerializer(plot)
         return Response(serializer.data, status=200)
 
-class PublicMicroPlotListView(APIView):
+class PublicMicroPlotListView(generics.ListAPIView):
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
     permission_classes = [AllowAny]
-
-    def get(self, request):
-        micro_plots = PlotListing.objects.filter(is_available_full=False, is_verified=True)
-        serializer = PlotListingSerializer(micro_plots, many=True)
-        return Response(serializer.data)
 
 class PublicMicroPlotDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
         try:
-            micro_plot = PlotListing.objects.get(pk=pk, is_available_full=False, is_verified=True)
-        except PlotListing.DoesNotExist:
+            micro_plot = SQLFTProject.objects.get(pk=pk)
+        except SQLFTProject.DoesNotExist:
             return Response({'detail': 'Not found'}, status=404)
-        serializer = PlotListingSerializer(micro_plot)
+        
+        serializer = SQLFTProjectSerializer(micro_plot)
         return Response(serializer.data)
 
 class PublicMaterialListView(APIView):
