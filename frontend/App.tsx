@@ -110,8 +110,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dcart" element={<DCart />} />
         <Route path="/Dplans" element={<DPlansPage />} />
         <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
-        <Route path="/Dterms" element={<TermsAndConditions />} />
-        <Route path="/Dprivacy" element={<PrivacyPolicy />} />
+        <Route path="/Terms_&_Conditions" element={<TermsAndConditions />} />
+        <Route path="/Privacy_Policy" element={<PrivacyPolicy />} />
         <Route path="/cancellation-refunds" element={<RefundPolicyPage />} />
       </Route>
 
@@ -145,8 +145,6 @@ const AppRoutes: React.FC = () => {
           <Route path="logbookconsultation" element={<LogBookConsultation />} />
           <Route path="bookplotpayment" element={<BookPlotPayment />} />
           <Route path="/bookmicroplotpayment" element={<BookMySqftPayment />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
         </Route>
       </Route>
 

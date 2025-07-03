@@ -39,12 +39,12 @@ const Footer: React.FC = () => (
           <h4 className="text-sm font-bold text-green-700 tracking-wider uppercase mb-2">Legal</h4>
           <ul className="mt-3 space-y-2">
             <li>
-              <Link to="/privacy" className="text-base text-black hover:text-green-600 transition-colors font-medium">
+              <Link to="/Privacy_Policy" className="text-base text-black hover:text-green-600 transition-colors font-medium">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="text-base text-black hover:text-green-600 transition-colors font-medium">
+              <Link to="/Terms_&_Conditions" className="text-base text-black hover:text-green-600 transition-colors font-medium">
                 Terms and Conditions
               </Link>
             </li>
@@ -116,8 +116,8 @@ export const DefaultFooter: React.FC = () => (
           ))}
         </div>
         <div className="flex gap-4 mt-4 md:mt-0">
-          <Link to="/Dprivacy" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Privacy Policy</Link>
-          <Link to="/Dterms" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Terms & Conditions</Link>
+          <Link to="/Privacy_Policy" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Privacy Policy</Link>
+          <Link to="/Terms_&_Conditions" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Terms & Conditions</Link>
         </div>
         <div className="text-sm text-gray-600">&copy; {new Date().getFullYear()} Cashback Farms</div>
       </div>
