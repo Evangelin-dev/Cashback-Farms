@@ -1371,7 +1371,7 @@ class AddToCartView(APIView):
             if item_type == 'plot':
                 model = PlotListing
             elif item_type == 'material':
-                model = MaterialProduct
+                model = EcommerceProduct
             elif item_type == 'microplot':
                 model = SQLFTProject
             else:
