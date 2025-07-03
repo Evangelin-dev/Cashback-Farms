@@ -655,9 +655,6 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             # Step 3: Send OTP via Email
             if email:
                 try:
-                    from django.core.mail import EmailMessage
-                    from django.conf import settings
-
                     smtp_user = settings.EMAIL_HOST_USER
                     smtp_pass = settings.EMAIL_HOST_PASSWORD
                     email_msg = EmailMessage(
@@ -1212,7 +1209,7 @@ class MyBookingListView(APIView):
         return Response(serializer.data, status=200)
 
 class BookingByClientIDView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, client_id):
         bookings = Booking.objects.filter(client_id=client_id).order_by('-booking_date')
@@ -1295,14 +1292,14 @@ class PublicServiceDetailView(APIView):
         serializer = EcommerceProductSerializer(service)
         return Response(serializer.data)
 
-class MyBookingListView(APIView):
-    permission_classes = [IsAuthenticated]
+# class MyBookingListView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        bookings = Booking.objects.filter(client=user)
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data, status=200)
+#     def get(self, request):
+#         user = request.user
+#         bookings = Booking.objects.filter(client=user)
+#         serializer = BookingSerializer(bookings, many=True)
+#         return Response(serializer.data, status=200)
 
 class MyPaymentsView(APIView):
     permission_classes = [IsAuthenticated]
