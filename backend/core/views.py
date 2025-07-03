@@ -171,9 +171,6 @@ class OTPRequestView(APIView):
             # Send OTP via email if email is provided
             if email:
                 try:
-                    from django.core.mail import EmailMessage
-                    from django.conf import settings
-
                     smtp_user = settings.EMAIL_HOST_USER
                     email_msg = EmailMessage(
                         subject="Your OTP Code",
@@ -187,9 +184,9 @@ class OTPRequestView(APIView):
             # Send OTP via SMS if mobile_number is provided
             elif mobile_number:
                 try:
-                    account_sid = settings.ACCOUNT_SID  # Move to settings in production!
-                    auth_token = settings.AUTH_TOKEN
-                    from_number = settings.FROM_NUMBER
+                    account_sid = settings.TWILIO['ACCOUNT_SID']  # Move to settings in production!
+                    auth_token = settings.TWILIO['AUTH_TOKEN']
+                    from_number = settings.TWILIO['FROM_NUMBER']
                     to_number = mobile_number
                     url = f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json'
                     data = {
