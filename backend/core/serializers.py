@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart
 )
 
 # User and Authentication Serializers
@@ -277,3 +277,30 @@ class PaymentTransactionSerializer(serializers.Serializer):
     date = serializers.DateTimeField()
     status = serializers.CharField()
 
+class ShortlistCartItemSerializer(serializers.ModelSerializer):
+    item_type = serializers.SerializerMethodField()
+    item_id = serializers.IntegerField(source='object_id')
+    item_title = serializers.SerializerMethodField()
+    price_per_unit = serializers.SerializerMethodField()
+    total_item_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShortlistCartItem
+        fields = [
+            'id', 'item_type', 'item_id', 'item_title',
+            'quantity', 'price_per_unit', 'total_item_value'
+        ]
+
+    def get_item_type(self, obj):
+        return obj.content_type.model
+
+    def get_item_title(self, obj):
+        return getattr(obj.content_object, 'title', getattr(obj.content_object, 'name', ''))
+
+    def get_price_per_unit(self, obj):
+        return getattr(obj.content_object, 'price_per_sqft', getattr(obj.content_object, 'price', None))
+
+    def get_total_item_value(self, obj):
+        price = self.get_price_per_unit(obj)
+        qty = obj.quantity if obj.quantity else 1
+        return str(float(price or 0) * qty)
