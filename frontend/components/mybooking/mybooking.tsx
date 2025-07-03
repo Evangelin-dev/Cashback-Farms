@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import apiClient from '@/src/utils/api/apiClient'; // Make sure this path is correct
+import apiClient from '@/src/utils/api/apiClient';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
@@ -11,17 +11,12 @@ interface ApiBooking {
   plot_listing: number;
   plot_title: string;
   client: number;
-  client_username: string;
+  client_username:string;
   booking_type: string;
   booked_area_sqft: string;
   total_price: string;
   booking_date: string;
   status: Status;
-}
-
-// Extend jsPDF with the autoTable plugin's type definition
-interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => jsPDF;
 }
 
 const MyBooking: React.FC = () => {
@@ -38,12 +33,12 @@ const MyBooking: React.FC = () => {
       setError(null);
       try {
         const accessToken = localStorage.getItem("access_token");
-        if (!accessToken) {
-          throw new Error("Access token not found. Please log in.");
-        }
+        if (!accessToken) throw new Error("Access token not found. Please log in.");
+        
         const response = await apiClient.get<ApiBooking[]>('/my/bookings/', {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+
         const sortedBookings = (response || []).sort((a: ApiBooking, b: ApiBooking) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime());
         setBookings(sortedBookings);
       } catch (err: any) {
@@ -69,41 +64,65 @@ const MyBooking: React.FC = () => {
     setShowReceiptPopup(true);
   };
 
+  // --- COMPLETELY REWRITTEN PDF GENERATION ---
   const handleGeneratePdf = (booking: ApiBooking) => {
-    const doc = new jsPDF() as jsPDFWithAutoTable;
-    
-    // Header
-    doc.setFontSize(22);
+    const doc = new jsPDF();
+
+    // 1. Header
     doc.setFont('helvetica', 'bold');
-    doc.text('Booking Receipt', 14, 22);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Cashback Farms', 14, 30);
+    doc.setFontSize(24);
+    doc.text('Booking Receipt', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
     
-    // Booking Details Table
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(12);
+    doc.text(`Booking ID: BKG${booking.id}`, 14, 35);
+    doc.text(`Date: ${new Date(booking.booking_date).toLocaleDateString()}`, doc.internal.pageSize.getWidth() - 14, 35, { align: 'right' });
+
+    // 2. Main Details Table
     const tableData = [
-      ['Booking ID', `BKG${booking.id}`],
-      ['Property Name', booking.plot_title],
-      ['Booking Date', new Date(booking.booking_date).toLocaleDateString()],
-      ['Status', booking.status],
-      ['Booking Type', `${booking.booking_type} Booking`],
-      ['Area Booked', `${booking.booked_area_sqft} sq.ft`],
-      ['Total Price', `₹${parseFloat(booking.total_price).toLocaleString('en-IN')}`],
+      { label: 'Property Name', value: booking.plot_title },
+      { label: 'Client', value: booking.client_username },
+      { label: 'Booking Type', value: `${booking.booking_type} Booking` },
+      { label: 'Area Booked', value: `${booking.booked_area_sqft} sq.ft` },
     ];
-
-    doc.autoTable({
-      startY: 40,
-      head: [['Detail', 'Information']],
+    
+    (doc as any).autoTable({
+      startY: 45,
       body: tableData,
-      theme: 'grid',
+      columns: [ { header: 'Description', dataKey: 'label' }, { header: 'Details', dataKey: 'value' } ],
+      theme: 'striped',
       headStyles: { fillColor: [22, 160, 133] },
-    });
+      didDrawPage: (data: any) => {
+        // This function runs after the table is drawn
+        let finalY = data.cursor.y; // Get the Y position after the table
+    
+        // 3. Status and Total Section
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
 
-    // Footer
-    const finalY = doc.lastAutoTable.finalY || 10;
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text('Thank you for your business with Cashback Farms.', 14, finalY + 20);
+        // Status
+        let statusColor: [number, number, number] = [128, 128, 128]; // Gray for default
+        if (booking.status === 'Confirmed') statusColor = [39, 174, 96]; // Green
+        if (booking.status === 'Cancelled') statusColor = [192, 57, 43]; // Red
+        if (booking.status === 'Pending') statusColor = [241, 196, 15]; // Yellow
+        
+        doc.setTextColor(...statusColor);
+        doc.text('Status:', 14, finalY + 15);
+        doc.text(booking.status.toUpperCase(), 35, finalY + 15);
+        
+        // Total Price
+        doc.setTextColor(0, 0, 0); // Reset to black
+        const totalPrice = `₹ ${parseFloat(booking.total_price).toLocaleString('en-IN')}`;
+        doc.text('Total Price:', doc.internal.pageSize.getWidth() - 14, finalY + 15, { align: 'right' });
+        doc.text(totalPrice, doc.internal.pageSize.getWidth() - 40, finalY + 15, { align: 'right' });
+        
+        // 4. Footer
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.text('Thank you for choosing Cashback Farms.', doc.internal.pageSize.getWidth() / 2, pageHeight - 10, { align: 'center' });
+      }
+    });
 
     doc.save(`Receipt-Booking-BKG${booking.id}.pdf`);
   };
