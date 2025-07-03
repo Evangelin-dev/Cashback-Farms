@@ -85,7 +85,7 @@ const LandingPage: React.FC = () => {
         setFeaturedPlots(allPlots.slice(0, 3));
 
         // Map and set featured professionals/services
-        const allServices = (servicesResponse.data || []).map((service: any) => ({
+        const allServices = (servicesResponse || []).map((service: any) => ({
             id: service.id,
             name: service.vendor_username,
             service: service.name,
