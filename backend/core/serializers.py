@@ -295,7 +295,15 @@ class ShortlistCartItemSerializer(serializers.ModelSerializer):
         return obj.content_type.model
 
     def get_item_title(self, obj):
-        return getattr(obj.content_object, 'title', getattr(obj.content_object, 'name', ''))
+        return getattr(
+            obj.content_object, 
+            'title', 
+            getattr(
+                obj.content_object, 
+                'name', 
+                getattr(obj.content_object, 'project_name', '')
+            )
+        )
 
     def get_price_per_unit(self, obj):
         return getattr(obj.content_object, 'price_per_sqft', getattr(obj.content_object, 'price', None))
