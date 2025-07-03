@@ -1,9 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import apiClient from "@/src/utils/api/apiClient"; // Ensure this path is correct
-import MaterialCard from '../../components/landingpage/landingpagecomponents/material/MaterialCard.tsx'; // Ensure this path is correct
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import apiClient from "@/src/utils/api/apiClient";
+import { useAuth } from '../../contexts/AuthContext.tsx';
 
-// Define a type for the material data from your API
-type Material = {
+// UI Components
+import CardShell from '../../components/common/CardShell.tsx';
+import Button from '../../components/common/Button.tsx';
+import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
+import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
+
+// Type Definitions
+interface Material {
   id: number;
   vendor_username: string;
   name: string;
@@ -12,34 +19,61 @@ type Material = {
   stock_quantity: number;
   category: string;
   is_active: boolean;
-};
+  moq: number; // Assuming MOQ and ImageUrl are part of the type
+  imageUrl: string;
+}
+
+interface ShortlistItem {
+  id: number;
+  item_id: number;
+}
 
 const MaterialsStorePage: React.FC = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [shortlistedItems, setShortlistedItems] = useState<ShortlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [submittingId, setSubmittingId] = useState<number | null>(null);
+
+  const { currentUser } = useAuth();
+
+  const fetchShortlist = useCallback(async () => {
+    if (!currentUser) return;
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) return;
+
+    try {
+      const response = await apiClient.get('/cart/', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setShortlistedItems(response || []);
+    } catch (err) {
+      console.error("Could not refresh shortlist:", err);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
-    const fetchMaterials = async () => {
+    const fetchPageData = async () => {
+      setIsLoading(true);
+      setError(null);
+      const accessToken = localStorage.getItem("access_token");
+      if (!accessToken) {
+        setError("Authorization token not found.");
+        setIsLoading(false);
+        return;
+      }
+      const headers = { Authorization: `Bearer ${accessToken}` };
+
       try {
-        setIsLoading(true);
-        setError(null);
-        const accessToken = localStorage.getItem("access_token");
+        const [materialsResponse, shortlistResponse] = await Promise.all([
+          apiClient.get('/materials/', { headers }),
+          apiClient.get('/cart/', { headers })
+        ]);
 
-        if (!accessToken) {
-          throw new Error("Authorization token not found.");
-        }
-
-        const response = await apiClient.get<Material[]>('/materials/', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        
-        setMaterials(response || []);
+        setMaterials(materialsResponse || []);
+        setShortlistedItems(shortlistResponse || []);
 
       } catch (err) {
         setError("Failed to fetch materials. Please try refreshing the page.");
@@ -49,30 +83,51 @@ const MaterialsStorePage: React.FC = () => {
       }
     };
 
-    fetchMaterials();
-  }, []);
+    if (currentUser) {
+        fetchPageData();
+    } else {
+        setIsLoading(false);
+    }
+  }, [currentUser]);
 
-  // Dynamically generate categories from the fetched materials
+  const handleAddToWishlist = async (materialId: number) => {
+    setSubmittingId(materialId);
+    const accessToken = localStorage.getItem("access_token");
+
+    const payload = {
+      item_type: "material",
+      item_id: materialId,
+      quantity: 1,
+    };
+
+    try {
+      await apiClient.post('/cart/add/', payload, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      await fetchShortlist();
+    } catch (error) {
+      console.error("Failed to add material to wishlist:", error);
+      alert("There was an error adding this item.");
+    } finally {
+      setSubmittingId(null);
+    }
+  };
+
   const materialCategories = useMemo(() => {
     if (materials.length === 0) return [];
     const categories = new Set(materials.map(m => m.category));
     return Array.from(categories);
   }, [materials]);
 
-  // Filter materials based on the selected category and search term
   const filteredMaterials = useMemo(() => {
     return materials.filter(material => {
-      // Filter out inactive materials so they don't show up for clients
-      if (!material.is_active) {
-        return false;
-      }
+      if (!material.is_active) return false;
       const matchesCategory = !selectedCategory || material.category === selectedCategory;
       const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                             material.vendor_username.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [materials, selectedCategory, searchTerm]);
-
 
   if (isLoading) {
     return (
@@ -98,7 +153,6 @@ const MaterialsStorePage: React.FC = () => {
         <p className="mt-2 text-lg text-gray-600">Find all your building material needs in one place.</p>
       </div>
 
-      {/* Categories & Search */}
       <div className="mb-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="mb-6">
             <input 
@@ -137,17 +191,41 @@ const MaterialsStorePage: React.FC = () => {
         </div>
       </div>
       
-      {/* Material Listings */}
       {filteredMaterials.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredMaterials.map(material => {
-            // We need to map our API data to the props that MaterialCard expects.
-            // Here, we assume MaterialCard needs a 'vendor' prop, so we map 'vendor_username' to it.
-            const cardProps = {
-                ...material,
-                vendor: material.vendor_username
-            };
-            return <MaterialCard key={material.id} material={cardProps} />
+            const isAlreadyShortlisted = shortlistedItems.some(item => item.item_id === material.id);
+            const isCurrentlySubmitting = submittingId === material.id;
+            
+            return (
+                <CardShell key={material.id} className="relative">
+                    {currentUser && (
+                        <button
+                          onClick={() => handleAddToWishlist(material.id)}
+                          disabled={isAlreadyShortlisted || isCurrentlySubmitting}
+                          className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/70 backdrop-blur-sm transition-colors disabled:cursor-not-allowed"
+                          aria-label="Add to wishlist"
+                        >
+                          {isAlreadyShortlisted ? (
+                            <SolidHeartIcon className="w-6 h-6 text-red-500" />
+                          ) : (
+                            <OutlineHeartIcon className="w-6 h-6 text-gray-700 hover:text-red-500" />
+                          )}
+                        </button>
+                    )}
+                    <img src={material.imageUrl || 'https://picsum.photos/seed/material/300/200'} alt={material.name} className="w-full h-40 object-cover"/>
+                    <div className="p-4">
+                        <h3 className="text-md font-semibold text-gray-800 mb-1 truncate">{material.name}</h3>
+                        <p className="text-xs text-gray-500 mb-1 capitalize">Category: {material.category}</p>
+                        <p className="text-sm text-green-600 font-bold mb-1">₹{parseFloat(material.price).toLocaleString('en-IN')}</p>
+                        <p className="text-xs text-gray-500 mb-1">MOQ: {material.moq}</p>
+                        <p className="text-xs text-gray-500 mb-2">Vendor: {material.vendor_username}</p>
+                        <Link to={`/materials/${material.id}`}>
+                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                        </Link>
+                    </div>
+                </CardShell>
+            );
           })}
         </div>
       ) : (
