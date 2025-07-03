@@ -54,10 +54,7 @@ const Navbar: React.FC = () => {
             {/* --- Group 1: Logo --- */}
             <div className="flex items-center">
               <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-                <span className="inline-block w-9 h-9 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow-lg flex items-center justify-center">
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4" /></svg>
-                </span>
-                <span className="text-2xl font-extrabold text-green-700 tracking-tight drop-shadow">Cashback Farms</span>
+                <img src="/images/logobg.png" className='w-20 h-20' alt="cashbackfarms-logo" />
               </Link>
             </div>
 
