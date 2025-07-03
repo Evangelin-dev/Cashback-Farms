@@ -1372,6 +1372,8 @@ class AddToCartView(APIView):
                 model = PlotListing
             elif item_type == 'material':
                 model = MaterialProduct
+            elif item_type == 'microplot':
+                model = SQLFTProject
             else:
                 return Response({"detail": "Invalid item_type. Use 'plot' or 'material'."}, status=400)
 
@@ -1382,6 +1384,9 @@ class AddToCartView(APIView):
             if item_type == 'plot':
                 price_per_unit = item_object.price_per_sqft
                 total_price = price_per_unit * Decimal(item_object.total_area_sqft)
+            elif item_type == 'microplot':
+                price_per_unit = item_object.price
+                total_price = price_per_unit
             elif item_type == 'material':
                 if not quantity:
                     return Response({"detail": "Quantity is required for material."}, status=400)
