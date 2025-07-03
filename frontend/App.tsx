@@ -112,7 +112,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
         <Route path="/Dterms" element={<TermsAndConditions />} />
         <Route path="/Dprivacy" element={<PrivacyPolicy />} />
-        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/cancellation-refunds" element={<RefundPolicyPage />} />
       </Route>
 
 

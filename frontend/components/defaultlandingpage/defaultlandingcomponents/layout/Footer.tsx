@@ -49,7 +49,7 @@ const Footer: React.FC = () => (
               </Link>
             </li>
             <li>
-              <Link to="/refund-policy" className="text-base text-black hover:text-green-600 transition-colors font-medium">Refund Policy</Link>
+              <Link to="/cancellation-refunds" className="text-base text-black hover:text-green-600 transition-colors font-medium">Refund Policy</Link>
             </li>
           </ul>
         </div>
