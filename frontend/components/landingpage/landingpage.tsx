@@ -72,7 +72,7 @@ const LandingPage: React.FC = () => {
         ]);
 
         // Map and set featured plots
-        const allPlots = (plotsResponse.data || []).map((plot: any) => ({
+        const allPlots = (plotsResponse || []).map((plot: any) => ({
           id: plot.id,
           title: plot.title,
           location: plot.location,
