@@ -214,13 +214,9 @@ const Sidebar: React.FC = () => {
       >
         {/* Profile section at the top */}
         <ProfileSection />
-        <div className="text-2xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
-          <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4" />
-            </svg>
-          </span>
-          Cashback<span className="text-black">Homes</span>
+        <div className="text-xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
+          <img src='/images/logobg.png' alt="CashbackHomes Logo" className="w-10 h-10" />
+          Cashback<span className="text-black text-md">Homes</span>
         </div>
         <nav className="flex-grow space-y-1">
           {menuItems.map((item) => (

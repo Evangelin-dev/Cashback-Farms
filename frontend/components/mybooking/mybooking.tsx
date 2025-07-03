@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '@/src/utils/api/apiClient';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // --- TYPE DEFINITIONS ---
 type Status = 'Confirmed' | 'Pending' | 'Cancelled';
@@ -39,7 +39,7 @@ const MyBooking: React.FC = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        const sortedBookings = (response || []).sort((a: ApiBooking, b: ApiBooking) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime());
+        const sortedBookings = (response || []).sort((a, b) => new Date(b.booking_date).getTime() - new Date(a.booking_date).getTime());
         setBookings(sortedBookings);
       } catch (err: any) {
         setError("Failed to fetch your bookings. Please try again later.");
@@ -65,67 +65,90 @@ const MyBooking: React.FC = () => {
   };
 
   // --- COMPLETELY REWRITTEN PDF GENERATION ---
-  const handleGeneratePdf = (booking: ApiBooking) => {
-    const doc = new jsPDF();
+const handleGeneratePdf = (booking: ApiBooking) => {
+  const doc = new jsPDF();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Header
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.text('Booking Receipt', pageWidth / 2, 20, { align: 'center' });
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  doc.text(`Booking ID: BKG${booking.id}`, 14, 35);
+  doc.text(`Date: ${new Date(booking.booking_date).toLocaleDateString()}`, pageWidth - 14, 35, { align: 'right' });
 
-    // 1. Header
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text('Booking Receipt', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    doc.text(`Booking ID: BKG${booking.id}`, 14, 35);
-    doc.text(`Date: ${new Date(booking.booking_date).toLocaleDateString()}`, doc.internal.pageSize.getWidth() - 14, 35, { align: 'right' });
+  // Main Details Table
+  const mainTableData = [
+    ['Property Name', booking.plot_title],
+    ['Client', booking.client_username],
+    ['Booking Type', `${booking.booking_type} Booking`],
+    ['Area Booked', `${booking.booked_area_sqft} sq.ft`],
+  ];
 
-    // 2. Main Details Table
-    const tableData = [
-      { label: 'Property Name', value: booking.plot_title },
-      { label: 'Client', value: booking.client_username },
-      { label: 'Booking Type', value: `${booking.booking_type} Booking` },
-      { label: 'Area Booked', value: `${booking.booked_area_sqft} sq.ft` },
-    ];
-    
-    (doc as any).autoTable({
-      startY: 45,
-      body: tableData,
-      columns: [ { header: 'Description', dataKey: 'label' }, { header: 'Details', dataKey: 'value' } ],
-      theme: 'striped',
-      headStyles: { fillColor: [22, 160, 133] },
-      didDrawPage: (data: any) => {
-        // This function runs after the table is drawn
-        let finalY = data.cursor.y; // Get the Y position after the table
-    
-        // 3. Status and Total Section
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-
-        // Status
-        let statusColor: [number, number, number] = [128, 128, 128]; // Gray for default
-        if (booking.status === 'Confirmed') statusColor = [39, 174, 96]; // Green
-        if (booking.status === 'Cancelled') statusColor = [192, 57, 43]; // Red
-        if (booking.status === 'Pending') statusColor = [241, 196, 15]; // Yellow
-        
-        doc.setTextColor(...statusColor);
-        doc.text('Status:', 14, finalY + 15);
-        doc.text(booking.status.toUpperCase(), 35, finalY + 15);
-        
-        // Total Price
-        doc.setTextColor(0, 0, 0); // Reset to black
-        const totalPrice = `₹ ${parseFloat(booking.total_price).toLocaleString('en-IN')}`;
-        doc.text('Total Price:', doc.internal.pageSize.getWidth() - 14, finalY + 15, { align: 'right' });
-        doc.text(totalPrice, doc.internal.pageSize.getWidth() - 40, finalY + 15, { align: 'right' });
-        
-        // 4. Footer
-        doc.setFontSize(10);
-        doc.setTextColor(150);
-        const pageHeight = doc.internal.pageSize.getHeight();
-        doc.text('Thank you for choosing Cashback Farms.', doc.internal.pageSize.getWidth() / 2, pageHeight - 10, { align: 'center' });
+  autoTable(doc, {
+    startY: 45,
+    head: [['Description', 'Details']],
+    body: mainTableData,
+    theme: 'grid',
+    headStyles: { fillColor: [22, 160, 133] },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { cellWidth: 120 }
+    }
+  });
+  
+  // --- FIXED: Status and Price in separate rows for better formatting ---
+  const statusData = [['Status', booking.status.toUpperCase()]];
+  const priceData = [['Total Price', `₹ ${parseFloat(booking.total_price).toLocaleString('en-IN')}`]];
+  
+  // Status table
+  autoTable(doc, {
+    startY: (doc as any).lastAutoTable.finalY + 5,
+    body: statusData,
+    theme: 'plain',
+    styles: { fontSize: 14, fontStyle: 'bold', cellPadding: { top: 5, bottom: 5 } },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { cellWidth: 120 }
+    },
+    didParseCell: function(data) {
+      if (data.column.index === 1 && data.cell.section === 'body') {
+        let statusColor: [number, number, number] = [128, 128, 128];
+        if (booking.status === 'Confirmed') statusColor = [39, 174, 96];
+        if (booking.status === 'Cancelled') statusColor = [192, 57, 43];
+        if (booking.status === 'Pending') statusColor = [241, 196, 15];
+        data.cell.styles.textColor = statusColor;
       }
-    });
+    }
+  });
 
-    doc.save(`Receipt-Booking-BKG${booking.id}.pdf`);
-  };
+  // Price table
+  autoTable(doc, {
+    startY: (doc as any).lastAutoTable.finalY + 2,
+    body: priceData,
+    theme: 'plain',
+    styles: { fontSize: 14, fontStyle: 'bold', cellPadding: { top: 5, bottom: 5 } },
+    columnStyles: {
+      0: { cellWidth: 60 },
+      1: { cellWidth: 120, halign: 'right' }
+    },
+    didParseCell: function(data) {
+      if (data.column.index === 1 && data.cell.section === 'body') {
+        data.cell.styles.textColor = [22, 160, 133]; // Green color for price
+      }
+    }
+  });
+
+  // Footer
+  doc.setFontSize(10);
+  doc.setTextColor(150);
+  doc.text('Thank you for choosing Cashback Farms.', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+  doc.save(`Receipt-Booking-BKG${booking.id}.pdf`);
+};
 
   const handleConfirmDownload = () => {
     if (selectedBooking) {
@@ -198,6 +221,10 @@ const MyBooking: React.FC = () => {
             <div className="text-gray-600 mb-2"><span className="font-semibold">Status:</span>{' '}<span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusClass(selectedBooking.status)}`}>{selectedBooking.status}</span></div>
             <div className="w-full mt-4 bg-green-50 rounded-lg p-4 text-sm text-green-900 shadow-inner">
               <div><span className="font-semibold">Land Area:</span> {selectedBooking.booked_area_sqft} sq.ft</div>
+              <div><span className="font-semibold">Facing:</span> East (Placeholder)</div>
+              <div><span className="font-semibold">Amenities:</span> Water, Electricity, Road, Park (Placeholder)</div>
+              <div><span className="font-semibold">Owner:</span> Green Valley Estates (Placeholder)</div>
+              <div><span className="font-semibold">Registration:</span> Ready for registration</div>
             </div>
             <button className="mt-6 px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition" onClick={handleCloseDetails}>Close</button>
           </div>
