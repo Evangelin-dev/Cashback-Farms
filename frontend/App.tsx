@@ -86,6 +86,7 @@ import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import RealEstateRoute from './components/ProtectedRealEstateRoute';
 import PlotDetailsPage from './pages/user/DetailMySqftListing';
+import RefundPolicyPage from './components/RefundPolicy';
 
 const AppRoutes: React.FC = () => {
   const { currentUser } = useAuth();
@@ -111,6 +112,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
         <Route path="/Dterms" element={<TermsAndConditions />} />
         <Route path="/Dprivacy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
       </Route>
 
 
@@ -127,6 +129,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/plots" element={<PlotMarketplacePage />} />
           <Route path="/plots/:id" element={<PlotDetailPage />} />
           <Route path="/book-my-sqft" element={<BookMySqftPage />} />
+
 
           <Route path="/materials" element={<MaterialsStorePage />} />
           <Route path="/materials/:id" element={<MaterialDetailPage />} />l
