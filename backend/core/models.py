@@ -8,6 +8,8 @@ import datetime
 from django.utils import timezone
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 
 
 # User Roles
@@ -487,3 +489,16 @@ class Inquiry(models.Model):
     product = models.ForeignKey(EcommerceProduct, on_delete=models.CASCADE, null=True, blank=True)
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class ShortlistCart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shortlist_cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ShortlistCartItem(models.Model):
+    cart = models.ForeignKey(ShortlistCart, on_delete=models.CASCADE, related_name='items')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    quantity = models.PositiveIntegerField(null=True, blank=True)
+    added_at = models.DateTimeField(auto_now_add=True)

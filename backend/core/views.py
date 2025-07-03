@@ -22,6 +22,10 @@ from decimal import Decimal
 from django.db.models import Q
 from django.conf import settings
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 
@@ -29,7 +33,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -37,7 +41,7 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer,
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,
 )
 
 # --- Authentication and User Management ---
@@ -180,6 +184,24 @@ class OTPRequestView(APIView):
                     email_msg.send(fail_silently=False)
                 except Exception as e:
                     return Response({"detail": f"Failed to send OTP email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Send OTP via SMS if mobile_number is provided
+            elif mobile_number:
+                try:
+                    account_sid = settings.ACCOUNT_SID  # Move to settings in production!
+                    auth_token = settings.AUTH_TOKEN
+                    from_number = settings.FROM_NUMBER
+                    to_number = mobile_number
+                    url = f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json'
+                    data = {
+                        'To': to_number,
+                        'From': from_number,
+                        'Body': f'Your OTP is {otp}'
+                    }
+                    response = requests.post(url, data=data, auth=HTTPBasicAuth(account_sid, auth_token))
+                    if response.status_code != 201:
+                        return Response({"detail": f"Failed to send OTP SMS: {response.text}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                except Exception as e:
+                    return Response({"detail": f"Failed to send OTP SMS: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             print(f"DEBUG: OTP for {user.username}: {otp}")  # For dev only
             return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
@@ -1321,3 +1343,145 @@ class MyPaymentsView(APIView):
 
         serializer = PaymentTransactionSerializer(transactions, many=True)
         return Response(serializer.data, status=200)
+    
+class CartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        serializer = ShortlistCartItemSerializer(cart.items.all(), many=True)
+        return Response(serializer.data, status=200)
+
+class AddToCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        item_type = request.data.get('item_type')  # Expected: 'plot' or 'material'
+        item_id = request.data.get('item_id')
+        quantity = request.data.get('quantity')  # Can be null for plot
+
+        if not item_type or not item_id:
+            return Response({"detail": "item_type and item_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            cart, _ = ShortlistCart.objects.get_or_create(user=user)
+
+            # Resolve content type and actual model
+            if item_type == 'plot':
+                model = PlotListing
+            elif item_type == 'material':
+                model = MaterialProduct
+            else:
+                return Response({"detail": "Invalid item_type. Use 'plot' or 'material'."}, status=400)
+
+            content_type = ContentType.objects.get_for_model(model)
+            item_object = model.objects.get(pk=item_id)
+
+            # Price calculation
+            if item_type == 'plot':
+                price_per_unit = item_object.price_per_sqft
+                total_price = price_per_unit * Decimal(item_object.total_area_sqft)
+            elif item_type == 'material':
+                if not quantity:
+                    return Response({"detail": "Quantity is required for material."}, status=400)
+                price_per_unit = item_object.price
+                total_price = price_per_unit * Decimal(quantity)
+
+            # Create cart item
+            cart_item = ShortlistCartItem.objects.create(
+                cart=cart,
+                content_type=content_type,
+                object_id=item_id,
+                quantity=quantity,
+            )
+
+            return Response({
+                "message": "Item added to cart successfully.",
+                "item_id": cart_item.id,
+                "total_price": str(total_price)
+            }, status=201)
+
+        except model.DoesNotExist:
+            return Response({"detail": "Item not found."}, status=404)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=500)
+
+class UpdateCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, id):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        try:
+            item = cart.items.get(id=id)
+            item.quantity = request.data.get("quantity", item.quantity)
+            item.save()
+            return Response({"message": "Item updated."})
+        except ShortlistCartItem.DoesNotExist:
+            return Response({"error": "Item not found in your cart."}, status=404)
+
+# DELETE /api/cart/remove-item/<id>/
+class RemoveCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        item = get_object_or_404(cart.items, id=id)
+        item.delete()
+        return Response(status=204)
+
+# POST /api/cart/clear/
+class ClearCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        cart.items.all().delete()
+        return Response(status=204)
+
+# POST /api/cart/checkout/
+class CheckoutCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        cart, _ = ShortlistCart.objects.get_or_create(user=user)
+        bookings_created = []
+        orders_created = []
+
+        for item in cart.items.all():
+            model_name = item.content_type.model
+            obj = item.content_object
+
+            if model_name == 'plotlisting':
+                booking = Booking.objects.create(
+                    client=user,
+                    plot_listing=obj,
+                    booking_type='full_plot' if item.quantity is None else 'square_feet',
+                    booked_area_sqft=item.quantity,
+                    total_price=float(getattr(obj, 'price_per_sqft', 0)) * (item.quantity or obj.total_area_sqft),
+                    status='pending'
+                )
+                bookings_created.append(booking.id)
+
+            elif model_name == 'ecommerceproduct':
+                order = Order.objects.create(
+                    client=user,
+                    total_amount=float(getattr(obj, 'price', 0)) * item.quantity,
+                    status='pending'
+                )
+                OrderItem.objects.create(
+                    order=order,
+                    product=obj,
+                    quantity=item.quantity,
+                    unit_price=obj.price
+                )
+                orders_created.append(order.id)
+
+        cart.items.all().delete()
+
+        return Response({
+            "message": "Cart checked out successfully.",
+            "bookings_created": bookings_created,
+            "orders_created": orders_created
+        }, status=200)
