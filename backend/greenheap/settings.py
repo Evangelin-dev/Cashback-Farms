@@ -104,6 +104,12 @@ SUPABASE = {
     'URL': os.getenv('SUPABASE_URL'),
 }
 
+TWILIO = {
+    'ACCOUNT_SID': os.getenv('TWILIO_ACCOUNT_SID'),
+    'AUTH_TOKEN': os.getenv('TWILIO_AUTH_TOKEN'),
+    'FROM_NUMBER': os.getenv('TWILIO_FROM_NUMBER'),
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -174,8 +180,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "azeema224143@gmail.com"         # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = "buwqswksuljoxjvm"        # Replace with your Gmail App Password
+EMAIL_HOST_USER = ""         # Replace with your Gmail address
+EMAIL_HOST_PASSWORD = ""        # Replace with your Gmail App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 CORS_ALLOWED_ORIGINS = [
@@ -186,7 +192,7 @@ CORS_ALLOWED_ORIGINS = [
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # ⬅️ change this to increase timeout
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # ⬅ change this to increase timeout
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     # Other optional settings:
     'ROTATE_REFRESH_TOKENS': True,
