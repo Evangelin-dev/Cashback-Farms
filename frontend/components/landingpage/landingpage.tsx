@@ -2,44 +2,52 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // --- API Client and Types ---
-import apiClient from '@/src/utils/api/apiClient'; // Adjust path if needed
-import { Plot, Professional } from '../../types'; // Adjust path if needed
+import apiClient from '@/src/utils/api/apiClient';
+import { Plot, Professional } from '@/types';
 
 // --- Reusable Components ---
-import Button from '../Button.tsx';
-import AssistedPlans from '../landingpage/landingpagecomponents/assistedplans/assistedplans';
-import FinancialServices from '../landingpage/landingpagecomponents/financialservices/financialservices';
-import Payments from '../landingpage/landingpagecomponents/payments/payments';
-import ProfessionalCard from '../landingpage/landingpagecomponents/service/ProfessionalCard.tsx';
-import PlotCard from './landingpagecomponents/plot/PlotCard.tsx';
+import Button from '@/components/Button';
+import DFinancialServices from '@/components/defaultlandingpage/defaultlandingcomponents/financialservices/financialservices';
+import DAssistedPlans from '@/components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
+import DPayments from '@/components/defaultlandingpage/defaultlandingcomponents/payments/payments';
+import DPlotCard from '@/components/defaultlandingpage/defaultlandingcomponents/plot/PlotCard';
+import DProfessionalCard from '@/components/defaultlandingpage/defaultlandingcomponents/service/ProfessionalCard';
 
-// --- Slider Data with Correct String Paths ---
-// We reference the images directly as strings from the public folder.
+
+// --- Slider Data ---
 const slides = [
   {
+    headline: "💰 Earn Rental Yields for Up to 30 Years!",
+    subtext: "Secure your future with our long-term rental income plans.",
     ctaText: "Know More",
     ctaLink: "/services",
     image: '/images/EarnRentaYieldsfo.png',
   },
   {
-     ctaText: "Explore Plots",
-    ctaLink: "/Dplots",
+    headline: "🏡 Owning a Plot Was Never This Easy!",
+    subtext: "Verified listings, transparent pricing, and easy booking — all in one place.",
+    ctaText: "Explore Plots",
+    ctaLink: "/plots",
     image: '/images/OwningaPlotWasNeverThisEasy.png',
   },
   {
-       ctaText: "Start Earning",
+    headline: "🌱 Let Your Plot Earn For You",
+    subtext: "Invest in Greenheap-verified properties and enjoy assured returns.",
+    ctaText: "Start Earning",
     ctaLink: "/services",
     image: '/images/LetYourPlotEarn.png',
   },
   {
+    headline: "🌿 Book Your Farm House Today",
+    subtext: "Weekend getaway or long-term investment — find your ideal plot.",
     ctaText: "Book Now",
-    ctaLink: "/Dplots",
+    ctaLink: "/plots",
     image: '/images/BookYourFarmHouseToday.png',
   },
 ];
 
 
-const LandingPage: React.FC = () => {
+const DefaultLanding: React.FC = () => {
   // --- State Management ---
   const [featuredPlots, setFeaturedPlots] = useState<Plot[]>([]);
   const [featuredProfessionals, setFeaturedProfessionals] = useState<Professional[]>([]);
@@ -62,7 +70,6 @@ const LandingPage: React.FC = () => {
   
   // Fetch featured data and current location on mount
   useEffect(() => {
-    // Fetch Plots and Services
     const fetchFeaturedData = async () => {
       setIsLoading(true);
       try {
@@ -71,8 +78,7 @@ const LandingPage: React.FC = () => {
           apiClient.get('/public/services/')
         ]);
 
-        // Map and set featured plots
-        const allPlots = (plotsResponse || []).map((plot: any) => ({
+        const allPlots = (plotsResponse|| []).map((plot: any) => ({
           id: plot.id,
           title: plot.title,
           location: plot.location,
@@ -84,8 +90,7 @@ const LandingPage: React.FC = () => {
         }));
         setFeaturedPlots(allPlots.slice(0, 3));
 
-        // Map and set featured professionals/services
-        const allServices = (servicesResponse || []).map((service: any) => ({
+        const allServices = (servicesResponse|| []).map((service: any) => ({
             id: service.id,
             name: service.vendor_username,
             service: service.name,
@@ -93,7 +98,7 @@ const LandingPage: React.FC = () => {
             rate: `₹${Number(service.price).toLocaleString('en-IN')}`,
             imageUrl: `https://picsum.photos/seed/${service.vendor_username}/400/300`,
             rating: 4.5,
-        })).reverse(); // Show latest services first
+        })).reverse();
         setFeaturedProfessionals(allServices.slice(0, 3));
 
       } catch (error) {
@@ -103,7 +108,6 @@ const LandingPage: React.FC = () => {
       }
     };
 
-    // Fetch User Location
     const fetchLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -128,22 +132,22 @@ const LandingPage: React.FC = () => {
     fetchLocation();
   }, []);
 
-  // --- Render Functions (unchanged logic) ---
+  // --- Render Functions ---
   const renderSearchInput = () => {
     if (searchType === 'buy') return <input type="text" className="w-full border rounded px-4 py-2 text-sm" placeholder="Search by locality or landmark" value={searchInput} onChange={e => setSearchInput(e.target.value)} />;
     if (searchType === 'sell') return <input type="text" className="w-full border rounded px-4 py-2 text-sm" placeholder="Sell by location" value={searchInput} onChange={e => setSearchInput(e.target.value)} />;
     return <input type="text" className="w-full border rounded px-4 py-2 text-sm" placeholder="Search up to 3 localities (comma separated)" value={searchInput} onChange={e => setSearchInput(e.target.value)} />;
   };
 
-  const buyServices = [ { title: 'Builder Projects', desc: 'Explore top builder projects', icon: '🏗️', link: '/services/buy' }, { title: 'Construction materials', desc: 'Get quality materials for your home', icon: '🧱', link: '/services/buy' }, { title: 'Property Legal Services', desc: 'Legal help for your property', icon: '⚖️', link: '/services/buy' }, { title: 'Home Interiors', desc: 'Design your dream home', icon: '🛋️', link: '/services/buy' }, { title: 'Plot Maintenance', desc: 'Keep your plot in top shape', icon: '🌱', link: '/services/buy' }];
+  const buyServices = [ { title: 'Builder Projects', desc: 'Explore top builder projects', icon: '🏗️', link: '/services/buy' }, { title: 'Construction materials', desc: 'Get quality materials for your home', icon: '🧱', link: '/Dmaterials' }, { title: 'Property Legal Services', desc: 'Legal help for your property', icon: '⚖️', link: '/services/buy' }, { title: 'Home Interiors', desc: 'Design your dream home', icon: '🛋️', link: '/services/buy' }, { title: 'Plot Maintenance', desc: 'Keep your plot in top shape', icon: '🌱', link: '/services/buy' }];
   const sellServices = [ { title: 'Free Property Listing', desc: 'List your property for free', icon: '📝', link: '/services/sell' }, { title: 'Professional Photography', desc: 'Attract buyers with great photos', icon: '📸', link: '/services/sell' }, { title: 'Seller Support', desc: 'Get help from our team', icon: '🤝', link: '/services/sell' }];
   const commercialServices = [ { title: 'Packers & Movers', desc: 'Hassle-free shifting', icon: '🚚', link: '/services/commercial' }, { title: 'Building Materials', desc: 'All materials for your commercial needs', icon: '🏢', link: '/services/commercial' }, { title: 'Home Cleaning', desc: 'Professional cleaning for your premises', icon: '🧹', link: '/services/commercial' }];
   
   const renderHomeServices = () => {
     let services, heading, link;
-    if (searchType === 'buy') { services = buyServices; heading = 'Home Services for Buyers'; link = '/services'; }
-    else if (searchType === 'sell') { services = sellServices; heading = 'Home Services for Sellers'; link = '/services'; }
-    else { services = commercialServices; heading = 'Commercial Services'; link = '/services'; }
+    if (searchType === 'buy') { services = buyServices; heading = 'Home Services for Buyers'; link = '/services/'; }
+    else if (searchType === 'sell') { services = sellServices; heading = 'Home Services for Sellers'; link = '/services/'; }
+    else { services = commercialServices; heading = 'Commercial Services'; link = '/services/'; }
     return (
       <div className="mt-8">
         <div className="text-lg font-semibold text-green-700 mb-3 text-center">{heading}</div>
@@ -164,23 +168,47 @@ const LandingPage: React.FC = () => {
   // --- Main Component JSX ---
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* --- REVISED Hero Section: Image Slider --- */}
-      <section className="relative h-[60vh] w-full overflow-hidden">
+      {/* --- REVISED Hero Section --- */}
+      <section className="relative h-[70vh] md:h-[60vh] w-full overflow-hidden">
         {slides.map((slide, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0'}`}
           >
-            <img src={slide.image} alt={`Slide ${index + 1}`} className="w-full h-full object-fill" />
-            <div className="absolute bottom-10 left-10 z-20">
-              {/* <Link to={slide.ctaLink}>
+            {/* Background: Green for mobile, Image for Desktop */}
+            <div className="absolute inset-0 bg-green-700 md:hidden"></div>
+            <img 
+              src={slide.image} 
+              alt={slide.headline} 
+              className="hidden md:block w-full h-full object-fill" 
+            />
+
+            {/* --- Mobile Content (Text + Button) --- */}
+            <div className="md:hidden absolute inset-0 flex flex-col justify-center items-center text-center p-6 z-20">
+              <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+                {slide.headline}
+              </h1>
+              <p className="text-lg text-white/90 mb-8 max-w-2xl">
+                {slide.subtext}
+              </p>
+              <Link to={slide.ctaLink}>
+                <Button size="lg" className="bg-black text-green-700 font-bold hover:bg-green-100  shadow-lg">
+                  {slide.ctaText}
+                </Button>
+              </Link>
+            </div>
+
+            {/* --- Desktop Content (Button Only) --- */}
+            <div className="hidden md:flex w-full justify-center absolute bottom-8 z-20">
+              <Link to={slide.ctaLink}>
                 <Button size="lg" variant="secondary" className="text-green-700 hover:bg-green-200 shadow-lg animate-fade-in">
                   {slide.ctaText}
                 </Button>
-              </Link> */}
+              </Link>
             </div>
           </div>
         ))}
+        {/* Slider Navigation Dots (Common for both) */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {slides.map((_, index) => (
                 <button
@@ -223,7 +251,7 @@ const LandingPage: React.FC = () => {
                 <div className="text-center text-gray-500">Loading plots...</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {featuredPlots.map((plot, idx) => <PlotCard key={plot.id || idx} plot={plot} />)}
+                    {featuredPlots.map(plot => <DPlotCard key={plot.id} plot={plot} />)}
                 </div>
             )}
             <div className="text-center mt-8">
@@ -240,9 +268,9 @@ const LandingPage: React.FC = () => {
             <Link to="/mysqft-listing"><Button size="lg" variant="primary">Explore Book My SqFt</Button></Link>
         </div>
       </section>
-      <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><AssistedPlans /></div></section>
-      <section className="py-12 bg-white"><Payments /></section>
-      <section className="py-12 bg-white"><FinancialServices /></section>
+      <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><DAssistedPlans /></div></section>
+      <section className="py-12 bg-white"><DPayments /></section>
+      <section className="py-12 bg-white"><DFinancialServices /></section>
 
       {/* --- Featured Professionals Section --- */}
       <section className="bg-gray-100 py-12">
@@ -252,7 +280,7 @@ const LandingPage: React.FC = () => {
                  <div className="text-center text-gray-500">Loading professionals...</div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {featuredProfessionals.map(prof => <ProfessionalCard key={prof.id} professional={prof} />)}
+                    {featuredProfessionals.map(prof => <DProfessionalCard key={prof.id} professional={prof} />)}
                 </div>
             )}
             <div className="text-center mt-8">
@@ -264,4 +292,4 @@ const LandingPage: React.FC = () => {
   );
 };
 
-export default LandingPage;
+export default DefaultLanding;
