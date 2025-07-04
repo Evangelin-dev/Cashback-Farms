@@ -17,21 +17,29 @@ import DProfessionalCard from './components/defaultlandingpage/defaultlandingcom
 // --- Slider Data ---
 const slides = [
   {
+    headline: "💰 Earn Rental Yields for Up to 30 Years!",
+    subtext: "Secure your future with our long-term rental income plans.",
     ctaText: "Know More",
     ctaLink: "/Dservices",
     image: '/images/EarnRentaYieldsfo.png',
   },
   {
-     ctaText: "Explore Plots",
+    headline: "🏡 Owning a Plot Was Never This Easy!",
+    subtext: "Verified listings, transparent pricing, and easy booking — all in one place.",
+    ctaText: "Explore Plots",
     ctaLink: "/Dplots",
     image: '/images/OwningaPlotWasNeverThisEasy.png',
   },
   {
-       ctaText: "Start Earning",
+    headline: "🌱 Let Your Plot Earn For You",
+    subtext: "Invest in Greenheap-verified properties and enjoy assured returns.",
+    ctaText: "Start Earning",
     ctaLink: "/Dservices",
     image: '/images/LetYourPlotEarn.png',
   },
   {
+    headline: "🌿 Book Your Farm House Today",
+    subtext: "Weekend getaway or long-term investment — find your ideal plot.",
     ctaText: "Book Now",
     ctaLink: "/Dplots",
     image: '/images/BookYourFarmHouseToday.png',
@@ -70,7 +78,6 @@ const DefaultLanding: React.FC = () => {
           apiClient.get('/public/services/')
         ]);
 
-        // CORRECTED: Access .data from the response
         const allPlots = (plotsResponse|| []).map((plot: any) => ({
           id: plot.id,
           title: plot.title,
@@ -83,7 +90,6 @@ const DefaultLanding: React.FC = () => {
         }));
         setFeaturedPlots(allPlots.slice(0, 3));
 
-        // CORRECTED: Access .data from the response
         const allServices = (servicesResponse|| []).map((service: any) => ({
             id: service.id,
             name: service.vendor_username,
@@ -162,15 +168,38 @@ const DefaultLanding: React.FC = () => {
   // --- Main Component JSX ---
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* --- REVISED Hero Section: Image Slider --- */}
-      <section className="relative h-[60vh] w-full overflow-hidden">
+      {/* --- REVISED Hero Section --- */}
+      <section className="relative h-[70vh] md:h-[60vh] w-full overflow-hidden">
         {slides.map((slide, index) => (
           <div
             key={index}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0'}`}
           >
-            <img src={slide.image} alt={`Slide ${index + 1}`} className="w-full h-full object-cover" />
-            <div className="w-full flex justify-center absolute bottom-8 z-20">
+            {/* Background: Green for mobile, Image for Desktop */}
+            <div className="absolute inset-0 bg-green-700 md:hidden"></div>
+            <img 
+              src={slide.image} 
+              alt={slide.headline} 
+              className="hidden md:block w-full h-full object-cover" 
+            />
+
+            {/* --- Mobile Content (Text + Button) --- */}
+            <div className="md:hidden absolute inset-0 flex flex-col justify-center items-center text-center p-6 z-20">
+              <h1 className="text-4xl font-bold text-white mb-4 leading-tight">
+                {slide.headline}
+              </h1>
+              <p className="text-lg text-white/90 mb-8 max-w-2xl">
+                {slide.subtext}
+              </p>
+              <Link to={slide.ctaLink}>
+                <Button size="lg" className="bg-black text-green-700 font-bold hover:bg-green-100  shadow-lg">
+                  {slide.ctaText}
+                </Button>
+              </Link>
+            </div>
+
+            {/* --- Desktop Content (Button Only) --- */}
+            <div className="hidden md:flex w-full justify-center absolute bottom-8 z-20">
               <Link to={slide.ctaLink}>
                 <Button size="lg" variant="secondary" className="text-green-700 hover:bg-green-200 shadow-lg animate-fade-in">
                   {slide.ctaText}
@@ -179,6 +208,7 @@ const DefaultLanding: React.FC = () => {
             </div>
           </div>
         ))}
+        {/* Slider Navigation Dots (Common for both) */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
             {slides.map((_, index) => (
                 <button
