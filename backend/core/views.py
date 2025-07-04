@@ -26,9 +26,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import requests
 from requests.auth import HTTPBasicAuth
-
-
-
+import razorpay
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
@@ -960,6 +958,7 @@ class SupportTicketViewSet(viewsets.ViewSet):
             return Response({"detail": "Not found"}, status=404)
 
 class PlotPurchaseListView(generics.ListAPIView):
+    queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1490,3 +1489,37 @@ class CheckoutCartView(APIView):
             "bookings_created": bookings_created,
             "orders_created": orders_created
         }, status=200)
+
+class CreateRazorpayOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        amount = request.data.get("amount")
+        currency = request.data.get("currency", "INR")
+        receipt = request.data.get("receipt", "order_rcptid_11")
+        notes = request.data.get("notes", {})
+
+        if not amount:
+            return Response({"detail": "Amount is required."}, status=400)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order_data = {
+            "amount": int(float(amount) * 100),  # Razorpay expects paise
+            "currency": currency,
+            "receipt": receipt,
+            "notes": notes,
+            "payment_capture": 1,
+        }
+        order = client.order.create(data=order_data)
+        return Response(order)
+
+from rest_framework.generics import ListAPIView
+from .models import Order
+from .serializers import OrderSerializer
+
+class UserPurchaseListView(ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(client=self.request.user).order_by('-order_date')
