@@ -214,10 +214,10 @@ const Sidebar: React.FC = () => {
       >
         {/* Profile section at the top */}
         <ProfileSection />
-        <div className="text-xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
+        <Link to='/' className="text-xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
           <img src='/images/logobg.png' alt="CashbackHomes Logo" className="w-10 h-10" />
           Cashback<span className="text-black text-md">Homes</span>
-        </div>
+        </Link>
         <nav className="flex-grow space-y-1">
           {menuItems.map((item) => (
             <NavItem

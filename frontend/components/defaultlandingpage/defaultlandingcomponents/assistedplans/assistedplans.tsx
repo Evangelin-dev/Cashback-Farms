@@ -16,11 +16,11 @@ const DPlanCard: React.FC<PlanCardProps> = ({ icon, text }) => {
 
   return (
     <div
-      className="bg-green-100 rounded-lg shadow-md p-6 flex flex-col items-center w-96 text-center cursor-pointer hover:shadow-lg transition duration-300 h-[200px] justify-center"
+      className="bg-green-100 rounded-lg shadow-md p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-lg transition-shadow duration-300 w-full h-full min-h-[180px]"
       onClick={handleClick}
     >
       <span className="mb-4">{icon}</span>
-      <p className="text-gray-700 text-sm">{text}</p>
+      <p className="text-gray-700 text-sm font-medium">{text}</p>
     </div>
   );
 };
@@ -32,27 +32,30 @@ const DAssistedPlans: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">Assisted Plans</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 justify-center">
+    <div className="container mx-auto py-12 px-4">
+      <h2 className="text-3xl font-semibold text-gray-800 mb-8 text-center">Assisted Plans</h2>
+      {/* Responsive grid: 1 column on mobile, 3 on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-8">
         <DPlanCard
-          icon={<svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 4.75 7.5 4.75a12.742 12.742 0 00-3 1m18.341 0a12.707 12.707 0 00-3.1 1m-5.166 0C15.8 5.477 14.214 4.75 12.5 4.75a12.742 12.742 0 00-3 1" /></svg>}
+          icon={<svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
           text="Dedicated property expert to guide you"
         />
         <DPlanCard
-          icon={<svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
-          text="Guaranteed property or 100% refund"
+          icon={<svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+          text="Guaranteed property viewing or 100% refund"
         />
         <DPlanCard
-          icon={<svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-6-6V3a2.002 2.002 0 00-2-2a2.002 2.002 0 00-2 2v8a6.002 6.002 0 00-6 6v3.158a2.032 2.032 0 01.595 1.405L4 17h5m6 0v1a3 3 0 01-3 3H7a3 3 0 01-3-3v-1m9 0h6" /></svg>}
+          icon={<svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.158c0 .538-.214 1.055-.595 1.437L4 17h5m6 0v1a3 3 0 01-3 3H7a3 3 0 01-3-3v-1m9 0h-6" /></svg>}
           text="Receive instant property alerts"
         />
       </div>
       <div className="text-center">
-        <Button onClick={handleClick}>Explore More</Button>
+        <Button onClick={handleClick} size="lg" variant="primary">
+          Explore All Plans
+        </Button>
       </div>
     </div>
   );
 };
 
-export default DAssistedPlans;
+export default DAssistedPlans;  
