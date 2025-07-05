@@ -26,7 +26,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import requests
 from requests.auth import HTTPBasicAuth
-import razorpay
+
+
+
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
@@ -169,6 +171,9 @@ class OTPRequestView(APIView):
             # Send OTP via email if email is provided
             if email:
                 try:
+                    from django.core.mail import EmailMessage
+                    from django.conf import settings
+
                     smtp_user = settings.EMAIL_HOST_USER
                     email_msg = EmailMessage(
                         subject="Your OTP Code",
@@ -182,9 +187,9 @@ class OTPRequestView(APIView):
             # Send OTP via SMS if mobile_number is provided
             elif mobile_number:
                 try:
-                    account_sid = settings.TWILIO['ACCOUNT_SID']  # Move to settings in production!
-                    auth_token = settings.TWILIO['AUTH_TOKEN']
-                    from_number = settings.TWILIO['FROM_NUMBER']
+                    account_sid = settings.ACCOUNT_SID  # Move to settings in production!
+                    auth_token = settings.AUTH_TOKEN
+                    from_number = settings.FROM_NUMBER
                     to_number = mobile_number
                     url = f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json'
                     data = {
@@ -266,14 +271,8 @@ class OTPVerificationAndLoginView(APIView):
                 user.save()
 
                 refresh = RefreshToken.for_user(user)
-                # Build user dict for response
-                user_data = {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "mobile_number": user.mobile_number,
-                    "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
-                }
+                user_data = CustomUserSerializer(user).data
+
                 return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
@@ -653,6 +652,9 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             # Step 3: Send OTP via Email
             if email:
                 try:
+                    from django.core.mail import EmailMessage
+                    from django.conf import settings
+
                     smtp_user = settings.EMAIL_HOST_USER
                     smtp_pass = settings.EMAIL_HOST_PASSWORD
                     email_msg = EmailMessage(
@@ -958,7 +960,6 @@ class SupportTicketViewSet(viewsets.ViewSet):
             return Response({"detail": "Not found"}, status=404)
 
 class PlotPurchaseListView(generics.ListAPIView):
-    queryset = Booking.objects.all()
     serializer_class = BookingSerializer
     permission_classes = [IsAuthenticated]
 
@@ -1208,7 +1209,7 @@ class MyBookingListView(APIView):
         return Response(serializer.data, status=200)
 
 class BookingByClientIDView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def get(self, request, client_id):
         bookings = Booking.objects.filter(client_id=client_id).order_by('-booking_date')
@@ -1291,14 +1292,14 @@ class PublicServiceDetailView(APIView):
         serializer = EcommerceProductSerializer(service)
         return Response(serializer.data)
 
-# class MyBookingListView(APIView):
-#     permission_classes = [IsAuthenticated]
+class MyBookingListView(APIView):
+    permission_classes = [IsAuthenticated]
 
-#     def get(self, request):
-#         user = request.user
-#         bookings = Booking.objects.filter(client=user)
-#         serializer = BookingSerializer(bookings, many=True)
-#         return Response(serializer.data, status=200)
+    def get(self, request):
+        user = request.user
+        bookings = Booking.objects.filter(client=user)
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
 
 class MyPaymentsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -1370,9 +1371,7 @@ class AddToCartView(APIView):
             if item_type == 'plot':
                 model = PlotListing
             elif item_type == 'material':
-                model = EcommerceProduct
-            elif item_type == 'microplot':
-                model = SQLFTProject
+                model = MaterialProduct
             else:
                 return Response({"detail": "Invalid item_type. Use 'plot' or 'material'."}, status=400)
 
@@ -1383,9 +1382,6 @@ class AddToCartView(APIView):
             if item_type == 'plot':
                 price_per_unit = item_object.price_per_sqft
                 total_price = price_per_unit * Decimal(item_object.total_area_sqft)
-            elif item_type == 'microplot':
-                price_per_unit = item_object.price
-                total_price = price_per_unit
             elif item_type == 'material':
                 if not quantity:
                     return Response({"detail": "Quantity is required for material."}, status=400)
@@ -1489,37 +1485,3 @@ class CheckoutCartView(APIView):
             "bookings_created": bookings_created,
             "orders_created": orders_created
         }, status=200)
-
-class CreateRazorpayOrderView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        amount = request.data.get("amount")
-        currency = request.data.get("currency", "INR")
-        receipt = request.data.get("receipt", "order_rcptid_11")
-        notes = request.data.get("notes", {})
-
-        if not amount:
-            return Response({"detail": "Amount is required."}, status=400)
-
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-        order_data = {
-            "amount": int(float(amount) * 100),  # Razorpay expects paise
-            "currency": currency,
-            "receipt": receipt,
-            "notes": notes,
-            "payment_capture": 1,
-        }
-        order = client.order.create(data=order_data)
-        return Response(order)
-
-from rest_framework.generics import ListAPIView
-from .models import Order
-from .serializers import OrderSerializer
-
-class UserPurchaseListView(ListAPIView):
-    serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Order.objects.filter(client=self.request.user).order_by('-order_date')

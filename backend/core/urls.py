@@ -14,8 +14,7 @@ from .views import (
     SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
-    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView,
-    UserPurchaseListView
+    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -91,7 +90,7 @@ urlpatterns = [
     path('public/micro-plots/<int:pk>/', PublicMicroPlotDetailView.as_view(), name='public-micro-plot-detail'),
     path('public/services/', PublicServiceListView.as_view(), name='public-service-list'),
     path('public/services/<int:pk>/', PublicServiceDetailView.as_view(), name='public-service-detail'),
-    path('my/bookings/', MyBookingListView.as_view(), name='my-bookings'),
+    path('bookings/my/', MyBookingListView.as_view(), name='my-bookings'),
     path('my-payments/', MyPaymentsView.as_view(), name='my-payments'),
     path('cart/', CartView.as_view(), name='cart-view'),
     path('cart/add/', AddToCartView.as_view(), name='cart-add'),
@@ -99,5 +98,4 @@ urlpatterns = [
     path('cart/remove-item/<int:id>/', RemoveCartItemView.as_view(), name='remove-cart-item'),
     path('cart/clear/', ClearCartView.as_view(), name='clear-cart'),
     path('cart/checkout/', CheckoutCartView.as_view(), name='checkout-cart'),
-    path("user/purchases/", UserPurchaseListView.as_view(), name="user-purchase-list"),
 ]
