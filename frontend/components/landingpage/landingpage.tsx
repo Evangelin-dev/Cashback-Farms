@@ -7,9 +7,7 @@ import { Plot, Professional } from '@/types';
 
 // --- Reusable Components ---
 import Button from '@/components/Button';
-import DFinancialServices from '@/components/defaultlandingpage/defaultlandingcomponents/financialservices/financialservices';
 import DAssistedPlans from '@/components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
-import DPayments from '@/components/defaultlandingpage/defaultlandingcomponents/payments/payments';
 import DPlotCard from '@/components/defaultlandingpage/defaultlandingcomponents/plot/PlotCard';
 import DProfessionalCard from '@/components/defaultlandingpage/defaultlandingcomponents/service/ProfessionalCard';
 
@@ -269,8 +267,6 @@ const DefaultLanding: React.FC = () => {
         </div>
       </section>
       <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><DAssistedPlans /></div></section>
-      <section className="py-12 bg-white"><DPayments /></section>
-      <section className="py-12 bg-white"><DFinancialServices /></section>
 
       {/* --- Featured Professionals Section --- */}
       <section className="bg-gray-100 py-12">
