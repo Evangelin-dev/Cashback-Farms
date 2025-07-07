@@ -7,7 +7,10 @@ export interface ResponseInterface {
 
 
 const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('currentUser');
+    window.location.href = '/';
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     // document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     // document.cookie = 'user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -37,11 +40,7 @@ apiClient.interceptors.response.use(
     (response: AxiosResponse): any => response.data,
     (error: AxiosError): Promise<AxiosError> => {
         if (error.response?.status === 401) {
-            // Logout the user and clear credentials
             logout();
-            
-            // Redirect to login page
-            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

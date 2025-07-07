@@ -2,7 +2,12 @@
 from rest_framework import serializers
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
+<<<<<<< HEAD
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject
+=======
+    EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 )
 from .models import AgentPlot
 from rest_framework import serializers
@@ -19,7 +24,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'mobile_number', 'password', 'confirm_password', 'user_type')
+        fields = (
+            'id', 'username', 'email', 'mobile_number', 'password', 'confirm_password',
+            'user_type', 'first_name', 'last_name', 'gender', 'date_of_birth',
+            'town', 'city', 'state', 'country'
+        )
         extra_kwargs = {
             'username': {'required': False},
             'email': {'required': False},
@@ -36,14 +45,24 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('confirm_password')
+
         user = CustomUser.objects.create_user(
             username=validated_data.get('username') or validated_data.get('email') or validated_data.get('mobile_number'),
             email=validated_data.get('email'),
             mobile_number=validated_data.get('mobile_number'),
-            user_type=validated_data.get('user_type', UserType.CLIENT), # Default to client if not specified
-            password=validated_data['password']
+            user_type=validated_data.get('user_type', UserType.CLIENT),
+            password=validated_data['password'],
+            first_name=validated_data.get('first_name'),
+            last_name=validated_data.get('last_name'),
+            gender=validated_data.get('gender'),
+            date_of_birth=validated_data.get('date_of_birth'),
+            town=validated_data.get('town'),
+            city=validated_data.get('city'),
+            state=validated_data.get('state'),
+            country=validated_data.get('country')
         )
         return user
+
 
 class OTPRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
@@ -64,12 +83,51 @@ class OTPVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Either email or mobile number is required for OTP verification.")
         return data
 
+class KYCDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = KYCDocument
+        fields = ['id', 'document_type', 'file', 'status', 'upload_date']
+        read_only_fields = ['status', 'upload_date']
+
+    def create(self, validated_data):
+        # Remove user from validated_data if it's already there
+        validated_data['user'] = self.context['request'].user
+        return KYCDocument.objects.create(**validated_data)
+
+
+# class CustomUserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = CustomUser
+#         fields = ('id', 'username', 'email', 'mobile_number', 'user_type', 'is_staff', 'is_active')
+#         read_only_fields = ('user_type', 'is_staff', 'is_active')
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    full_mobile_number = serializers.SerializerMethodField()
+    kyc_documents = KYCDocumentSerializer(many=True, read_only=True)
+
     class Meta:
         model = CustomUser
-        fields = ('id', 'username', 'email', 'mobile_number', 'user_type', 'is_staff', 'is_active')
-        read_only_fields = ('user_type', 'is_staff', 'is_active')
+        fields = [
+            'id', 'username', 'first_name', 'last_name',
+            'gender', 'date_of_birth',
+            'country_code', 'mobile_number', 'full_mobile_number',
+            'town', 'city', 'state', 'country',  # 👈 flat fields added here
+            'kyc_documents',
+            'email', 'user_type', 'user_code', 'referral_code',
+            'is_active', 'is_superuser', 'is_staff', 'last_login', 'date_joined'
+        ]
+
+    def get_full_mobile_number(self, obj):
+        return f"{obj.country_code or ''}{obj.mobile_number or ''}"
+
+
+    def get_address(self, obj):
+        return {
+            "town": obj.town,
+            "city": obj.city,
+            "state": obj.state,
+            "country": obj.country,
+        }
 
 
 # Core Models Serializers
@@ -81,7 +139,6 @@ class JointOwnerSerializer(serializers.ModelSerializer):
         model = JointOwner
         fields = ('id', 'owner', 'owner_username', 'owner_email', 'share_percentage')
         read_only_fields = ('owner_username', 'owner_email')
-
 
 class PlotListingSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source='owner.username', read_only=True)
@@ -97,7 +154,7 @@ class PlotListingSerializer(serializers.ModelSerializer):
             'owner_username', 'listed_by_agent_username', 'joint_owners'
         ]
         read_only_fields = (
-            'owner',  # <--- add this
+            'owner',
             'is_verified', 'available_sqft_for_investment', 'joint_owners',
             'owner_username', 'listed_by_agent_username'
         )
@@ -216,3 +273,64 @@ class MicroPlotSerializer(serializers.ModelSerializer):
         read_only_fields = ['listed_by', 'created_at']
 
 
+
+class FAQSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FAQ
+        fields = '__all__'
+
+class SupportTicketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportTicket
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+class InquirySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Inquiry
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at']
+
+class PaymentTransactionSerializer(serializers.Serializer):
+    transaction_id = serializers.CharField()
+    type = serializers.CharField()
+    description = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    date = serializers.DateTimeField()
+    status = serializers.CharField()
+
+class ShortlistCartItemSerializer(serializers.ModelSerializer):
+    item_type = serializers.SerializerMethodField()
+    item_id = serializers.IntegerField(source='object_id')
+    item_title = serializers.SerializerMethodField()
+    price_per_unit = serializers.SerializerMethodField()
+    total_item_value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ShortlistCartItem
+        fields = [
+            'id', 'item_type', 'item_id', 'item_title',
+            'quantity', 'price_per_unit', 'total_item_value'
+        ]
+
+    def get_item_type(self, obj):
+        return obj.content_type.model
+
+    def get_item_title(self, obj):
+        return getattr(
+            obj.content_object, 
+            'title', 
+            getattr(
+                obj.content_object, 
+                'name', 
+                getattr(obj.content_object, 'project_name', '')
+            )
+        )
+
+    def get_price_per_unit(self, obj):
+        return getattr(obj.content_object, 'price_per_sqft', getattr(obj.content_object, 'price', None))
+
+    def get_total_item_value(self, obj):
+        price = self.get_price_per_unit(obj)
+        qty = obj.quantity if obj.quantity else 1
+        return str(float(price or 0) * qty)

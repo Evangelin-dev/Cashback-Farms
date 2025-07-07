@@ -147,22 +147,23 @@ const AppRoutes: React.FC = () => {
         
       </Route>
 
-<Route element={<B2BLayout />}>
-      {/* B2B Vendor Panel Route */}
-      <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
-      <Route path="/b2b/*" element={<B2BPanelRoutes />} />
+      <Route element={<B2BLayout />}>
+
+        <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
+        <Route path="/b2b/*" element={<B2BPanelRoutes />} />
       </Route>
 
- <Route element={<RealLayout />}>
-      {/* RealEstate Agent Panel Route */}
-      <Route path="/realestate/realprofile" element={<RealProfile />} />
-      <Route path="/realestate/*" element={<RealEstateRoutes />} />
-      <Route path="/referrealestate" element={<ReferAndEarnReal />} />
-      <Route path="post-plots" element={<PostPlots />} />
-      <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
- </Route>
+      <Route element={<RealEstateRoute />}>
+        <Route element={<RealLayout />}>
+          <Route path="/realestate/realprofile" element={<RealProfile />} />
+          <Route path="/realestate/*" element={<RealEstateRoutes />} />
+          <Route path="/referrealestate" element={<ReferAndEarnReal />} />
+          <Route path="/realestate/post-plots" element={<PostPlots />} />
+          <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
+          <Route path="/realestate/dashboard" element={<Mydashboard />} />
+        </Route>
+      </Route>
 
-      {/* Admin Routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
@@ -174,34 +175,34 @@ const AppRoutes: React.FC = () => {
         <Route path="materials" element={<ManageMaterialsPage />} />
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
-        <Route path="microplot" element={< ManageMysqft/>} />
+        <Route path="microplot" element={< ManageMysqft />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
-      
-      {/* Fallback for any unmatched route */}
-      {/* <Route path="*" element={<DefaultLanding/>} /> */}
-      <Route path="/registration" element={<RegistrationPage />} /> 
-      <Route path="/OTP" element={<OTPPage />} /> 
+
+
+
+      <Route path="/registration" element={<RegistrationPage />} />
+      <Route path="/OTP" element={<OTPPage />} />
       <Route path="*" element={<NotFoundPage />} />
 
 
     </Routes>
-    
+
   );
 };
 
 const App: React.FC = () => {
- 
+
   return (
-       <CacheProvider value={emotionCache}>
-      
-        <CssBaseline />
-        <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </BrowserRouter>
-      
+    <CacheProvider value={emotionCache}>
+
+      <CssBaseline />
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+
     </CacheProvider>
   );
 };

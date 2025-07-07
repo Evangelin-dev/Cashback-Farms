@@ -168,9 +168,8 @@ const AdminSidebar: React.FC = () => {
           </div>
           {/* Dropdown */}
           <div
-            className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${
-              dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
-            }`}
+            className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
+              }`}
             style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
           >
             <div className="p-4 flex flex-col items-center">
@@ -267,12 +266,12 @@ const AdminSidebar: React.FC = () => {
           <AdminNavItem to="/admin/commercial" icon={<IconBuildingOffice className="w-5 h-5" />} label="Commercial Properties" onClick={handleNavClick} />
           <AdminNavItem to="/admin/bookings" icon={<IconCollection className="w-5 h-5" />} label="Bookings" onClick={handleNavClick} />
           <AdminNavItem to="/admin/payments" icon={<IconCreditCard className="w-5 h-5" />} label="Payments" onClick={handleNavClick} />
-          
+
           <div className="pt-4 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Site</div>
           <AdminNavItem to="/admin/users" icon={<IconUsers className="w-5 h-5" />} label="Users" onClick={handleNavClick} />
           <AdminNavItem to="/admin/site" icon={<IconBuildingOffice className="w-5 h-5" />} label="Project Site Details" onClick={handleNavClick} />
           <AdminNavItem to="/admin/materials" icon={<IconCubeTransparent className="w-5 h-5" />} label="Construction Materials" onClick={handleNavClick} />
-          
+
           <div className="pt-4 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">System</div>
           <AdminNavItem to="/admin/settings" icon={<IconCog className="w-5 h-5" />} label="Settings" onClick={handleNavClick} />
         </nav>
@@ -280,6 +279,9 @@ const AdminSidebar: React.FC = () => {
           <button
             onClick={() => {
               logout();
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('refresh_token');
+              navigate('/');
               setSidebarOpen(false);
             }}
             className="flex items-center w-full px-4 py-3 text-sm text-black hover:bg-red-700 hover:text-white transition-colors duration-150 rounded-md"

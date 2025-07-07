@@ -7,68 +7,170 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.exceptions import PermissionDenied
 from django.contrib.auth import authenticate
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
+<<<<<<< HEAD
 from .models import AgentPlot
 from .serializers import AgentPlotSerializer
 from rest_framework import viewsets, permissions
 from .models import MicroPlot
 from .serializers import MicroPlotSerializer
 from rest_framework.decorators import action
+=======
+from django.core.mail import EmailMessage
+from rest_framework.parsers import MultiPartParser, FormParser
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from rest_framework.decorators import action
+from django.db import transaction
+from rest_framework import generics
+from decimal import Decimal
+from django.db.models import Q
+from django.conf import settings
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+import requests
+from requests.auth import HTTPBasicAuth
+
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 
 
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
+<<<<<<< HEAD
     SQLFTProject
+=======
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
     CustomUserSerializer, PlotListingSerializer, JointOwnerSerializer,
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
+<<<<<<< HEAD
     ReferralCommissionSerializer, SQLFTProjectSerializer
 )
 
 # --- Authentication and User Management ---
 class UserRegistrationView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
+=======
+    ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,
+)
+
+# --- Authentication and User Management ---
+class UserRegistrationView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
     serializer_class = UserRegistrationSerializer
     permission_classes = (AllowAny,)
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         referral_code = request.data.get('referral_code')
         referred_by = None
+
         if referral_code:
             referred_by = CustomUser.objects.filter(referral_code=referral_code).first()
+
         try:
+            # Create user
             user = serializer.save(
                 user_type=validated_data.get('user_type', UserType.CLIENT),
-                referred_by=referred_by
+                referred_by=referred_by,
+                is_active=False  # ✅ Deactivate until OTP is verified
             )
-            user.generate_otp()
-            headers = self.get_success_headers(serializer.data)
+
+            # Generate OTP
+            otp = user.generate_otp()
+
+            # Send OTP via email
+            email = validated_data.get('email')
+            if email:
+                smtp_user = settings.EMAIL_HOST_USER
+                email_msg = EmailMessage(
+                    subject="Your OTP Code",
+                    body=f"Dear {user.username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                    from_email=smtp_user,
+                    to=[email],
+                )
+                email_msg.send(fail_silently=False)
+
             return Response(
-                {"message": "User registered successfully. OTP sent for verification.", "user_id": user.id, "referral_code": user.referral_code},
-                status=status.HTTP_201_CREATED,
-                headers=headers
+                {
+                    "message": "User registered successfully. OTP sent for verification.",
+                    "user_id": user.id,
+                    "referral_code": user.referral_code
+                },
+                status=status.HTTP_201_CREATED
             )
+
         except IntegrityError:
             return Response(
                 {"detail": "A user with this email or mobile number already exists."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": f"Internal server error: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+# class OTPRequestView(APIView):
+#     authentication_classes = []  # <--- Add this line
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPRequestSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             user = None
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+#             # Generate OTP
+#             otp = user.generate_otp()
+#             # Send OTP via email if email is provided
+#             if email:
+#                 try:
+#                     send_mail(
+#                         subject="Your OTP Code",
+#                         message=f"Your OTP code is: {otp}",
+#                         from_email=settings.EMAIL_HOST_USER,  # Uses DEFAULT_FROM_EMAIL from settings
+#                         recipient_list=[email],
+#                         fail_silently=False,
+#                     )
+#                 except Exception as e:
+#                     return Response({"detail": f"Failed to send OTP email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#             print(f"DEBUG: OTP for {user.username}: {otp}") # For development purposes
+#             return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class OTPRequestView(APIView):
+<<<<<<< HEAD
     permission_classes = (AllowAny,)
+=======
+    authentication_classes = []
+    permission_classes = [AllowAny]
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 
     def post(self, request, *args, **kwargs):
         try:
@@ -78,33 +180,102 @@ class OTPRequestView(APIView):
             email = data.get('email')
             mobile_number = data.get('mobile_number')
             user = None
+
             if email:
                 user = get_object_or_404(CustomUser, email=email)
             elif mobile_number:
                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
             else:
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # ✅ Block inactive users
+            if not user.is_active:
+                return Response({"detail": "Account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
+
             # Generate OTP
             otp = user.generate_otp()
+
             # Send OTP via email if email is provided
             if email:
                 try:
-                    send_mail(
+                    smtp_user = settings.EMAIL_HOST_USER
+                    email_msg = EmailMessage(
                         subject="Your OTP Code",
-                        message=f"Your OTP code is: {otp}",
-                        from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
-                        recipient_list=[email],
-                        fail_silently=False,
+                        body=f"Your OTP code is: {otp}",
+                        from_email=smtp_user,
+                        to=[email],
                     )
+                    email_msg.send(fail_silently=False)
                 except Exception as e:
                     return Response({"detail": f"Failed to send OTP email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            print(f"DEBUG: OTP for {user.username}: {otp}") # For development purposes
+            # Send OTP via SMS if mobile_number is provided
+            elif mobile_number:
+                try:
+                    account_sid = settings.TWILIO['ACCOUNT_SID']  # Move to settings in production!
+                    auth_token = settings.TWILIO['AUTH_TOKEN']
+                    from_number = settings.TWILIO['FROM_NUMBER']
+                    to_number = mobile_number
+                    url = f'https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json'
+                    data = {
+                        'To': to_number,
+                        'From': from_number,
+                        'Body': f'Your OTP is {otp}'
+                    }
+                    response = requests.post(url, data=data, auth=HTTPBasicAuth(account_sid, auth_token))
+                    if response.status_code != 201:
+                        return Response({"detail": f"Failed to send OTP SMS: {response.text}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                except Exception as e:
+                    return Response({"detail": f"Failed to send OTP SMS: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            print(f"DEBUG: OTP for {user.username}: {otp}")  # For dev only
             return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
+
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+# class OTPVerificationAndLoginView(APIView):
+#     authentication_classes = []  # <--- Add this line
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPVerificationSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             otp_code = data.get('otp_code')
+#             user = None
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if user.verify_otp(otp_code):
+#                 user.is_active = True  # activate the user on successful verification
+#                 user.save()
+#                 refresh = RefreshToken.for_user(user)
+#                 return Response({"data":{
+#                     "message": "OTP verified successfully. Login successful.",
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "user_id": user.id,
+#                     "username": user.username,
+#                     "user_type": user.user_type
+#                 }}, status=status.HTTP_200_OK)
+#             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 class OTPVerificationAndLoginView(APIView):
+<<<<<<< HEAD
     permission_classes = (AllowAny,)
+=======
+    authentication_classes = []
+    permission_classes = [AllowAny]
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 
     def post(self, request, *args, **kwargs):
         try:
@@ -115,6 +286,7 @@ class OTPVerificationAndLoginView(APIView):
             mobile_number = data.get('mobile_number')
             otp_code = data.get('otp_code')
             user = None
+
             if email:
                 user = get_object_or_404(CustomUser, email=email)
             elif mobile_number:
@@ -123,28 +295,57 @@ class OTPVerificationAndLoginView(APIView):
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
 
             if user.verify_otp(otp_code):
+                user.is_active = True
+                user.save()
+
                 refresh = RefreshToken.for_user(user)
+<<<<<<< HEAD
+=======
+                # Build user dict for response
+                user_data = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "mobile_number": user.mobile_number,
+                    "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
+                }
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
                 return Response({
                     "message": "OTP verified successfully. Login successful.",
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
+<<<<<<< HEAD
                     "user_id": user.id,
                     "username": user.username,
                     "user_type": user.user_type
                 }, status=status.HTTP_200_OK)
+=======
+                    "user": user_data
+                }, status=status.HTTP_200_OK)
+
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request, *args, **kwargs):
         try:
-            username = request.data.get('username') # Could be email or mobile_number too
+            username = request.data.get('username')  # Could be email or mobile_number too
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
+
             if user:
+                if not user.is_active:
+                    return Response(
+                        {"detail": "Account not active. Please verify OTP."},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
                 token, created = Token.objects.get_or_create(user=user)
                 return Response({
                     "message": "Login successful.",
@@ -153,9 +354,14 @@ class UserLoginView(APIView):
                     "username": user.username,
                     "user_type": user.user_type
                 }, status=status.HTTP_200_OK)
+
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
+
         except Exception as e:
-            return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"detail": f"Internal server error: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class UserLogoutView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -170,9 +376,20 @@ class UserLogoutView(APIView):
 
 # --- Core Model ViewSets ---
 class PlotListingViewSet(viewsets.ModelViewSet):
-    queryset = PlotListing.objects.all()
     serializer_class = PlotListingSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    
+    filterset_fields = ['location', 'price_per_sqft', 'is_available_full', 'is_verified']
+    search_fields = ['title', 'location']
+    ordering_fields = ['price_per_sqft', 'created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == 'real_estate_agent':
+            # Show plots listed or owned by this agent
+            return PlotListing.objects.filter(Q(listed_by_agent=user) | Q(owner=user))
+        return PlotListing.objects.all()
 
     def perform_create(self, serializer):
         try:
@@ -257,50 +474,113 @@ class BookingViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
+# class EcommerceProductViewSet(viewsets.ModelViewSet):
+#     queryset = EcommerceProduct.objects.all()
+#     serializer_class = EcommerceProductSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         try:
+#             if self.request.user.user_type == UserType.ADMIN:
+#                 return EcommerceProduct.objects.all()
+#             elif self.request.user.user_type == UserType.B2B_VENDOR:
+#                 return EcommerceProduct.objects.filter(vendor=self.request.user)
+#             # Clients can view all active products
+#             return EcommerceProduct.objects.filter(is_active=True)
+#         except Exception as e:
+#             return EcommerceProduct.objects.none()
+
+#     def perform_create(self, serializer):
+#         try:
+#             if self.request.user.user_type == UserType.B2B_VENDOR:
+#                 serializer.save(vendor=self.request.user)
+#             else:
+#                 raise PermissionDenied("Only B2B Vendors can add products.")
+#         except Exception as e:
+#             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+#     def perform_update(self, serializer):
+#         try:
+#             if self.request.user.user_type == UserType.ADMIN or \
+#                (serializer.instance.vendor == self.request.user and self.request.user.user_type == UserType.B2B_VENDOR):
+#                 serializer.save()
+#             else:
+#                 raise PermissionDenied("You do not have permission to edit this product.")
+#         except Exception as e:
+#             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+#     def perform_destroy(self, instance):
+#         try:
+#             if self.request.user.user_type == UserType.ADMIN or \
+#                (instance.vendor == self.request.user and self.request.user.user_type == UserType.B2B_VENDOR):
+#                 instance.delete()
+#             else:
+#                 raise PermissionDenied("You do not have permission to delete this product.")
+#         except Exception as e:
+#             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
 class EcommerceProductViewSet(viewsets.ModelViewSet):
     queryset = EcommerceProduct.objects.all()
     serializer_class = EcommerceProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['category', 'is_active']
+    search_fields = ['name', 'description']
+    ordering_fields = ['price', 'created_at']
 
     def get_queryset(self):
+        user = self.request.user
+        category = self.request.query_params.get('category')
+
         try:
-            if self.request.user.user_type == UserType.ADMIN:
-                return EcommerceProduct.objects.all()
-            elif self.request.user.user_type == UserType.B2B_VENDOR:
-                return EcommerceProduct.objects.filter(vendor=self.request.user)
-            # Clients can view all active products
-            return EcommerceProduct.objects.filter(is_active=True)
+            if user.user_type == UserType.ADMIN:
+                queryset = EcommerceProduct.objects.all()
+            elif user.user_type == UserType.B2B_VENDOR:
+                queryset = EcommerceProduct.objects.filter(vendor=user)
+            else:
+                # CLIENT or ANONYMOUS can only view active products
+                queryset = EcommerceProduct.objects.filter(is_active=True)
+
+            if category:
+                queryset = queryset.filter(category=category)
+
+            return queryset
+
         except Exception as e:
             return EcommerceProduct.objects.none()
 
     def perform_create(self, serializer):
+        user = self.request.user
+        if user.user_type != UserType.B2B_VENDOR:
+            raise PermissionDenied("Only B2B Vendors can add products.")
         try:
-            if self.request.user.user_type == UserType.B2B_VENDOR:
-                serializer.save(vendor=self.request.user)
-            else:
-                raise PermissionDenied("Only B2B Vendors can add products.")
+            serializer.save(vendor=user)
         except Exception as e:
-            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+            raise serializers.ValidationError({"detail": f"Error saving product: {e}"})
 
     def perform_update(self, serializer):
-        try:
-            if self.request.user.user_type == UserType.ADMIN or \
-               (serializer.instance.vendor == self.request.user and self.request.user.user_type == UserType.B2B_VENDOR):
+        user = self.request.user
+        instance = serializer.instance
+
+        if user.user_type == UserType.ADMIN or (user == instance.vendor and user.user_type == UserType.B2B_VENDOR):
+            try:
                 serializer.save()
-            else:
-                raise PermissionDenied("You do not have permission to edit this product.")
-        except Exception as e:
-            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+            except Exception as e:
+                raise serializers.ValidationError({"detail": f"Error updating product: {e}"})
+        else:
+            raise PermissionDenied("You do not have permission to edit this product.")
 
     def perform_destroy(self, instance):
-        try:
-            if self.request.user.user_type == UserType.ADMIN or \
-               (instance.vendor == self.request.user and self.request.user.user_type == UserType.B2B_VENDOR):
+        user = self.request.user
+
+        if user.user_type == UserType.ADMIN or (user == instance.vendor and user.user_type == UserType.B2B_VENDOR):
+            try:
                 instance.delete()
-            else:
-                raise PermissionDenied("You do not have permission to delete this product.")
-        except Exception as e:
-            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+            except Exception as e:
+                raise serializers.ValidationError({"detail": f"Error deleting product: {e}"})
+        else:
+            raise PermissionDenied("You do not have permission to delete this product.")
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
@@ -388,22 +668,49 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         try:
+            data = self.request.data
+
             username = self.request.data.get('username') or self.request.data.get('email') or self.request.data.get('mobile_number')
             email = self.request.data.get('email')
             mobile_number = self.request.data.get('mobile_number')
             password = self.request.data.get('password')
+            user_type = data.get('user_type')
+
 
             if not username:
                 raise serializers.ValidationError({"username": "Username, email, or mobile number is required."})
 
+            # Step 1: Create user
             user = CustomUser.objects.create_user(
                 username=username,
                 email=email,
                 mobile_number=mobile_number,
-                user_type=UserType.REAL_ESTATE_AGENT,
+                user_type=user_type,
                 password=password,
+                is_active=False  # ✅ Mark inactive until OTP verified
             )
+
+            # Step 2: Generate OTP
+            otp = user.generate_otp()
+
+            # Step 3: Send OTP via Email
+            if email:
+                try:
+                    smtp_user = settings.EMAIL_HOST_USER
+                    smtp_pass = settings.EMAIL_HOST_PASSWORD
+                    email_msg = EmailMessage(
+                        subject="Your OTP Code",
+                        body=f"Dear {username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                        from_email=smtp_user,
+                        to=[email],
+                    )
+                    email_msg.send(fail_silently=False)
+                except Exception as e:
+                    raise serializers.ValidationError({"detail": f"Failed to send OTP email: {e}"})
+
+            # Step 4: Save profile
             serializer.save(user=user)
+
         except IntegrityError:
             raise serializers.ValidationError({"detail": "A user with this email or mobile number already exists."})
         except Exception as e:
@@ -419,6 +726,37 @@ class PlotInquiryViewSet(viewsets.ModelViewSet):
             return PlotInquiry.objects.all()
         except Exception as e:
             return PlotInquiry.objects.none()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError as e:
+            return Response({'detail': 'Database integrity error: {}'.format(str(e))},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            return Response({'detail': 'Database error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'detail': 'Unexpected error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            return super().update(request, *args, **kwargs)
+        except IntegrityError as e:
+            return Response({'detail': 'Database integrity error: {}'.format(str(e))},
+                            status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            return Response({'detail': 'Database error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response({'detail': 'Unexpected error: {}'.format(str(e))},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ReferralNetworkView(APIView):
     permission_classes = [IsAuthenticated]
@@ -438,24 +776,29 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        try:
-            if self.request.user.user_type == UserType.ADMIN:
-                return SQLFTProject.objects.all()
-            # Filter logic for other user types if needed
-            return SQLFTProject.objects.none()
-        except Exception as e:
-            return SQLFTProject.objects.none()
+        user = self.request.user
+        if user.user_type == UserType.ADMIN:
+            return SQLFTProject.objects.all()
+        return SQLFTProject.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({"data": serializer.data})
 
     def perform_create(self, serializer):
         try:
-            # Custom logic for creating SQLFT projects if needed
             serializer.save()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
     def perform_update(self, serializer):
         try:
-            # Custom logic for updating SQLFT projects if needed
             serializer.save()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
@@ -471,6 +814,7 @@ class AgentPlotViewSet(viewsets.ModelViewSet):
     serializer_class = AgentPlotSerializer
 
     def perform_create(self, serializer):
+<<<<<<< HEAD
         serializer.save(listed_by=self.request.user)
 
     @action(detail=True, methods=['post'])
@@ -491,3 +835,721 @@ class MicroPlotViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(listed_by=self.request.user)
+=======
+        serializer.save(user=self.request.user)
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.user_type == UserType.ADMIN:
+            return BankDetail.objects.all()
+        return BankDetail.objects.filter(user=user)
+
+class UserRegisterView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            otp = user.generate_otp()  # Optional
+            user.send_otp_email(otp) 
+            return Response({
+                "message": "User registered successfully. OTP sent.",
+                "user_id": user.id,
+                "referral_code": user.referral_code
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = CustomUserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        serializer = CustomUserSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        request.user.delete()
+        return Response({"message": "User account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
+class KYCSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        serializer = KYCDocumentSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response({'message': 'KYC submitted successfully'}, status=201)
+        return Response(serializer.errors, status=400)
+
+
+class KYCStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        documents = request.user.kyc_documents.all()
+        serializer = KYCDocumentSerializer(documents, many=True)
+        return Response({
+            "status": "pending",  # You can customize this logic based on document statuses
+            "documents": serializer.data
+        }, status=200)
+
+
+class KYCUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        kyc_id = request.data.get('id')
+        try:
+            kyc_doc = KYCDocument.objects.get(id=kyc_id)
+            if request.user.is_staff or request.user == kyc_doc.user:
+                serializer = KYCDocumentSerializer(kyc_doc, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=200)
+                return Response(serializer.errors, status=400)
+            else:
+                return Response({"detail": "Permission denied."}, status=403)
+        except KYCDocument.DoesNotExist:
+            return Response({"detail": "KYC document not found."}, status=404)
+
+class MicroPlotListView(generics.ListAPIView):
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class MicroPlotDetailView(generics.RetrieveAPIView):
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class IsOwnerOrAdmin(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff or obj.vendor == request.user
+
+class MaterialProductViewSet(viewsets.ModelViewSet):
+    queryset = EcommerceProduct.objects.filter(category='material')
+    serializer_class = EcommerceProductSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['category', 'price']
+    search_fields = ['title', 'description']
+    ordering_fields = ['price', 'created_at']
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        serializer.save(vendor=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return EcommerceProduct.objects.filter(category='material')
+        return EcommerceProduct.objects.filter(category='material')
+
+class FAQViewSet(viewsets.ModelViewSet):
+    queryset = FAQ.objects.all()
+    serializer_class = FAQSerializer
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return [permissions.AllowAny()]
+
+class SupportTicketViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return SupportTicket.objects.all()
+        return SupportTicket.objects.filter(user=user)
+
+    @action(detail=False, methods=['post'], url_path='inquiry')
+    def submit_ticket(self, request):
+        serializer = SupportTicketSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='my-tickets')
+    def my_tickets(self, request):
+        tickets = SupportTicket.objects.filter(user=request.user)
+        serializer = SupportTicketSerializer(tickets, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        try:
+            ticket = SupportTicket.objects.get(pk=pk)
+            if ticket.user != request.user and not request.user.is_staff:
+                return Response({"detail": "Not allowed"}, status=403)
+            serializer = SupportTicketSerializer(ticket)
+            return Response(serializer.data)
+        except SupportTicket.DoesNotExist:
+            return Response({"detail": "Not found"}, status=404)
+
+    def update(self, request, pk=None):
+        try:
+            ticket = SupportTicket.objects.get(pk=pk)
+            if ticket.user != request.user and not request.user.is_staff:
+                return Response({"detail": "Not allowed"}, status=403)
+
+            if request.user.is_staff:
+                allowed_fields = ['status', 'reply_message']
+            else:
+                allowed_fields = ['message']
+
+            data = {field: request.data[field] for field in allowed_fields if field in request.data}
+            serializer = SupportTicketSerializer(ticket, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=400)
+        except SupportTicket.DoesNotExist:
+            return Response({"detail": "Not found"}, status=404)
+
+class PlotPurchaseListView(generics.ListAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Booking.objects.filter(client=self.request.user, booking_type='full_plot')
+
+
+class PlotPurchaseCreateView(generics.CreateAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        plot_id = request.data.get("plot_listing")
+        booking_type = request.data.get("booking_type")
+
+        if booking_type != 'full_plot':
+            return Response({"error": "Invalid booking_type, must be 'full_plot'"}, status=400)
+
+        try:
+            plot = PlotListing.objects.get(id=plot_id, is_available_full=True)
+        except PlotListing.DoesNotExist:
+            return Response({"error": "Plot not available for full purchase."}, status=404)
+
+        total_price = float(plot.total_area_sqft) * float(plot.price_per_sqft)
+
+        booking = Booking.objects.create(
+            plot_listing=plot,
+            client=user,
+            booking_type='full_plot',
+            total_price=total_price
+        )
+
+        # Mark the plot as unavailable for further full booking
+        plot.is_available_full = False
+        plot.save()
+
+        return Response(BookingSerializer(booking).data, status=status.HTTP_201_CREATED)
+
+class MicroPlotPurchaseListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        bookings = Booking.objects.filter(client=request.user, booking_type='square_feet')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MicroPlotPurchaseCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data.copy()
+        data['client'] = request.user.id
+        data['booking_type'] = 'square_feet'
+        serializer = BookingSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MaterialPurchaseListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        orders = Order.objects.filter(client=request.user, items__product__category='material').distinct()
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MaterialPurchaseCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        items_data = request.data.get('items', [])
+        if not items_data:
+            return Response({"detail": "No items provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        total_amount = Decimal(0)
+        order_items = []
+
+        for item in items_data:
+            try:
+                product = EcommerceProduct.objects.get(id=item['product'], category='material')
+                quantity = int(item['quantity'])
+                price = product.price * quantity
+                total_amount += price
+                order_items.append((product, quantity, product.price))
+            except Exception as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = Order.objects.create(client=user, total_amount=total_amount)
+
+        for product, quantity, price in order_items:
+            OrderItem.objects.create(order=order, product=product, quantity=quantity, price_at_purchase=price)
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class ServicePurchaseListView(generics.ListAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(
+            user=self.request.user,
+            items__product__category='service'
+        ).distinct()
+
+
+class ServicePurchaseCreateView(generics.CreateAPIView):
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        items_data = request.data.get('items', [])
+        if not items_data:
+            return Response({"detail": "No items provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        order = Order.objects.create(user=request.user)
+        for item in items_data:
+            product_id = item.get('product')
+            quantity = item.get('quantity', 1)
+            try:
+                product = EcommerceProduct.objects.get(id=product_id, category='service')
+                OrderItem.objects.create(order=order, product=product, quantity=quantity)
+            except EcommerceProduct.DoesNotExist:
+                order.delete()
+                return Response({"detail": f"Service with id {product_id} not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
+
+
+class ServiceOrderListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        orders = Order.objects.filter(client=request.user, items__product__category='service').distinct()
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
+
+
+class ServiceOrderCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        items_data = request.data.get('items', [])
+        if not items_data:
+            return Response({'error': 'No items provided'}, status=400)
+
+        total_amount = 0
+        for item in items_data:
+            try:
+                product = EcommerceProduct.objects.get(id=item['product'], category='service')
+                total_amount += product.price * item.get('quantity', 1)
+            except EcommerceProduct.DoesNotExist:
+                return Response({'error': f"Product ID {item['product']} not found or not a service."}, status=400)
+
+        # ✅ create the order with total_amount set
+        order = Order.objects.create(
+            client=request.user,
+            total_amount=total_amount,
+            status='pending'
+        )
+
+        # Create order items
+        for item in items_data:
+            OrderItem.objects.create(
+                order=order,
+                product_id=item['product'],
+                quantity=item['quantity']
+            )
+
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=201)
+
+class SubmitPlotInquiry(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = InquirySerializer(data={
+            'user': request.user.id if request.user.is_authenticated else None,
+            'type': 'plot',
+            'plot': request.data.get('plot'),
+            'message': request.data.get('message')
+        })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+class SubmitMicroPlotInquiry(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = InquirySerializer(data={
+            'user': request.user.id if request.user.is_authenticated else None,
+            'type': 'micro_plot',
+            'plot': request.data.get('plot'),
+            'message': request.data.get('message')
+        })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+class SubmitMaterialInquiry(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = InquirySerializer(data={
+            'user': request.user.id if request.user.is_authenticated else None,
+            'type': 'material',
+            'product': request.data.get('product'),
+            'message': request.data.get('message')
+        })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+class SubmitServiceInquiry(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = InquirySerializer(data={
+            'user': request.user.id if request.user.is_authenticated else None,
+            'type': 'service',
+            'product': request.data.get('product'),
+            'message': request.data.get('message')
+        })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
+
+class AllBookingListView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        bookings = Booking.objects.all().order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class MyBookingListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        bookings = Booking.objects.filter(client=request.user).order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class BookingByClientIDView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, client_id):
+        bookings = Booking.objects.filter(client_id=client_id).order_by('-booking_date')
+        serializer = BookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=200)
+
+class PublicPlotListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        plots = PlotListing.objects.all()
+        serializer = PlotListingSerializer(plots, many=True)
+        return Response(serializer.data, status=200)
+
+class PublicPlotDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        plot = get_object_or_404(PlotListing, pk=pk)
+        serializer = PlotListingSerializer(plot)
+        return Response(serializer.data, status=200)
+
+class PublicMicroPlotListView(generics.ListAPIView):
+    queryset = SQLFTProject.objects.all()
+    serializer_class = SQLFTProjectSerializer
+    permission_classes = [AllowAny]
+
+class PublicMicroPlotDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            micro_plot = SQLFTProject.objects.get(pk=pk)
+        except SQLFTProject.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=404)
+        
+        serializer = SQLFTProjectSerializer(micro_plot)
+        return Response(serializer.data)
+
+class PublicMaterialListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        materials = EcommerceProduct.objects.filter(category='material', is_active=True)
+        serializer = EcommerceProductSerializer(materials, many=True)
+        return Response(serializer.data)
+
+class PublicMaterialDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        material = get_object_or_404(EcommerceProduct, pk=pk, category='material', is_active=True)
+        serializer = EcommerceProductSerializer(material)
+        return Response(serializer.data)
+
+class PublicMaterialDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        material = get_object_or_404(EcommerceProduct, pk=pk, category='material', is_active=True)
+        serializer = EcommerceProductSerializer(material)
+        return Response(serializer.data, status=200)
+
+class PublicServiceListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        services = EcommerceProduct.objects.filter(category='service')
+        serializer = EcommerceProductSerializer(services, many=True)
+        return Response(serializer.data)
+
+class PublicServiceDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pk):
+        try:
+            service = EcommerceProduct.objects.get(pk=pk, category='service')
+        except EcommerceProduct.DoesNotExist:
+            return Response({'detail': 'Not found'}, status=404)
+        serializer = EcommerceProductSerializer(service)
+        return Response(serializer.data)
+
+# class MyBookingListView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         user = request.user
+#         bookings = Booking.objects.filter(client=user)
+#         serializer = BookingSerializer(bookings, many=True)
+#         return Response(serializer.data, status=200)
+
+class MyPaymentsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        transactions = []
+
+        # Add plot & micro-plot bookings
+        bookings = Booking.objects.filter(client=user)
+        for booking in bookings:
+            if booking.booking_type == 'full_plot':
+                trans_type = "plot_purchase"
+                description = f"Full Plot Booking: {booking.plot_listing.title}"
+            else:
+                trans_type = "micro_plot_purchase"
+                description = f"Micro Plot Investment: {booking.plot_listing.title} ({booking.booked_area_sqft} sqft)"
+
+            transactions.append({
+                "transaction_id": f"BOOKING-{booking.id}",
+                "type": trans_type,
+                "description": description,
+                "amount": booking.total_price,
+                "date": booking.booking_date,
+                "status": booking.status
+            })
+
+        # Add material/service orders
+        orders = Order.objects.filter(client=user)
+        for order in orders:
+            product_names = ", ".join([item.product.title for item in order.items.all()])
+            order_type = 'material_purchase' if order.category == 'material' else 'service_purchase'
+            transactions.append({
+                "transaction_id": f"ORDER-{order.id}",
+                "type": order_type,
+                "description": f"Order for {product_names}",
+                "amount": order.total_price,
+                "date": order.created_at,
+                "status": order.status
+            })
+
+        serializer = PaymentTransactionSerializer(transactions, many=True)
+        return Response(serializer.data, status=200)
+    
+class CartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        serializer = ShortlistCartItemSerializer(cart.items.all(), many=True)
+        return Response(serializer.data, status=200)
+
+class AddToCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        item_type = request.data.get('item_type')  # Expected: 'plot' or 'material'
+        item_id = request.data.get('item_id')
+        quantity = request.data.get('quantity')  # Can be null for plot
+
+        if not item_type or not item_id:
+            return Response({"detail": "item_type and item_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            cart, _ = ShortlistCart.objects.get_or_create(user=user)
+
+            # Resolve content type and actual model
+            if item_type == 'plot':
+                model = PlotListing
+            elif item_type == 'material':
+                model = EcommerceProduct
+            elif item_type == 'microplot':
+                model = SQLFTProject
+            else:
+                return Response({"detail": "Invalid item_type. Use 'plot' or 'material'."}, status=400)
+
+            content_type = ContentType.objects.get_for_model(model)
+            item_object = model.objects.get(pk=item_id)
+
+            # Price calculation
+            if item_type == 'plot':
+                price_per_unit = item_object.price_per_sqft
+                total_price = price_per_unit * Decimal(item_object.total_area_sqft)
+            elif item_type == 'microplot':
+                price_per_unit = item_object.price
+                total_price = price_per_unit
+            elif item_type == 'material':
+                if not quantity:
+                    return Response({"detail": "Quantity is required for material."}, status=400)
+                price_per_unit = item_object.price
+                total_price = price_per_unit * Decimal(quantity)
+
+            # Create cart item
+            cart_item = ShortlistCartItem.objects.create(
+                cart=cart,
+                content_type=content_type,
+                object_id=item_id,
+                quantity=quantity,
+            )
+
+            return Response({
+                "message": "Item added to cart successfully.",
+                "item_id": cart_item.id,
+                "total_price": str(total_price)
+            }, status=201)
+
+        except model.DoesNotExist:
+            return Response({"detail": "Item not found."}, status=404)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=500)
+
+class UpdateCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, id):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        try:
+            item = cart.items.get(id=id)
+            item.quantity = request.data.get("quantity", item.quantity)
+            item.save()
+            return Response({"message": "Item updated."})
+        except ShortlistCartItem.DoesNotExist:
+            return Response({"error": "Item not found in your cart."}, status=404)
+
+# DELETE /api/cart/remove-item/<id>/
+class RemoveCartItemView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, id):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        item = get_object_or_404(cart.items, id=id)
+        item.delete()
+        return Response(status=204)
+
+# POST /api/cart/clear/
+class ClearCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        cart, _ = ShortlistCart.objects.get_or_create(user=request.user)
+        cart.items.all().delete()
+        return Response(status=204)
+
+# POST /api/cart/checkout/
+class CheckoutCartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        cart, _ = ShortlistCart.objects.get_or_create(user=user)
+        bookings_created = []
+        orders_created = []
+
+        for item in cart.items.all():
+            model_name = item.content_type.model
+            obj = item.content_object
+
+            if model_name == 'plotlisting':
+                booking = Booking.objects.create(
+                    client=user,
+                    plot_listing=obj,
+                    booking_type='full_plot' if item.quantity is None else 'square_feet',
+                    booked_area_sqft=item.quantity,
+                    total_price=float(getattr(obj, 'price_per_sqft', 0)) * (item.quantity or obj.total_area_sqft),
+                    status='pending'
+                )
+                bookings_created.append(booking.id)
+
+            elif model_name == 'ecommerceproduct':
+                order = Order.objects.create(
+                    client=user,
+                    total_amount=float(getattr(obj, 'price', 0)) * item.quantity,
+                    status='pending'
+                )
+                OrderItem.objects.create(
+                    order=order,
+                    product=obj,
+                    quantity=item.quantity,
+                    unit_price=obj.price
+                )
+                orders_created.append(order.id)
+
+        cart.items.all().delete()
+
+        return Response({
+            "message": "Cart checked out successfully.",
+            "bookings_created": bookings_created,
+            "orders_created": orders_created
+        }, status=200)
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226

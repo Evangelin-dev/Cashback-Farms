@@ -17,7 +17,9 @@ const Leads: React.FC = () => {
                         Authorization: `Bearer ${accessToken}`,
                     },
                 });
+                console.log("Fetched leads:", res);
                 // Map API response to table format if needed
+<<<<<<< HEAD
                 const mappedLeads = (res.data || []).map((lead: any, idx: number) => ({
                     key: lead.id || idx,
                     name: lead.lead_name || lead.inquirer_name || "N/A",
@@ -25,6 +27,14 @@ const Leads: React.FC = () => {
                     plot: lead.plot_name || lead.plot || "N/A",
                     inquiry: lead.inquiry || lead.message || "N/A",
                     status: lead.status || "New",
+=======
+                const mappedLeads = (res.data || []).map((lead: any) => ({
+                    name: lead.lead_name || "N/A",
+                    contact: lead.contact || "N/A",
+                    plot: lead.plot_name || "N/A",
+                    inquiry: lead.inquiry || "N/A",
+                    status: lead.status ? lead.status.charAt(0).toUpperCase() + lead.status.slice(1) : "New",
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
                 }));
                 setLeads(mappedLeads);
             } catch (err) {

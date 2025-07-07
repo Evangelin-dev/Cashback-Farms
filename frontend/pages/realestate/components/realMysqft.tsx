@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Card, Form, Input, InputNumber, Modal, Table, Tag } from "antd";
+=======
+import { Card, Form, Input, InputNumber, Modal, Select, Table, Tag } from "antd";
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 import React, { useEffect, useState } from "react";
 import Button from "../../../components/common/Button";
 import apiClient from "@/src/utils/api/apiClient";
@@ -401,6 +405,7 @@ const RealMySqft: React.FC = () => {
                 Unit
               </span>
             }
+<<<<<<< HEAD
             rules={[{ required: true }]}
             style={{ marginBottom: 16 }}
           >
@@ -415,6 +420,25 @@ const RealMySqft: React.FC = () => {
               }}
               placeholder="e.g. per sqft, per acre"
             />
+=======
+            rules={[{ required: true, message: 'Please select a measurement unit!' }]}
+            style={{ marginBottom: 16 }}
+          >
+            <Select
+              placeholder="Select a unit for the price"
+              style={{ width: '100%' }}
+              // Optional: you can add this styling to the dropdown itself to match your form
+              dropdownStyle={{
+                borderRadius: 8,
+                background: "#dcfce7",
+                border: "1.5px solid #bbf7d0",
+              }}
+            >
+              {/* The `value` prop MUST be 'sqft' or 'sqyd' to match your backend */}
+              <Select.Option value="sqft">Per Square Feet</Select.Option>
+              <Select.Option value="sqyd">Per Square Yards</Select.Option>
+            </Select>
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
           </Form.Item>
           {/* Description Box */}
           <div style={{ marginBottom: 18 }}>
@@ -595,4 +619,3 @@ const RealMySqft: React.FC = () => {
 };
 
 export default RealMySqft;
-

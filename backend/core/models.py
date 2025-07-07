@@ -5,8 +5,15 @@ import random
 import string
 import datetime
 from django.utils import timezone
+<<<<<<< HEAD
 from django.db import models
 from django.conf import settings
+=======
+from django.core.mail import EmailMessage
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
 
 
 # User Roles
@@ -22,23 +29,78 @@ def generate_referral_code():
     return 'CBF' + ''.join(random.choices(string.digits, k=5))
 
 
+# class CustomUser(AbstractUser):
+#     # Using username as a primary login field if email/mobile is not provided,
+#     # or it can be removed if login is strictly by mobile/email.
+#     # We will make email and mobile_number unique and allow login by either.
+#     email = models.EmailField(unique=True, null=True, blank=True)
+#     mobile_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+#     user_type = models.CharField(
+#         max_length=20,
+#         choices=UserType.choices,
+#         default=UserType.CLIENT,
+#         help_text="Defines the user's role and panel access."
+#     )
+#     user_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+#     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
+#     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
+
+#     is_active = models.BooleanField(default=False)
+
+#     # Add related_name to avoid clashes with auth.User.groups and auth.User.user_permissions
+#     groups = models.ManyToManyField(
+#         'auth.Group',
+#         verbose_name='groups',
+#         blank=True,
+#         help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+#         related_name="customuser_set",
+#         related_query_name="customuser",
+#     )
+#     user_permissions = models.ManyToManyField(
+#         'auth.Permission',
+#         verbose_name='user permissions',
+#         blank=True,
+#         help_text='Specific permissions for this user.',
+#         related_name="customuser_set",
+#         related_query_name="customuser",
+#     )
+
 class CustomUser(AbstractUser):
-    # Using username as a primary login field if email/mobile is not provided,
-    # or it can be removed if login is strictly by mobile/email.
-    # We will make email and mobile_number unique and allow login by either.
     email = models.EmailField(unique=True, null=True, blank=True)
     mobile_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    country_code = models.CharField(max_length=5, null=True, blank=True)  # e.g. +91, +1
+
+    # Basic Profile
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+
+    # Address
+    town = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
+
+    # KYC
+    aadhaar_card = models.CharField(max_length=20, null=True, blank=True)
+    pan_card = models.CharField(max_length=20, null=True, blank=True)
+    kyc_status = models.CharField(max_length=20, default='pending')
+
+    # Role & Referral
     user_type = models.CharField(
         max_length=20,
         choices=UserType.choices,
         default=UserType.CLIENT,
         help_text="Defines the user's role and panel access."
     )
-    user_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    user_code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
 
-    # Add related_name to avoid clashes with auth.User.groups and auth.User.user_permissions
+    is_active = models.BooleanField(default=False)
+
+    # Group & Permission fix
     groups = models.ManyToManyField(
         'auth.Group',
         verbose_name='groups',
@@ -79,6 +141,24 @@ class CustomUser(AbstractUser):
             # Log or handle the error as needed
             print(f"Error generating OTP: {e}")
             return None
+
+    def send_otp_email(self, otp):
+        try:
+            if self.email:
+                # smtp_user = "azeema224143@gmail.com"
+                # smtp_pass = "buwqswksuljoxjvm"
+                smtp_user = settings.EMAIL_HOST_USER
+                smtp_pass = settings.EMAIL_HOST_PASSWORD
+
+                email_msg = EmailMessage(
+                    subject="Your OTP Code",
+                    body=f"Your OTP code is: {otp}",
+                    from_email=smtp_user,
+                    to=[self.email],
+                )
+                email_msg.send(fail_silently=False)
+        except Exception as e:
+            print(f"Error sending OTP email: {e}")
 
     def verify_otp(self, otp_code):
         try:
@@ -370,3 +450,82 @@ class MicroPlot(models.Model):
     def __str__(self):
         return self.project_name
 
+class KYCDocument(models.Model):
+    DOCUMENT_TYPES = [
+        ('national_id', 'National ID'),
+        ('address_proof', 'Address Proof'),
+        ('passport', 'Passport'),
+        ('aadhaar_card', 'Aadhaar'),
+        ('pan_card','Pan Card'),
+        # add more if needed
+    ]
+
+    STATUS_CHOICES = [
+        ('submitted', 'Submitted'),
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='kyc_documents')
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    file = models.FileField(upload_to='kyc_documents/')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    upload_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.document_type}"
+
+class FAQ(models.Model):
+    question = models.TextField()
+    answer = models.TextField()
+
+    def __str__(self):
+        return self.question[:50]
+
+User = get_user_model()
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='support_tickets')
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    reply_message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.subject}"
+
+class Inquiry(models.Model):
+    INQUIRY_TYPES = [
+        ('plot', 'Plot'),
+        ('micro_plot', 'Micro Plot'),
+        ('material', 'Material'),
+        ('service', 'Service'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    type = models.CharField(max_length=20, choices=INQUIRY_TYPES)
+    plot = models.ForeignKey(PlotListing, on_delete=models.CASCADE, null=True, blank=True)
+    product = models.ForeignKey(EcommerceProduct, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ShortlistCart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shortlist_cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ShortlistCartItem(models.Model):
+    cart = models.ForeignKey(ShortlistCart, on_delete=models.CASCADE, related_name='items')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    quantity = models.PositiveIntegerField(null=True, blank=True)
+    added_at = models.DateTimeField(auto_now_add=True)

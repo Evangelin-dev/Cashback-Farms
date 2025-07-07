@@ -24,12 +24,14 @@ const PostPlots: React.FC = () => {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchPlots = async () => {
       setLoading(true);
 
       try {
+              setIsLoading(true); 
         const accessToken = localStorage.getItem("access_token");
         const res = await apiClient.get("/plots", {
           headers: {
@@ -49,9 +51,12 @@ const PostPlots: React.FC = () => {
           description: "", // or plot.description if available
           images: [], // or map plot.plot_file if you have images
         }));
-        setPlots(mappedPlots);
+        setPlots(mappedPlots.reverse());
       } catch (err) {
+        console.error("Error fetching plots:", err);
         setPlots([]);
+      }finally{
+        setIsLoading(false);
       }
       setLoading(false);
 
@@ -97,7 +102,7 @@ const PostPlots: React.FC = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      const mappedPlots = (res.data || []).map((plot: any) => ({
+      const mappedPlots = (res || []).map((plot: any) => ({
         key: plot.id,
         title: plot.title,
         owner: plot.owner_name || plot.owner_username,
@@ -108,7 +113,7 @@ const PostPlots: React.FC = () => {
         description: "",
         images: [],
       }));
-      setPlots(mappedPlots);
+      setPlots(mappedPlots.reverse());
 
       setModalVisible(false);
       form.resetFields();
@@ -116,6 +121,7 @@ const PostPlots: React.FC = () => {
       setImages([]);
       setImagePreviews([]);
     } catch (err) {
+      console.error("Error adding plot:", err);
       alert("Failed to add plot.");
     }
   };
@@ -148,11 +154,6 @@ const PostPlots: React.FC = () => {
           {record.status}
         </Tag>
       ),
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      render: (desc: string) => desc || "-",
     },
     {
       title: "Images",
@@ -241,8 +242,12 @@ const PostPlots: React.FC = () => {
         rowKey="key"
         style={{ borderRadius: 12, overflow: "hidden" }}
         rowClassName={() => "custom-table-row"}
+<<<<<<< HEAD
         loading={loading}
 
+=======
+        loading={isLoading}
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226
       />
       <Modal
         title={

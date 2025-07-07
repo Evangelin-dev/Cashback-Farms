@@ -16,7 +16,7 @@ from pathlib import Path
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -100,6 +100,13 @@ SUPABASE = {
     'URL': os.getenv('SUPABASE_URL'),
 }
 
+TWILIO = {
+    'ACCOUNT_SID': os.getenv('TWILIO_ACCOUNT_SID'),
+    'AUTH_TOKEN': os.getenv('TWILIO_AUTH_TOKEN'),
+    'FROM_NUMBER': os.getenv('TWILIO_FROM_NUMBER'),
+}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -169,3 +176,20 @@ EMAIL_HOST_USER = "amruthakumarchennai@gmail.com"         # Replace with your Gm
 EMAIL_HOST_PASSWORD = "tsvzwvrnahbmtvtd"        # Replace with your Gmail App Password
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+<<<<<<< HEAD
+=======
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite default
+    "http://localhost:3000",  # React default
+    # Add any other frontend URLs you use
+]
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # ⬅ change this to increase timeout
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    # Other optional settings:
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+>>>>>>> a7649c49c7fc9ceee2f7bc49f42e93d295b88226

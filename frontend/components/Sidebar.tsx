@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   IconCog,
   IconCollection,
-  IconDashboard,
   IconInformationCircle,
   IconLogout,
   IconMapPin,
@@ -13,7 +12,7 @@ import {
   generateUserCode
 } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
-
+import { Home ,LayoutDashboard } from "lucide-react";
 interface NavItemProps {
   to: string;
   icon: React.ReactNode;
@@ -39,20 +38,37 @@ const NavItem: React.FC<NavItemProps & { onClick?: () => void }> = ({ to, icon, 
 };
 
 const ProfileSection: React.FC = () => {
-  // Example user profile state (replace with real user data as needed)
-  const [profile] = useState({
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+91 9876543210",
-    photo: "",
-    company: "Cashback Homes",
-    joiningDate: new Date(),
-  });
+  const { currentUser } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+
+  // Don't use useState for profile - derive it directly from currentUser
+  const profile = {
+    name: currentUser?.username || "User",
+    email: currentUser?.email || "",
+    phone: currentUser?.mobile_number || "",
+    photo: currentUser?.photo || "", // Add this if you have photo in currentUser
+    company: currentUser?.company || "",
+    joiningDate: currentUser?.created_at ? new Date(currentUser.created_at) : new Date(),
+  };
 
   // Generate User Code
   const userCode = generateUserCode(profile.name, profile.joiningDate);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const navigate = useNavigate();
+
+  // Add loading state if needed
+  if (!currentUser) {
+    return (
+      <div className="w-full mb-4 p-4 rounded-lg bg-gray-100 animate-pulse">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+          <div className="flex flex-col gap-2">
+            <div className="h-4 bg-gray-300 rounded w-24"></div>
+            <div className="h-3 bg-gray-300 rounded w-32"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full mb-4">
@@ -65,7 +81,7 @@ const ProfileSection: React.FC = () => {
             {profile.photo ? (
               <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
-              profile.name[0]
+              profile.name[0]?.toUpperCase() || "U"
             )}
           </div>
         </div>
@@ -92,17 +108,21 @@ const ProfileSection: React.FC = () => {
               {profile.photo ? (
                 <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                profile.name[0]
+                profile.name[0]?.toUpperCase() || "U"
               )}
             </div>
           </div>
           <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.phone}</span>
-          </div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-            <span>{profile.email}</span>
-          </div>
+          {profile.phone && (
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+              <span>{profile.phone}</span>
+            </div>
+          )}
+          {profile.email && (
+            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+              <span>{profile.email}</span>
+            </div>
+          )}
           <div className="mt-2 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">
             User Code: <span className="text-primary font-semibold">{userCode}</span>
           </div>
@@ -140,6 +160,8 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     navigate('/');
   };
 
@@ -191,14 +213,10 @@ const Sidebar: React.FC = () => {
       >
         {/* Profile section at the top */}
         <ProfileSection />
-        <div className="text-2xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
-          <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4" />
-            </svg>
-          </span>
-          Cashback<span className="text-black">Homes</span>
-        </div>
+        <Link to='/' className="text-xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
+          <img src='/images/logobg.png' alt="CashbackHomes Logo" className="w-10 h-10" />
+          Cashback<span className="text-black text-md">Homes</span>
+        </Link>
         <nav className="flex-grow space-y-1">
           {menuItems.map((item) => (
             <NavItem
