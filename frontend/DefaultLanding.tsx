@@ -263,7 +263,7 @@ const DefaultLanding: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-semibold text-green-700 mb-4">Introducing Book My SqFt!</h2>
             <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">Don't want to buy a whole plot? Now you can book the exact square footage you need. Flexible, affordable, and transparent.</p>
-            <Link to="/Dbook-my-sqft"><Button size="lg" variant="primary">Explore Book My SqFt</Button></Link>
+            <Link to="/Dmysqft-listing"><Button size="lg" variant="primary">Explore Book My SqFt</Button></Link>
         </div>
       </section>
       <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><DAssistedPlans /></div></section>

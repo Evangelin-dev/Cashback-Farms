@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import apiClient from "../../../src/utils/api/apiClient"; // Make sure this path is correct
-import { FaSpinner } from 'react-icons/fa';
+import apiClient from "../../../src/utils/api/apiClient";
 
-// Define a type for the fetched micro-plot data for better type safety
+// --- ICONS ---
+import { FaSpinner } from 'react-icons/fa';
+import { IoLocationOutline } from "react-icons/io5";
+
+// --- TYPE DEFINITIONS ---
 interface MicroPlot {
     id: number;
     name: string;
@@ -13,108 +16,145 @@ interface MicroPlot {
     imageUrl: string;
 }
 
+interface ApiMicroPlot {
+    id: number;
+    project_name: string;
+    location: string;
+    price: string;
+    unit: string;
+    project_image: string | null;
+}
+
+// --- CARD COMPONENT ---
+const MicroPlotCard: React.FC<{ plot: MicroPlot; onViewDetails: (id: number) => void; }> = ({ plot, onViewDetails }) => {
+    return (
+        <div className="bg-white border rounded-lg overflow-hidden flex flex-col sm:flex-row mb-6 shadow-sm hover:shadow-lg transition-shadow">
+            <div className="sm:w-1/3 p-2">
+                <img src={plot.imageUrl} alt={plot.name} className="w-full h-full object-cover rounded-md" />
+            </div>
+            <div className="sm:w-2/3 flex flex-col p-4">
+                <h2 className="font-bold text-xl text-gray-800">{plot.name}</h2>
+                <div className="flex items-center text-gray-600 text-sm mt-2 mb-4">
+                    <IoLocationOutline className="mr-2 flex-shrink-0" />
+                    <span>{plot.location}</span>
+                </div>
+                <div className="border-y py-4 mb-4">
+                    <p className="text-2xl font-bold text-gray-900">
+                        ₹{plot.pricePerUnit.toLocaleString('en-IN')}
+                        <span className="text-base font-medium text-gray-500"> / {plot.unit}</span>
+                    </p>
+                    <p className="text-xs text-gray-500">Price per Unit</p>
+                </div>
+                <div className="mt-auto flex items-center">
+                    <button onClick={() => onViewDetails(plot.id)} className="bg-green-600 text-white font-bold py-2 px-6 rounded hover:bg-green-700 transition-colors w-full">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- SIDEBAR COMPONENT ---
+const FilterSidebar: React.FC<{
+    searchTerm: string; setSearchTerm: (value: string) => void;
+    locationFilter: string; setLocationFilter: (value: string) => void;
+    priceRange: { min: number; max: number }; setPriceRange: (value: { min: number; max: number }) => void;
+    cities: string[]; resetFilters: () => void;
+}> = ({ searchTerm, setSearchTerm, locationFilter, setLocationFilter, priceRange, setPriceRange, cities, resetFilters }) => {
+    return (
+        <div className="w-full lg:w-1/4 lg:sticky lg:top-24 bg-white p-4 border rounded-lg shadow-sm h-fit">
+            <div className="flex justify-between items-center mb-4 pb-3 border-b"><h3 className="font-bold text-xl">Filters</h3><button onClick={resetFilters} className="text-sm font-semibold text-red-500">Reset</button></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700 block mb-2">Search by Name</label><input type="text" placeholder="Project name..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700 block mb-2">Location</label><select className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>{cities.map(city => (<option key={city} value={city}>{city}</option>))}</select></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700">Price Per Unit</label><p className="text-sm text-gray-500 mb-2">Up to ₹{priceRange.max.toLocaleString('en-IN')}</p><input type="range" min="0" max="100000" step="1000" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })} className="w-full accent-green-600"/></div>
+        </div>
+    );
+};
+
+
+// --- MAIN PAGE COMPONENT (BUG FIXED) ---
 const DMySqftListing: React.FC = () => {
     const navigate = useNavigate();
     
-    // State for live data, loading, and errors
-    const [plots, setPlots] = useState<MicroPlot[]>([]);
+    const [plots, setPlots] = useState<ApiMicroPlot[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const initialPriceRange = { min: 0, max: 100000 };
+    const [priceRange, setPriceRange] = useState(initialPriceRange);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [locationFilter, setLocationFilter] = useState('All Locations');
+    const tamilNaduCities = ["All Locations", "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli"];
+
     useEffect(() => {
-        const fetchMicroPlots = async () => {
+        const fetchPageData = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch data from the API
                 const response = await apiClient.get('/public/micro-plots/');
-                
-                // Use the response directly as requested, defaulting to an empty array
-                const apiData = response || [];
-
-                // Map the API data to the structure needed by the component
-                const mappedPlots: MicroPlot[] = apiData.map((plot: any) => ({
-                    id: plot.id,
-                    name: plot.project_name,
-                    location: plot.location,
-                    pricePerUnit: Number(plot.price),
-                    unit: plot.unit,
-                    imageUrl: plot.project_image || `https://picsum.photos/seed/${plot.id}/600/400`, // Use a placeholder image if null
-                }));
-
-                setPlots(mappedPlots);
-
+                setPlots(response || []);
             } catch (err) {
-                console.error("Failed to fetch micro-plots:", err);
                 setError("Could not load listings. Please try again later.");
+                console.error("Failed to fetch micro-plots:", err);
             } finally {
                 setIsLoading(false);
             }
         };
+        fetchPageData();
+    }, []);
 
-        fetchMicroPlots();
-    }, []); // Empty dependency array ensures this runs only once on mount
+    const handleViewDetails = (id: number) => {
+        navigate(`/micro-plots/${id}`);
+    };
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center py-20">
-                <FaSpinner className="animate-spin text-green-600 text-4xl" />
-            </div>
-        );
-    }
+	const finalFilteredPlots = useMemo(() => {
+        return plots
+            .map(apiPlot => ({
+                id: apiPlot.id,
+                name: apiPlot.project_name,
+                location: apiPlot.location,
+                pricePerUnit: Number(apiPlot.price),
+                unit: apiPlot.unit,
+                imageUrl: apiPlot.project_image || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
+            }))
+            .filter(plot => {
+                const matchesSearch = plot.name.toLowerCase().includes(searchTerm.toLowerCase());
+                // --- THIS IS THE LINE THAT WAS FIXED ---
+                const matchesLocation = locationFilter === 'All Locations' || plot.location.toLowerCase().includes(locationFilter.toLowerCase());
+                const withinPrice = plot.pricePerUnit <= priceRange.max;
+                return matchesSearch && matchesLocation && withinPrice;
+            });
+    }, [plots, searchTerm, locationFilter, priceRange]);
 
-    if (error) {
-        return (
-            <div className="text-center py-20">
-                <p className="text-red-500 font-semibold">{error}</p>
-            </div>
-        );
-    }
+    const resetFilters = () => {
+        setPriceRange(initialPriceRange);
+        setSearchTerm('');
+        setLocationFilter('All Locations');
+    };
 
 	return (
-		<div className="max-w-3xl mx-auto px-4 py-8">
-			<h1 className="text-3xl font-bold text-green-700 mb-6">
-				Book My SqFt Listings
-			</h1>
-			<div className="grid gap-6 sm:grid-cols-2">
-				{plots.map((plot) => (
-					<div
-						key={plot.id}
-						className="bg-white rounded-lg shadow hover:shadow-lg transition border border-neutral-200 p-6 flex flex-col group"
-					>
-						<div className="mb-3 overflow-hidden rounded">
-							<img
-								src={plot.imageUrl}
-								alt={plot.name}
-								className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110"
-							/>
-						</div>
-						<div className="mb-2">
-							<span className="text-lg font-semibold text-green-700">
-								{plot.name}
-							</span>
-						</div>
-						<div className="text-sm text-gray-600 mb-1">
-							<span className="font-medium">Location:</span> {plot.location}
-						</div>
-						<div className="text-sm text-gray-600 mb-2">
-							<span className="font-medium">Price:</span> ₹
-							{plot.pricePerUnit.toLocaleString("en-IN")} per {plot.unit}
-						</div>
-						<button
-							className="mt-auto bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-							onClick={() => navigate(`/micro-plots/${plot.id}`)} // Navigate to the specific plot detail page
-						>
-							View Details
-						</button>
-					</div>
-				))}
-			</div>
-            {plots.length === 0 && (
-                <div className="text-center py-10 col-span-full">
-                    <p className="text-gray-500">No "Book My SqFt" listings are available at the moment.</p>
+		<div className="bg-gray-50 min-h-screen">
+            <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3"><h1 className="text-2xl font-bold text-green-700">Book My SqFt</h1></div></header>
+            <main className="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row gap-6">
+                <FilterSidebar searchTerm={searchTerm} setSearchTerm={setSearchTerm} locationFilter={locationFilter} setLocationFilter={setLocationFilter} priceRange={priceRange} setPriceRange={setPriceRange} cities={tamilNaduCities} resetFilters={resetFilters}/>
+                <div className="flex-1">
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-96"><FaSpinner className="animate-spin text-green-700 text-5xl" /></div>
+                    ) : error ? (
+                        <div className="text-center py-20 bg-white border rounded-lg"><p className="text-xl text-red-600">{error}</p></div>
+                    ) : finalFilteredPlots.length > 0 ? (
+                        <div>
+                            {finalFilteredPlots.map((plot) => (
+                                <MicroPlotCard key={plot.id} plot={plot} onViewDetails={handleViewDetails} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-20 bg-white border rounded-lg"><p className="text-xl text-gray-600">No listings match your current filters.</p><p className="text-gray-400 mt-2">Try adjusting or resetting your filters.</p></div>
+                    )}
                 </div>
-            )}
+            </main>
 		</div>
 	);
 };
