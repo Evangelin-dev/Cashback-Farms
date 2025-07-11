@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 
@@ -25,8 +25,6 @@ import LandingPage from './components/landingpage/landingpage';
 import PlansPage from './components/landingpage/landingpagecomponents/assistedplans/plans';
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
 import MyBooking from './components/mybooking/mybooking';
-
-import AuthModal from '@/components/auth/AuthForm';
 import Cart from './components/detailpageandcart/cart';
 import MyProfile from './components/myprofile/myprofile';
 import MaterialCheckout from "./components/payment/materialcheckout";
@@ -89,8 +87,6 @@ import PlotDetailsPage from './pages/user/DetailMySqftListing';
 import RefundPolicyPage from './components/RefundPolicy';
 
 const AppRoutes: React.FC = () => {
-  const { currentUser } = useAuth();
-  console.log(currentUser, "curr")
   return (
 
     <Routes>

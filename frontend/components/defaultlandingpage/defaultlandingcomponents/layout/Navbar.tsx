@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { DNAV_LINKS } from '../../../../constants'; // Adjust this import path if needed
-import AuthForm from '../../../auth/AuthForm';     // Adjust this import path if needed
-import { useAuth } from '@/contexts/AuthContext'; // Adjust this import path if needed
+import { DNAV_LINKS } from '../../../../constants'; 
+import AuthForm from '../../../auth/AuthForm';     
+import { useAuth } from '@/contexts/AuthContext'; 
 
 const Navbar: React.FC = () => {
-  // State for mobile menu visibility
   const [isOpen, setIsOpen] = useState(false);
-  // State for desktop profile dropdown visibility
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  // State for login/signup modal visibility
   const [showAuth, setShowAuth] = useState(false);
-
+  
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const profileRef = useRef<HTMLDivElement>(null);
