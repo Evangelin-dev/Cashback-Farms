@@ -213,7 +213,7 @@ const PlotMarketplacePage: React.FC = () => {
                   <div className="mt-auto pt-3">
                     {plot.sqftPrice ? (
                        <Link to={`/book-my-sqft/${plot.id}`}>
-                         <Button variant="primary" className="w-full">Book My SqFt</Button>
+                         <Button variant="primary" className="w-full">Book Now</Button>
                        </Link>
                     ) : (
                        <Link to={`/plot-details/${plot.id}`}>
