@@ -1,8 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import apiClient from '../src/utils/api/apiClient';
 import Button from '../components/Button';
 import Card from '../components/Card';
+import apiClient from '../src/utils/api/apiClient';
 import { Plot, PlotType } from '../types';
 import BookPlotPayment from './user/BookPlotPayment';
 
@@ -108,7 +108,7 @@ const PlotDetailsPage: React.FC = () => {
             <p className="text-xs text-neutral-500 mb-2">A great investment opportunity.</p>
             <div className="flex items-center gap-2 mt-2">
               <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowPaymentPopup(true)}>Book This Plot</Button>
-              <Button variant="outline" size='sm' className="px-3 py-1 text-sm rounded shadow ml-1" onClick={() => navigate('/book-my-sqft')}>Book by SqFt</Button>
+              {/* <Button variant="outline" size='sm' className="px-3 py-1 text-sm rounded shadow ml-1" onClick={() => navigate('/book-my-sqft')}>Book by SqFt</Button> */}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Area: {plot.area} sqft</span>
@@ -150,6 +150,14 @@ const PlotDetailsPage: React.FC = () => {
                 <li>Flexible payment options</li>
                 <li>Gated community with amenities</li>
               </ul>
+            </Card>
+            {/* Land Document Verification Card */}
+            <Card title="Land Document Verification" className="bg-yellow-50 border-0 shadow rounded-xl text-sm">
+              <div className="flex flex-col gap-2">
+                <div className="text-yellow-800 font-semibold">Verify the land document before you buy it</div>
+                <div className="text-xs text-gray-600 mb-2">Get peace of mind by verifying the legal status of the land before making your investment.</div>
+                <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow bg-yellow-500 hover:bg-yellow-600 text-white">Pay ₹5000 for Verification</Button>
+              </div>
             </Card>
           </div>
         </div>
