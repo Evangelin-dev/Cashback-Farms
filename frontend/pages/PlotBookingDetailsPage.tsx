@@ -148,15 +148,15 @@ const PlotDetailsPage: React.FC = () => {
                 <li>Ready for construction</li>
                 <li>Clear title and legal documentation</li>
                 <li>Flexible payment options</li>
-                <li>Gated community with amenities</li>
-              </ul>
+                <li>Gated community with amenities</li>  
+              </ul>     
             </Card>
             {/* Land Document Verification Card */}
-            <Card title="Land Document Verification" className="bg-yellow-50 border-0 shadow rounded-xl text-sm">
+            <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm" style={{ backgroundColor: '#22c55e' }}>
               <div className="flex flex-col gap-2">
-                <div className="text-yellow-800 font-semibold">Verify the land document before you buy it</div>
-                <div className="text-xs text-gray-600 mb-2">Get peace of mind by verifying the legal status of the land before making your investment.</div>
-                <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow bg-yellow-500 hover:bg-yellow-600 text-white">Pay ₹5000 for Verification</Button>
+                <div className="font-semibold" style={{ color: '#fff' }}>Verify the land document before you buy it</div>
+                <div className="text-xs mb-2" style={{ color: '#e0ffe6' }}>Get peace of mind by verifying the legal status of the land before making your investment.</div>
+                <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow text-white" style={{ backgroundColor: '#22c55e', border: 'none' }}>Pay ₹5000 for Verification</Button>
               </div>
             </Card>
           </div>
