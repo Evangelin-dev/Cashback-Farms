@@ -1,7 +1,7 @@
+import { DEFAULT_COUNTRY_OPTIONS } from "@/components/countryCode";
 import apiClient from '@/src/utils/api/apiClient';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {DEFAULT_COUNTRY_OPTIONS} from "@/components/countryCode";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -49,9 +49,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     town: "",
     city: "",
     state: "",
-    country: "",
-    password: "",
-    confirmPassword: ""
+    country: ""
   });
 
   useEffect(() => {
@@ -233,11 +231,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
     e.preventDefault();
     setError('');
     setSuccess('');
-
-    if (signupData.password !== signupData.confirmPassword) {
-        setError('Passwords do not match.');
-        return;
-    }
     setLoading(true);
 
     const payload = {
@@ -251,9 +244,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         city: signupData.city,
         state: signupData.state,
         country: signupData.country,
-        user_type: 'client',
-        password: signupData.password,
-        confirm_password: signupData.confirmPassword
+        user_type: 'client'
     };
 
     try {
@@ -323,8 +314,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
                     <div className="w-full flex items-center"><select className="border rounded-l px-2 py-2 text-sm bg-gray-50" value={countryCode} onChange={e => setCountryCode(e.target.value)}>{countryOptions.map(opt => (<option key={opt.code} value={opt.code}>{opt.label}</option>))}</select><input type="tel" name="phone" placeholder="Phone Number" value={signupData.phone} onChange={handleSignupDataChange} className="flex-1 w-full px-3 py-2 border-t border-b border-r rounded-r-lg text-sm" required /></div>
                     <div className="w-full grid grid-cols-2 gap-2"><input type="text" name="town" placeholder="Town/Village" value={signupData.town} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required /><input type="text" name="city" placeholder="City" value={signupData.city} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required /></div>
                     <div className="w-full grid grid-cols-2 gap-2"><input type="text" name="state" placeholder="State" value={signupData.state} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required /><input type="text" name="country" placeholder="Country" value={signupData.country} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required /></div>
-                    <input type="password" name="password" placeholder="Password" value={signupData.password} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required />
-                    <input type="password" name="confirmPassword" placeholder="Confirm Password" value={signupData.confirmPassword} onChange={handleSignupDataChange} className="w-full px-3 py-2 border rounded-lg text-sm" required />
+                    {/* Password fields removed as per requirements */}
                     {error && <div className="text-red-500 text-xs pt-1 animate-shake">{error}</div>}
                     {success && <div className="text-green-600 text-xs pt-1 animate-fade-in-fast">{success}</div>}
                     <button type="submit" className={`w-full bg-gradient-to-r from-green-500 to-green-700 text-white py-2 rounded-lg font-semibold hover:from-green-600 hover:to-green-800 shadow transition-all duration-200 text-base flex items-center justify-center gap-2 mt-2 ${loading ? 'opacity-60 cursor-not-allowed' : ''}`} disabled={loading}>{loading && <span className="loader mr-2"></span>}Create Account</button>

@@ -1,15 +1,15 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext.tsx';
 import apiClient from '../../src/utils/api/apiClient';
 import { Plot, PlotType } from '../../types';
-import { useAuth } from '../../contexts/AuthContext.tsx';
 
 // UI Components
+import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
 import Button from '../../components/common/Button.tsx';
 import CardShell from '../../components/common/CardShell.tsx';
 import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../constants';
-import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
-import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
 
 // Interfaces
 interface ShortlistItem {
@@ -23,6 +23,7 @@ const PlotMarketplacePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | PlotType>('all');
+  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [submittingId, setSubmittingId] = useState<number | null>(null);
 
@@ -128,9 +129,10 @@ const PlotMarketplacePage: React.FC = () => {
       const matchesFilter = filter === 'all' || plot.type === filter;
       const matchesSearch = plot.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         plot.location.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesFilter && matchesSearch;
+      const matchesVerified = !showVerifiedOnly || plot.type === PlotType.VERIFIED;
+      return matchesFilter && matchesSearch && matchesVerified;
     });
-  }, [plots, filter, searchTerm]);
+  }, [plots, filter, searchTerm, showVerifiedOnly]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -153,6 +155,16 @@ const PlotMarketplacePage: React.FC = () => {
           <Button variant={filter === 'all' ? 'primary' : 'outline'} onClick={() => setFilter('all')}>All Plots</Button>
           <Button variant={filter === PlotType.PUBLIC ? 'primary' : 'outline'} onClick={() => setFilter(PlotType.PUBLIC)}>Public Listings</Button>
           <Button variant={filter === PlotType.VERIFIED ? 'primary' : 'outline'} onClick={() => setFilter(PlotType.VERIFIED)}>Greenheap Verified</Button>
+        </div>
+        <div className="flex items-center mt-3 md:mt-0 md:ml-4">
+          <input
+            type="checkbox"
+            id="verified-plots"
+            checked={showVerifiedOnly}
+            onChange={e => setShowVerifiedOnly(e.target.checked)}
+            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-600"
+          />
+          <label htmlFor="verified-plots" className="ml-2 text-sm text-gray-700">Green Heap Verified Plot</label>
         </div>
       </div>
 
