@@ -14,10 +14,7 @@ interface SqftGridProps {
 }
 
 // Example GRID_LABELS and additional subplot data for demonstration
-const GRID_LABELS = {
-  rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-  cols: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-};
+
 
 // Example subplot details (in real use, this should come from props or context)
 const SUBPLOT_DETAILS: Record<string, {
@@ -26,23 +23,19 @@ const SUBPLOT_DETAILS: Record<string, {
   facing: string;
   sqft: number;
 }> = {};
-for (let r = 0; r < GRID_LABELS.rows.length; r++) {
-  for (let c = 0; c < GRID_LABELS.cols.length; c++) {
-    const key = `${GRID_LABELS.rows[r]}${GRID_LABELS.cols[c]}`;
-    SUBPLOT_DETAILS[key] = {
-      imageUrl: `https://picsum.photos/seed/${key}/100/80`,
-      dimension: `${30 + r} x ${40 + c} ft`,
-      facing: ['East', 'West', 'North', 'South'][(r + c) % 4],
-      sqft: (30 + r) * (40 + c),
-    };
-  }
+for (let i = 1; i <= 100; i++) {
+  SUBPLOT_DETAILS[i] = {
+    imageUrl: `https://picsum.photos/seed/${i}/100/80`,
+    dimension: `${30 + ((i - 1) % 10)} x ${40 + Math.floor((i - 1) / 10)} ft`,
+    facing: ['East', 'West', 'North', 'South'][(i - 1) % 4],
+    sqft: (30 + ((i - 1) % 10)) * (40 + Math.floor((i - 1) / 10)),
+  };
 }
 
-// Helper to get label for a cell
-function getGridLabel(row: number, col: number) {
-  const rowLabel = GRID_LABELS.rows[row] ?? `R${row + 1}`;
-  const colLabel = GRID_LABELS.cols[col] ?? `C${col + 1}`;
-  return `${rowLabel}${colLabel}`;
+// Helper to get label for a cell (1 to N)
+function getGridLabel(row: number, col: number, page = 1, pageSize = 100) {
+  // Calculate the flat index for the current page
+  return ((page - 1) * pageSize + (row * 10 + col) + 1).toString();
 }
 
 interface SqftUnit {
@@ -58,12 +51,16 @@ interface SqftUnit {
   sqft?: number;
 }
 
+const PAGE_SIZE = 100;
+
 const DSqftGrid: React.FC<SqftGridProps> = ({
   gridData,
   onUnitSelect,
   projectLayoutImage, // new prop
   unitSize = 44,
 }) => {
+  // Pagination state
+  const [page, setPage] = useState(1);
   const [hoveredUnit, setHoveredUnit] = useState<SqftUnit | null>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +84,10 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
       row.map(unit => ({ ...unit }))
     )
   );
+
+  // Calculate total units and pages
+  const totalUnits = localGrid.flat().length;
+  const totalPages = Math.ceil(totalUnits / PAGE_SIZE);
 
   // Update localGrid if gridData changes (optional, if gridData is dynamic)
   // React.useEffect(() => {
@@ -310,35 +311,15 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
           {/* Grid header (sticky) */}
           <div
             className="sticky top-0 z-20 flex flex-row gap-2 bg-white/80 backdrop-blur-md rounded-t-2xl px-2 py-1"
-            style={{ marginLeft: unitSize + 16 }}
+            style={{ marginLeft: 0 }}
           >
-            {GRID_LABELS.cols.map(col => (
-              <div
-                key={col}
-                className="w-11 text-center text-green-700 font-bold text-xs tracking-wide"
-                style={{ width: unitSize }}
-              >
-                {col}
-              </div>
-            ))}
           </div>
           <div
             ref={gridScrollRef}
             className="flex flex-row w-full h-full overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent"
             style={{ maxHeight: 500, marginTop: 8, borderRadius: 18, position: 'relative' }}
           >
-            {/* Row labels (sticky) */}
-            <div className="flex flex-col gap-2 sticky left-0 z-10 bg-white/70 backdrop-blur-md rounded-l-2xl px-1 py-1">
-              {GRID_LABELS.rows.map(row => (
-                <div
-                  key={row}
-                  className="h-11 flex items-center justify-center text-green-700 font-bold text-xs tracking-wide"
-                  style={{ height: unitSize }}
-                >
-                  {row}
-                </div>
-              ))}
-            </div>
+            {/* Row labels removed */}
             {/* Grid */}
             <div
               className="grid gap-3"
@@ -349,8 +330,11 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
             >
               {localGrid.map((row, rowIdx) =>
                 row.map((unit, colIdx) => {
-                  const label = getGridLabel(unit.row, unit.col);
+                  const label = getGridLabel(unit.row, unit.col, page, PAGE_SIZE);
                   const subplot = SUBPLOT_DETAILS[label];
+                  // Only render units for the current page
+                  const flatIndex = rowIdx * localGrid[0].length + colIdx;
+                  if (flatIndex < (page - 1) * PAGE_SIZE || flatIndex >= page * PAGE_SIZE) return null;
                   return (
                     <div
                       key={unit.id}
@@ -373,11 +357,11 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                         transition: 'box-shadow 0.2s, transform 0.2s',
                       }}
                       onClick={() => handleUnitClick(unit)}
-                      onMouseEnter={e => handleMouseEnter(e, unit, SUBPLOT_DETAILS[getGridLabel(unit.row, unit.col)])}
+                      onMouseEnter={e => handleMouseEnter(e, unit, SUBPLOT_DETAILS[label])}
                       onMouseLeave={handleMouseLeave}
                     >
                       <span className={`text-xs font-bold ${unit.isBooked ? 'text-gray-400' : 'text-green-800'}`}>
-                        {getGridLabel(unit.row, unit.col)}
+                        {label}
                       </span>
                       {/* Dot indicator for selected */}
                       {unit.isSelected && (
@@ -389,6 +373,26 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                 })
               )}
             </div>
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className="flex flex-row gap-2 justify-center items-center mt-4">
+          <button
+            className="px-3 py-1 rounded bg-green-100 text-green-700 font-semibold border border-green-200 disabled:opacity-50"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </button>
+          <span className="text-green-700 font-bold">Page {page} of {totalPages}</span>
+          <button
+            className="px-3 py-1 rounded bg-green-100 text-green-700 font-semibold border border-green-200 disabled:opacity-50"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
             {/* Hover detail rendered inside grid container, absolutely positioned */}
             {hoveredDetail && (
               <div

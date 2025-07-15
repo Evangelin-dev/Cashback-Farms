@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
+import { FaSpinner } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext"; // 1. IMPORT the useAuth hook
 import apiClient from "../../../src/utils/api/apiClient";
 import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
 import Button from '../../common/Button';
 import SqftGrid from '../defaultlandingcomponents/plot/SqftGrid';
-import { FaSpinner } from "react-icons/fa";
-import { useAuth } from "../../../contexts/AuthContext"; // 1. IMPORT the useAuth hook
 
 // Helper function to generate a default grid since the API doesn't provide one
 const generateInitialGrid = (rows: number, cols: number): SqftUnit[][] => {
@@ -76,6 +76,8 @@ const DBookMySqftPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<SqftUnit[]>([]);
   const [showLoginPopup, setShowLoginPopup] = useState(false); // 3. State for the popup
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -141,22 +143,42 @@ const DBookMySqftPage: React.FC = () => {
         setShowLoginPopup(true);
         return;
     }
-    // If user exists, proceed with booking
-    alert(`Booking ${totalSelectedArea} units for a total of ₹${totalCost.toLocaleString('en-IN')}`);
-    // Here you would navigate to a checkout page, e.g., navigate('/checkout');
+    // Show payment popup
+    setShowPaymentPopup(true);
+  };
+
+  // Handler for payment done
+  const handlePaymentDone = () => {
+    setIsProcessing(true);
+    setTimeout(() => {
+      setIsProcessing(false);
+      setShowPaymentPopup(false);
+      navigate('/Dbook-my-sqft');
+    }, 2000);
   };
 
   if (isLoading) return <div className="flex justify-center items-center h-screen"><FaSpinner className="animate-spin text-green-600 text-4xl" /></div>;
   if (error || !plotInfo) return <div className="text-center py-20"><h2 className="text-2xl font-bold text-red-600">Error</h2><p className="mt-2 text-gray-600">{error}</p><Button className="mt-4" onClick={() => navigate('/Dbook-my-sqft')}>Back to Listings</Button></div>;
 
-  const carouselImages = [ plotInfo.imageUrl, "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80", "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80" ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 py-6 px-2">
       <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
-        <h1 className="text-3xl font-extrabold text-green-800 mb-2 mt-4 tracking-tight drop-shadow">
-          {plotInfo.name}
-        </h1>
+        {/* Image at the top */}
+        <img
+          src={plotInfo.imageUrl}
+          alt={plotInfo.name}
+          className="w-full max-w-2xl h-72 object-cover rounded-2xl shadow-xl border border-green-200 mt-6 mb-2"
+          style={{ aspectRatio: '16/9' }}
+        />
+        {/* Description below image */}
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 flex flex-col items-start mb-4">
+          <h1 className="text-3xl font-extrabold text-green-800 mb-2 tracking-tight drop-shadow">
+            {plotInfo.name}
+          </h1>
+          <p className="text-lg text-gray-700 mb-1"><strong>Location:</strong> {plotInfo.location}</p>
+          <p className="text-lg text-gray-700 mb-1"><strong>Price per SqFt Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+        </div>
+        {/* Grid selection */}
         <div className="w-full flex flex-col items-center">
           <div className="flex justify-center items-center" style={{ overflow: 'auto', borderRadius: 12, border: '2px solid #bbf7d0', background: '#fff', marginBottom: 16, width: '100%', minHeight: 350 }}>
             <div>
@@ -164,9 +186,7 @@ const DBookMySqftPage: React.FC = () => {
             </div>
           </div>
         </div>
-        
-        <ImageCarousel images={carouselImages} />
-
+        {/* Booking summary (unchanged) */}
         <div className="w-full mt-4 flex flex-col items-center">
           <div className="md:col-span-1 bg-white p-10 rounded-2xl shadow-2xl flex flex-col items-center gap-10 w-full max-w-5xl">
             <h2 className="text-2xl font-bold text-green-700 mb-4">Booking Summary</h2>
@@ -189,7 +209,7 @@ const DBookMySqftPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+      {/* How it works section */}
       <div className="max-w-5xl mx-auto mt-12 p-4 bg-green-50 rounded-lg border border-green-200">
         <h3 className="text-xl font-semibold text-green-700 mb-2">How it works:</h3>
         <ol className="list-decimal list-inside text-gray-600 space-y-1">
@@ -200,9 +220,45 @@ const DBookMySqftPage: React.FC = () => {
             <li>Receive your digital booking receipt.</li>
         </ol>
       </div>
-
       {/* 5. RENDER THE POPUP CONDITIONALLY */}
       {showLoginPopup && <AuthPopup onClose={() => setShowLoginPopup(false)} />}
+      {/* Payment Popup */}
+      {showPaymentPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-xs w-full flex flex-col items-center relative">
+            {isProcessing ? (
+              <>
+                <div className="flex flex-col items-center justify-center">
+                  <FaSpinner className="animate-spin text-green-600 text-4xl mb-4" />
+                  <div className="text-lg font-semibold text-green-700 mb-2">Processing Payment...</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <img
+                  src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay"
+                  alt="Sample QR Code"
+                  className="w-48 h-48 object-contain mb-4 border border-green-200 rounded-xl shadow"
+                />
+                <div className="text-lg font-bold text-green-700 mb-2 text-center">Scan to Pay</div>
+                <div className="text-gray-600 text-center mb-4">Scan this QR code to complete your payment.<br/>After payment, click below.</div>
+                <button
+                  className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition mb-2"
+                  onClick={handlePaymentDone}
+                >
+                  Payment Done
+                </button>
+                <button
+                  className="w-full py-2 rounded-lg bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300 transition"
+                  onClick={() => setShowPaymentPopup(false)}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
