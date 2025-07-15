@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
 import Modal from '../../components/Modal';
@@ -11,27 +11,34 @@ const initialPlotFormState: Omit<Plot, 'id' | 'plotValue'> = {
   price: 0,
   area: 0,
   imageUrl: '',
-  type: 'Public Listing', // Predefined and not editable
+  type: 'Verified Plot', // Predefined and not editable
   description: '',
   amenities: [],
-  isFlagship: false,
+  isFlagship: true,
   documents: [],
   sqftPrice: 0,
   value: 0,
 };
 
-const ManagePlotsPage: React.FC = () => {
-  const [plots, setPlots] = useState<Plot[]>(MOCK_PLOTS);
+const ManageVerifiedPlots: React.FC = () => {
+  // Only flagship plots
+  const [plots, setPlots] = useState<Plot[]>(MOCK_PLOTS.filter(p => p.isFlagship));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlot, setEditingPlot] = useState<Plot | null>(null);
   const [plotFormData, setPlotFormData] = useState<Omit<Plot, 'id' | 'plotValue'>>(initialPlotFormState);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     if (editingPlot) {
       const { id, plotValue, ...editableData } = editingPlot;
       setPlotFormData(editableData as typeof plotFormData);
+      setImagePreview(editableData.imageUrl || '');
+      setImageFile(null);
     } else {
       setPlotFormData(initialPlotFormState);
+      setImagePreview('');
+      setImageFile(null);
     }
   }, [editingPlot]);
 
@@ -48,16 +55,31 @@ const ManagePlotsPage: React.FC = () => {
     setPlotFormData(prev => ({ ...prev, [name]: val }));
   };
 
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const plotValue = plotFormData.area * (plotFormData.sqftPrice || 0);
+    let imageUrl = plotFormData.imageUrl;
+    if (imageFile) {
+      // In a real app, upload the file and get the URL
+      imageUrl = imagePreview;
+    }
     if (editingPlot) {
-      setPlots(plots.map(p => p.id === editingPlot.id ? { ...plotFormData, id: editingPlot.id, plotValue } : p));
+      setPlots(plots.map(p => p.id === editingPlot.id ? { ...plotFormData, id: editingPlot.id, plotValue, imageUrl, isFlagship: true } : p));
     } else {
-      const newPlot: Plot = { 
-        ...plotFormData, 
+      const newPlot: Plot = {
+        ...plotFormData,
         id: `plot-${Date.now().toString()}`,
-        plotValue 
+        plotValue,
+        imageUrl,
+        isFlagship: true,
       };
       setPlots([...plots, newPlot]);
     }
@@ -72,6 +94,8 @@ const ManagePlotsPage: React.FC = () => {
   const openModalForNew = () => {
     setEditingPlot(null);
     setPlotFormData(initialPlotFormState);
+    setImagePreview('');
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -79,6 +103,8 @@ const ManagePlotsPage: React.FC = () => {
     setIsModalOpen(false);
     setEditingPlot(null);
     setPlotFormData(initialPlotFormState);
+    setImagePreview('');
+    setImageFile(null);
   };
 
   const handleDeletePlot = (plotId: string) => {
@@ -86,7 +112,7 @@ const ManagePlotsPage: React.FC = () => {
       setPlots(plots.filter(p => p.id !== plotId));
     }
   };
-  
+
   const renderInputField = (
     label: string,
     name: keyof typeof plotFormData,
@@ -141,82 +167,91 @@ const ManagePlotsPage: React.FC = () => {
   );
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-neutral-800">Manage Plots</h1>
-        <Button onClick={openModalForNew} leftIcon={<IconPlus className="w-5 h-5"/>}>Add New Plot</Button>
+    <div className="px-2 sm:px-4 md:px-8 py-4 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-semibold text-neutral-800 text-center md:text-left">Manage Verified (Flagship) Plots</h1>
+        <div className="flex justify-center md:justify-end">
+          <Button onClick={openModalForNew} leftIcon={<IconPlus className="w-5 h-5"/>} className="w-full md:w-auto">Add New Verified Plot</Button>
+        </div>
       </div>
-      
       <Card bodyClassName="p-0">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-neutral-200">
+        <div className="overflow-x-auto rounded-lg">
+          <table className="min-w-full divide-y divide-neutral-200 text-sm">
             <thead className="bg-neutral-50">
               <tr>
-                {['Plot Title', 'Location', 'Area (Sq.Ft)', 'Price', 'Type', 'Actions'].map(header => (
-                  <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">{header}</th>
+                {['Plot Title', 'Location', 'Area (Sq.Ft)', 'Price', 'Type', 'Status', 'Image', 'Actions'].map(header => (
+                  <th key={header} scope="col" className="px-3 py-3 text-left font-semibold text-neutral-500 uppercase tracking-wider whitespace-nowrap">{header}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-neutral-200">
               {plots.map((plot) => (
-                <tr key={plot.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">{plot.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{plot.location}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{plot.area?.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">₹{plot.price?.toLocaleString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">Public Listing</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => openModalForEdit(plot)} leftIcon={<IconPencil className="w-4 h-4"/>}>Edit</Button>
-                    <Button size="sm" variant="danger" onClick={() => handleDeletePlot(plot.id)} leftIcon={<IconTrash className="w-4 h-4"/>}>Delete</Button>
+                <tr key={plot.id} className="hover:bg-blue-50 transition-colors">
+                  <td className="px-3 py-4 whitespace-nowrap font-medium text-neutral-900 max-w-[160px] truncate">{plot.title}</td>
+                  <td className="px-3 py-4 whitespace-nowrap text-neutral-500 max-w-[120px] truncate">{plot.location}</td>
+                  <td className="px-3 py-4 whitespace-nowrap text-neutral-500">{plot.area?.toLocaleString()}</td>
+                  <td className="px-3 py-4 whitespace-nowrap text-neutral-500">₹{plot.price?.toLocaleString()}</td>
+                  <td className="px-3 py-4 whitespace-nowrap text-neutral-500">{plot.type}</td>
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Flagship</span>
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    {plot.imageUrl ? <img src={plot.imageUrl} alt="Plot" className="w-16 h-12 object-cover rounded shadow" /> : <span className="text-xs text-gray-400">No Image</span>}
+                  </td>
+                  <td className="px-3 py-4 whitespace-nowrap font-medium space-x-2 flex flex-col sm:flex-row gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openModalForEdit(plot)} leftIcon={<IconPencil className="w-4 h-4"/>} className="w-full sm:w-auto">Edit</Button>
+                    <Button size="sm" variant="danger" onClick={() => handleDeletePlot(plot.id)} leftIcon={<IconTrash className="w-4 h-4"/>} className="w-full sm:w-auto">Delete</Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {plots.length === 0 && <p className="text-center py-4 text-neutral-500">No plots found.</p>}
+          {plots.length === 0 && <p className="text-center py-4 text-neutral-500">No flagship plots found.</p>}
         </div>
       </Card>
-
       <Modal isOpen={isModalOpen} onClose={closeModal} title="">
         <div className="max-w-lg mx-auto bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-2xl shadow-2xl p-0">
-          <div className="flex items-center justify-between px-8 pt-8 pb-2">
-            <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between px-6 pt-8 pb-2 gap-2">
+            <h2 className="text-xl md:text-2xl font-bold text-primary flex items-center gap-2">
               {editingPlot ? (
                 <>
                   <IconPencil className="w-5 h-5 text-primary" />
-                  Edit Plot
+                  Edit Verified Plot
                 </>
               ) : (
                 <>
                   <IconPlus className="w-5 h-5 text-primary" />
-                  Add New Plot
+                  Add New Verified Plot
                 </>
               )}
             </h2>
-            {/* Keep the inside close/back icon, remove any outside/Modal-level close icon if present */}
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4 px-8 pb-8 pt-2">
+          <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-8 pt-2">
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {renderInputField('Plot Title', 'title')}
                 {renderInputField('Location', 'location')}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {renderInputField('Area (Sq. Ft.)', 'area', 'number')}
                 {renderInputField('Price (₹)', 'price', 'number')}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {renderInputField('Sqft Price (₹)', 'sqftPrice', 'number', false)}
-                {renderInputField('Image URL', 'imageUrl', 'url', false)}
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700">Image Upload</label>
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="mt-1 block w-full text-sm" />
+                  {imagePreview && <img src={imagePreview} alt="Preview" className="mt-2 w-32 h-20 object-cover rounded shadow" />}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700">Type</label>
                   <input
                     type="text"
                     name="type"
                     id="type"
-                    value="Public Listing"
+                    value="Verified Plot"
                     readOnly
                     disabled
                     className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm bg-gray-100 text-gray-700 cursor-not-allowed sm:text-sm"
@@ -226,9 +261,9 @@ const ManagePlotsPage: React.FC = () => {
               {renderTextAreaField('Description', 'description', false)}
               {/* Add amenities/documents as needed */}
             </div>
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button type="button" variant="secondary" onClick={closeModal}>Back</Button>
-              <Button type="submit" variant="primary">{editingPlot ? 'Save Changes' : 'Add Plot'}</Button>
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+              <Button type="button" variant="secondary" onClick={closeModal} className="w-full sm:w-auto">Back</Button>
+              <Button type="submit" variant="primary" className="w-full sm:w-auto">{editingPlot ? 'Save Changes' : 'Add Verified Plot'}</Button>
             </div>
           </form>
         </div>
@@ -249,4 +284,4 @@ const ManagePlotsPage: React.FC = () => {
   );
 };
 
-export default ManagePlotsPage;
+export default ManageVerifiedPlots;

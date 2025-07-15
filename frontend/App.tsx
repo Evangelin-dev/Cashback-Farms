@@ -85,6 +85,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import RealEstateRoute from './components/ProtectedRealEstateRoute';
 import PlotDetailsPage from './pages/user/DetailMySqftListing';
 import RefundPolicyPage from './components/RefundPolicy';
+import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -173,6 +174,7 @@ const AppRoutes: React.FC = () => {
         <Route path="settings" element={<AdminSettingsPage />} />
         <Route path="profile" element={<AdminProfilePage />} />
         <Route path="microplot" element={< ManageMysqft />} />
+        <Route path="verifiedplot" element={< ManageVerifiedPlots />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
 
