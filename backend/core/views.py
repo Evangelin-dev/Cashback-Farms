@@ -41,7 +41,7 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1545,6 +1545,22 @@ class CheckoutCartView(APIView):
             "bookings_created": bookings_created,
             "orders_created": orders_created
         }, status=200)
+
+# views.py
+class WebOrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by('-order_date')
+    serializer_class = WebOrderSerializer
+    permission_classes = [IsB2BVendor]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == UserType.ADMIN:
+            return Order.objects.all().order_by('-order_date')
+        return Order.objects.filter(client=user).order_by('-order_date')
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user)
+
 
 class UpdateOrderStatusView(APIView):
     permission_classes = [IsB2BVendor]
