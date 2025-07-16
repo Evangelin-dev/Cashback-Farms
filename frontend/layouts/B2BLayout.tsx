@@ -19,17 +19,14 @@ import "../pages/realestate/AgentProfileSection.css";
 // --- B2B Profile Section (copied from b2bMain) ---
 const ProfileSection: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
+  const { currentUser } = useAuth();
   const [profile, setProfile] = React.useState({
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+91-9876543210",
+    email: currentUser?.email || "B2B User",
+    phone: currentUser?.mobile_number || "",
     photo: "",
-    kycStatus: "Not Verified",
-    company: "Acme Supplies",
-    joiningDate: new Date(),
   });
   const [showKyc, setShowKyc] = React.useState(false);
-  const [kycStatus, setKycStatus] = React.useState(profile.kycStatus);
+  const [kycStatus, setKycStatus] = React.useState('');
   const navigate = useNavigate();
 
   // KYC simulation
@@ -46,7 +43,6 @@ const ProfileSection: React.FC = () => {
   const toggleDropdown = () => setDropdownOpen((open) => !open);
 
   // Generate B2B Code for display
-  const b2bCode = generateB2BCode(profile.company || "Acme Supplies", profile.joiningDate || new Date());
 
   return (
     <div className="relative w-full">
@@ -60,12 +56,11 @@ const ProfileSection: React.FC = () => {
             {profile.photo ? (
               <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
-              profile.name[0]
+              profile.email[0]
             )}
           </div>
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-primary-light truncate">{profile.name}</span>
           <span className="text-xs text-gray-500 truncate">{profile.email}</span>
         </div>
         <span className="ml-auto">
@@ -87,18 +82,17 @@ const ProfileSection: React.FC = () => {
               {profile.photo ? (
                 <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                profile.name[0]
+                profile.email[0]
               )}
             </div>
           </div>
-          <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
             <span>{profile.phone}</span>
           </div>
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
             <span>{profile.email}</span>
           </div>
-          <div className="w-full flex flex-col items-center mt-4 mb-2">
+          {/* <div className="w-full flex flex-col items-center mt-4 mb-2">
             <div className="flex flex-col items-center w-full px-2 py-2 bg-neutral-100 rounded-lg border border-neutral-200">
               <span className="text-xs text-gray-500 mb-1 tracking-wide">KYC Status</span>
               {kycStatus === "Verified" ? (
@@ -132,10 +126,9 @@ const ProfileSection: React.FC = () => {
                 </button>
               )}
             </div>
-          </div>
+          </div> */}
           {/* Show B2B User Code */}
           <div className="mt-2 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">
-            B2B User Code: <span className="text-primary font-semibold">{b2bCode}</span>
           </div>
           <button
                       className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
