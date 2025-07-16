@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import Button from "../../../components/common/Button";
 import apiClient from "../../../src/utils/api/apiClient";
 
-// Define an interface for the product data structure
 interface Product {
   id: number;
   key: number;
@@ -11,12 +10,11 @@ interface Product {
   category: string;
   price: number;
   quantity: number;
-  offer: number; // For frontend calculations
+  offer: number;
   moq: number;
   description: string;
 }
 
-// Define the structure for the cache during editing
 interface EditCache extends Product {
   originalPrice: number;
 }
@@ -38,10 +36,10 @@ const PriceStockManager: React.FC = () => {
         category: p.category,
         price: parseFloat(p.price),
         quantity: p.stock_quantity,
-        offer: 0, // Initialize offer percentage on the frontend
+        offer: 0,
         moq: p.moq,
         description: p.description,
-      })).sort((a: Product, b: Product) => b.id - a.id); // Show newest first
+      })).sort((a: Product, b: Product) => b.id - a.id);
       setData(transformedData);
     } catch (error) {
       message.error("Failed to load products.");
@@ -56,7 +54,7 @@ const PriceStockManager: React.FC = () => {
 
   const handleEdit = (record: Product) => {
     setEditingKey(record.key);
-    // Store the original price to calculate discounts against a stable value
+  
     setEditCache({ ...record, originalPrice: record.price });
   };
 
@@ -67,15 +65,15 @@ const PriceStockManager: React.FC = () => {
       const payload = {
         name,
         description,
-        price, // Send the final, calculated price
+        price,
         stock_quantity: quantity,
-        category: "material", // As per requirement
+        category: "material",
         moq,
       };
 
       await apiClient.put(`/api/materials/${key}/`, payload);
 
-      // Update the local data to reflect the save
+    
       const newData = data.map(item => (item.key === key ? { ...item, ...editCache, price: editCache.price as number } : item));
       setData(newData);
 
@@ -90,25 +88,25 @@ const PriceStockManager: React.FC = () => {
     }
   };
 
-  // Handles real-time changes and calculates price/offer
+
   const handleChange = (field: keyof EditCache, value: any) => {
     setEditCache(prev => {
       const newCache = { ...prev, [field]: value };
 
-      // Two-way calculation logic
+    
       if (field === 'offer') {
         const offerPercent = value || 0;
         const originalPrice = newCache.originalPrice || 0;
-        // Calculate new price based on offer, rounding to 2 decimal places
+      
         const newPrice = originalPrice * (1 - offerPercent / 100);
         newCache.price = Math.round(newPrice * 100) / 100;
       } else if (field === 'price') {
         const newPrice = value || 0;
         const originalPrice = newCache.originalPrice || 0;
-        // If price is changed manually, recalculate the offer percentage
+      
         if (originalPrice > 0) {
           const newOffer = ((originalPrice - newPrice) / originalPrice) * 100;
-          newCache.offer = Math.max(0, Math.round(newOffer * 100) / 100); // Ensure offer isn't negative
+          newCache.offer = Math.max(0, Math.round(newOffer * 100) / 100);
         } else {
           newCache.offer = 0;
         }
@@ -119,7 +117,7 @@ const PriceStockManager: React.FC = () => {
 
   const columns = [
     { title: "Product", dataIndex: "name", render: (name: string) => <span className="font-semibold text-primary text-xs">{name}</span> },
-    // FIX: This column will now hide on extra-small screens
+  
     { title: "Cat.", dataIndex: "category", responsive: ['sm'], render: (cat: string) => <span className="text-blue-600 font-medium text-xs">{cat}</span> },
     {
       title: "Price",
