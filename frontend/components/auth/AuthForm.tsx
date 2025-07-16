@@ -193,9 +193,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
 
            if (user.user_type === 'real_estate_agent') {
             window.location.href = '/realestate/dashboard';
-          } else if (user.user_type === 'client' || user.user_type === 'b2b_vendor') {
+          } else if (user.user_type === 'client') {
             window.location.href = '/user-dashboard';
-          } else {
+          }else if(user.user_type === 'b2b_vendor') {
+            window.location.href = '/b2b/products';
+          }
+          else {
             window.location.href = '/';
           }
         }, 800);
