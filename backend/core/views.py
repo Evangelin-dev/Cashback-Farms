@@ -26,14 +26,14 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import requests
 from requests.auth import HTTPBasicAuth
-
+from django.db.models import Count
 
 
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -41,7 +41,8 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
+    CallRequestSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1567,25 +1568,26 @@ class UpdateOrderStatusView(APIView):
 
     def post(self, request, pk):
         new_status = request.data.get("status")
-        if not new_status:
-            return Response({"error": "Missing 'status' in request body."}, status=400)
 
-        new_status = new_status.capitalize()
+        if not isinstance(new_status, str) or not new_status.strip():
+            return Response({"error": "Missing or invalid 'status' in request body."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_status = new_status.upper()
 
         valid_transitions = {
-            "Pending": ["Confirmed"],
-            "Confirmed": ["Dispatched"],
-            "Dispatched": ["Delivered"],
-            "Delivered": [],
-            "Cancelled": []
+            "PENDING": ["CONFIRMED", "CANCELLED"],
+            "CONFIRMED": ["PENDING", "DISPATCHED", "CANCELLED"],
+            "DISPATCHED": ["CONFIRMED", "DELIVERED", "CANCELLED"],
+            "DELIVERED": ["DISPATCHED"],
+            "CANCELLED": []
         }
 
         try:
             order = Order.objects.get(pk=pk)
         except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=404)
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        current_status = order.status.capitalize()
+        current_status = order.status.upper()
 
         if new_status not in valid_transitions.get(current_status, []):
             return Response(
@@ -1595,4 +1597,39 @@ class UpdateOrderStatusView(APIView):
 
         order.status = new_status
         order.save()
-        return Response({"message": f"Order status updated to {new_status}."}, status=200)
+        return Response({"message": f"Order status updated to {new_status}."}, status=status.HTTP_200_OK)
+
+
+class CallRequestCreateView(generics.CreateAPIView):
+    queryset = CallRequest.objects.all()
+    serializer_class = CallRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class B2BCustomerListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.user_type != 'b2b_vendor':
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        call_requests = CallRequest.objects.all().order_by('-created_at')
+        serializer = CallRequestSerializer(call_requests, many=True)
+        return Response(serializer.data, status=200)
+
+
+# Toggle Status View
+class ToggleCustomerStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            call_request = CallRequest.objects.get(pk=pk)
+            call_request.status = 'inactive' if call_request.status == 'active' else 'active'
+            call_request.save()
+            return Response({'status': call_request.status}, status=200)
+        except CallRequest.DoesNotExist:
+            return Response({'error': 'Call request not found'}, status=404)
