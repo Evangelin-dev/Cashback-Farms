@@ -29,7 +29,7 @@ const ProductManager: React.FC = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/api/ecommerce/materials/my-products/');
+      const response = await apiClient.get('/ecommerce/materials/my-products/');
       const transformedData: Product[] = response.map((p: any) => ({
         id: p.id,
         key: p.id,
@@ -72,10 +72,10 @@ const ProductManager: React.FC = () => {
 
     try {
       if (editingProduct) {
-        await apiClient.put(`/api/materials/${editingProduct.id}/`, payload);
+        await apiClient.put(`/materials/${editingProduct.id}/`, payload);
         message.success("Product updated successfully!");
       } else {
-        await apiClient.post('/api/materials/', payload);
+        await apiClient.post('/materials/', payload);
         message.success("Product added successfully!");
       }
       setIsModalOpen(false);
@@ -99,7 +99,7 @@ const ProductManager: React.FC = () => {
     const newStatus = originalStatus === 'Active' ? 'Inactive' : 'Active';
     setProducts(products.map(p => p.id === productToToggle.id ? { ...p, status: newStatus } : p));
     try {
-      await apiClient.patch(`/api/materials/${productToToggle.id}/toggle-status/`);
+      await apiClient.patch(`/materials/${productToToggle.id}/toggle-status/`);
       message.success(`Product status changed to ${newStatus}.`);
     } catch (error) {
       message.error("Failed to update status. Reverting change.");
@@ -111,7 +111,7 @@ const ProductManager: React.FC = () => {
     if (!productToDelete) return;
     setSubmitting(true);
     try {
-      await apiClient.delete(`/api/materials/${productToDelete.id}/`);
+      await apiClient.delete(`/materials/${productToDelete.id}/`);
       message.success("Product deleted successfully!");
       setIsDeleteModalVisible(false);
       setProducts(products.filter(p => p.id !== productToDelete.id));
