@@ -1577,8 +1577,8 @@ class UpdateOrderStatusView(APIView):
             "Pending": ["Confirmed"],
             "Confirmed": ["Dispatched"],
             "Dispatched": ["Delivered"],
-            "Delivered": [],
-            "Cancelled": []
+            "Delivered": ["Delivered"],
+            "Cancelled": ["Cancelled"]
         }
 
         try:
