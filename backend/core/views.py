@@ -1574,11 +1574,11 @@ class UpdateOrderStatusView(APIView):
         new_status = new_status.capitalize()
 
         valid_transitions = {
-            "Pending": ["Confirmed"],
-            "Confirmed": ["Dispatched"],
-            "Dispatched": ["Delivered"],
-            "Delivered": ["Delivered"],
-            "Cancelled": ["Cancelled"]
+            "PENDING": ["CONFIRMED"],
+            "CONFIRMED": ["DISPATCHED"],
+            "DISPATCHED": ["DELIVERED"],
+            "DELIVERED": ["DELIVERED"],
+            "CANCELLED": ["CANCELLED"]
         }
 
         try:
