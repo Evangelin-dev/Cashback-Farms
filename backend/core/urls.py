@@ -14,7 +14,7 @@ from .views import (
     SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
-    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView
+    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -37,6 +37,7 @@ router.register(r'materials', MaterialProductViewSet, basename='materials')
 router.register(r'ecommerce/materials', MaterialProductViewSet, basename='ecommerce-materials')
 router.register(r'ecommerce/services', EcommerceProductViewSet, basename='ecommerce-services')
 router.register(r'faqs', FAQViewSet, basename='faq')
+router.register(r'web/orders', WebOrderViewSet, basename='web-orders')
 
 
 
