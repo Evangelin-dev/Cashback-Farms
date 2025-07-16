@@ -143,12 +143,12 @@ const AdminDashboardPage: React.FC = () => {
       {/* Placeholder for more charts/widgets */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
         <Card title="Property Status Overview (Example)" className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 shadow dark:bg-neutral-800 dark:border-neutral-700">
-           <p className="text-neutral-700 font-semibold dark:text-neutral-200">Available: <span className="text-green-600 font-bold dark:text-green-400">{availablePlots}</span></p>
-           <p className="text-neutral-700 font-semibold dark:text-neutral-200">Booked: <span className="text-red-500 font-bold dark:text-red-400">{bookedPlots}</span></p>
+           <p className="text-neutral-700 font-semibold dark:text-neutral-800">Available: <span className="text-green-600 font-bold dark:text-green-400">{availablePlots}</span></p>
+           <p className="text-neutral-700 font-semibold dark:text-neutral-800">Booked: <span className="text-red-500 font-bold dark:text-red-400">{bookedPlots}</span></p>
            {/* This could be a pie chart or more detailed bar chart later */}
         </Card>
         <Card title="Recent Activity (Placeholder)" className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 shadow dark:bg-neutral-800 dark:border-neutral-700">
-            <p className="text-neutral-500 dark:text-neutral-300">Coming soon: Recent bookings, payments, user sign-ups...</p>
+            <p className="text-neutral-500 dark:text-neutral-800">Coming soon: Recent bookings, payments, user sign-ups...</p>
         </Card>
       </div>
 
