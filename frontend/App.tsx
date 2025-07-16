@@ -86,6 +86,7 @@ import RealEstateRoute from './components/ProtectedRealEstateRoute';
 import PlotDetailsPage from './pages/user/DetailMySqftListing';
 import RefundPolicyPage from './components/RefundPolicy';
 import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
+import B2bProtectedRoute from './components/ProtectedB2BRoute';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -98,7 +99,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/Dbook-my-sqft/:plotId" element={<DPlotBookingDetailsPage />} />
         <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
         <Route path="/Dservices" element={<DServicesHubPage />} />
-         <Route path="/micro-plots/:id" element={<DBookMySqftPage />} />
+        <Route path="/micro-plots/:id" element={<DBookMySqftPage />} />
         <Route path="/Dpaymentvai" element={<DPaymentVai />} />
         <Route path="/Dplans" element={<DPlansPage />} />
         <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
@@ -145,10 +146,11 @@ const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
-      <Route element={<B2BLayout />}>
-
-        <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
-        <Route path="/b2b/*" element={<B2BPanelRoutes />} />
+      <Route element={<B2bProtectedRoute />}>
+        <Route element={<B2BLayout />}>
+          <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
+          <Route path="/b2b/*" element={<B2BPanelRoutes />} />
+        </Route>
       </Route>
 
       <Route element={<RealEstateRoute />}>
