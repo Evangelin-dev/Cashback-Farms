@@ -10,6 +10,7 @@ from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+import uuid
 
 
 # User Roles
@@ -291,8 +292,8 @@ class EcommerceProduct(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock_quantity = models.IntegerField(default=0)
-    category = models.CharField(max_length=100, blank=True, null=True)  # e.g., 'material', 'tool', 'service', 'architect'
-    moq = models.IntegerField(default=1, verbose_name="Minimum Order Quantity")  # Added MOQ field
+    category = models.CharField(max_length=100, blank=True, null=True)
+    moq = models.IntegerField(default=1, verbose_name="Minimum Order Quantity")  # Added field
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -304,17 +305,33 @@ class EcommerceProduct(models.Model):
             return f"EcommerceProduct (error: {e})"
 
 
+def generate_order_id():
+    return str(uuid.uuid4()).replace('-', '').upper()[:12]  # Optional formatting
+
 class Order(models.Model):
     client = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='my_orders')
+    order_id = models.CharField(max_length=100, unique=True, blank=True)  # Removed default here
+    product_name = models.CharField(max_length=255, null=True, blank=True)
+    category = models.CharField(max_length=100, null=True, blank=True)
+    qty = models.PositiveIntegerField(null=True, blank=True)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    customer_type = models.CharField(max_length=10, choices=[('B2B', 'B2B'), ('B2C', 'B2C')], null=True, blank=True)
+    buyer_name = models.CharField(max_length=255, null=True, blank=True)
+    buyer_phone_number = models.CharField(max_length=15, null=True, blank=True)
+    gst_number = models.CharField(max_length=20, blank=True, null=True)
+    shipping_address = models.TextField(null=True, blank=True)
+    expected_delivery_date = models.DateField(null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    status = models.CharField(max_length=50, default='pending') # e.g., pending, processing, shipped, delivered, cancelled
+    status = models.CharField(max_length=50, default='pending')
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = generate_order_id()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        try:
-            return f"Order #{self.id} by {self.client.username}"
-        except Exception as e:
-            return f"Order (error: {e})"
+        return f"Order #{self.order_id} by {self.client.username}"
 
 
 class OrderItem(models.Model):

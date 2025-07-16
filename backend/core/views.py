@@ -1545,3 +1545,38 @@ class CheckoutCartView(APIView):
             "bookings_created": bookings_created,
             "orders_created": orders_created
         }, status=200)
+
+class UpdateOrderStatusView(APIView):
+    permission_classes = [IsB2BVendor]
+
+    def post(self, request, pk):
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response({"error": "Missing 'status' in request body."}, status=400)
+
+        new_status = new_status.capitalize()
+
+        valid_transitions = {
+            "Pending": ["Confirmed"],
+            "Confirmed": ["Dispatched"],
+            "Dispatched": ["Delivered"],
+            "Delivered": [],
+            "Cancelled": []
+        }
+
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=404)
+
+        current_status = order.status.capitalize()
+
+        if new_status not in valid_transitions.get(current_status, []):
+            return Response(
+                {"error": f"Cannot change status from {current_status} to {new_status}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order.status = new_status
+        order.save()
+        return Response({"message": f"Order status updated to {new_status}."}, status=200)
