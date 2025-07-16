@@ -524,3 +524,21 @@ class ShortlistCartItem(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
     quantity = models.PositiveIntegerField(null=True, blank=True)
     added_at = models.DateTimeField(auto_now_add=True)
+
+class CallRequest(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="call_requests")
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    city = models.CharField(max_length=100)
+    message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.phone}"

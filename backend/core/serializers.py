@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest
 )
 
 # User and Authentication Serializers
@@ -331,3 +331,9 @@ class WebOrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = '__all__'
         read_only_fields = ('client', 'order_date', 'client_username')
+
+class CallRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CallRequest
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at']
