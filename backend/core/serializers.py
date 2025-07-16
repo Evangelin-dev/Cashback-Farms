@@ -164,14 +164,25 @@ class BookingSerializer(serializers.ModelSerializer):
 
 class EcommerceProductSerializer(serializers.ModelSerializer):
     vendor_username = serializers.CharField(source='vendor.username', read_only=True)
+    status = serializers.SerializerMethodField()  # Map is_active to status
 
     class Meta:
         model = EcommerceProduct
         fields = (
             'id', 'vendor', 'vendor_username', 'name', 'description', 'price',
-            'stock_quantity', 'category', 'is_active', 'created_at', 'updated_at'
+            'stock_quantity', 'category', 'moq', 'status', 'created_at', 'updated_at'
         )
-        read_only_fields = ('vendor', 'vendor_username')
+        read_only_fields = ('id', 'vendor', 'vendor_username', 'created_at', 'updated_at')
+
+    def get_status(self, obj):
+        return 'Active' if obj.is_active else 'Inactive'
+
+    def validate(self, data):
+        # Ensure MOQ is not greater than stock_quantity
+        if 'moq' in data and 'stock_quantity' in data:
+            if data['moq'] > data['stock_quantity']:
+                raise serializers.ValidationError("MOQ cannot be greater than stock quantity.")
+        return data
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
