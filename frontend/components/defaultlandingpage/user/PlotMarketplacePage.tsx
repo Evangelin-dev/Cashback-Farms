@@ -84,19 +84,21 @@ const FilterSidebar: React.FC<{
     return (
         <div className="w-full lg:w-1/4 lg:sticky lg:top-24 bg-white p-4 border rounded-lg shadow-sm h-fit">
             <div className="flex justify-between items-center mb-4 pb-3 border-b"><h3 className="font-bold text-xl">Filters</h3><button onClick={resetFilters} className="text-sm font-semibold text-red-500">Reset</button></div>
-            <div className="mb-6"><label className="font-semibold text-gray-700">Total Price Range</label><p className="text-sm text-gray-500 mb-2">Up to ₹{(priceRange.max / 100000).toFixed(1)} Lacs</p><input type="range" min="0" max="200000000" step="100000" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
-            <div className="mb-6"><label className="font-semibold text-gray-700">Plot Area (sq. ft.)</label><p className="text-sm text-gray-500 mb-2">Up to {areaRange.max.toLocaleString('en-IN')} sq.ft.</p><input type="range" min="0" max="10000" step="100" value={areaRange.max} onChange={(e) => setAreaRange({ ...areaRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
             <div className="mb-6">
                 <label className="font-semibold text-gray-700">Show Only</label>
-                <div className="mt-2 flex items-center">
-                    <input type="checkbox" id="with-photos" checked={showWithPhotos} onChange={(e) => setShowWithPhotos(e.target.checked)} className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
-                    <label htmlFor="with-photos" className="ml-2 text-sm text-gray-600">Plots with Photos</label>
-                </div>
-                <div className="mt-2 flex items-center">
-                    <input type="checkbox" id="verified-plots" checked={showVerified} onChange={(e) => setShowVerified(e.target.checked)} className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
-                    <label htmlFor="verified-plots" className="ml-2 text-sm text-gray-600">Green Heap Verified Plot</label>
+                <div className="mt-2 grid grid-cols-1 gap-3">
+                    <div className="flex items-center min-h-[56px] w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-sm flex-grow">
+                        <input type="checkbox" id="with-photos" checked={showWithPhotos} onChange={(e) => setShowWithPhotos(e.target.checked)} className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
+                        <span className="ml-3 text-green-700 font-semibold flex items-center"><LuRectangleHorizontal className="mr-2 text-xl" /> Plots with Photos</span>
+                    </div>
+                    <div className="flex items-center min-h-[56px] w-full bg-green-100 border border-green-300 rounded-lg px-3 py-2 shadow-sm flex-grow">
+                        <input type="checkbox" id="verified-plots" checked={showVerified} onChange={(e) => setShowVerified(e.target.checked)} className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
+                        <span className="ml-3 text-green-800 font-bold flex items-center"><GoVerified className="mr-2 text-2xl text-green-600" /> Green Heap Verified Plot</span>
+                    </div>
                 </div>
             </div>
+            <div className="mb-6"><label className="font-semibold text-gray-700">Total Price Range</label><p className="text-sm text-gray-500 mb-2">Up to ₹{(priceRange.max / 100000).toFixed(1)} Lacs</p><input type="range" min="0" max="200000000" step="100000" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700">Plot Area (sq. ft.)</label><p className="text-sm text-gray-500 mb-2">Up to {areaRange.max.toLocaleString('en-IN')} sq.ft.</p><input type="range" min="0" max="10000" step="100" value={areaRange.max} onChange={(e) => setAreaRange({ ...areaRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
         </div>
     );
 };

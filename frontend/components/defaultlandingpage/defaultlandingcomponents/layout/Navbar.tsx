@@ -69,21 +69,31 @@ const Navbar: React.FC = () => {
               {currentUser ? (
                 <>
                   {/* Show buttons based on user type */}
+                  {(currentUser.user_type === 'admin'  ) && (
+                    <button
+                      className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
+                      style={{ marginRight: 8 }}
+                      onClick={() => navigate('/admin/plots')}
+                    >
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      Upload plot
+                    </button>
+                  )}
                   {currentUser.user_type === 'admin' && (
                     <button
                       className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
                       style={{ marginRight: 8 }}
-                      onClick={() => navigate('/verifiedplot')}
+                      onClick={() => navigate('/admin/verifiedplot')}
                     >
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Verified Plot
                     </button>
-                  )}
-                  {(currentUser.user_type === 'real_estate_agent' || currentUser.user_type === 'b2b_vendor') && (
+                  )}           
+                  {(currentUser.user_type === 'real_estate_agent' ) && (
                     <button
                       className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
                       style={{ marginRight: 8 }}
-                      onClick={() => navigate('plots')}
+                      onClick={() => navigate('/realestate/post-plots')}
                     >
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                       Upload plot

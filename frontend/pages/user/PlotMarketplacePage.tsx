@@ -156,16 +156,7 @@ const PlotMarketplacePage: React.FC = () => {
           <Button variant={filter === PlotType.PUBLIC ? 'primary' : 'outline'} onClick={() => setFilter(PlotType.PUBLIC)}>Public Listings</Button>
           <Button variant={filter === PlotType.VERIFIED ? 'primary' : 'outline'} onClick={() => setFilter(PlotType.VERIFIED)}>Greenheap Verified</Button>
         </div>
-        <div className="flex items-center mt-3 md:mt-0 md:ml-4">
-          <input
-            type="checkbox"
-            id="verified-plots"
-            checked={showVerifiedOnly}
-            onChange={e => setShowVerifiedOnly(e.target.checked)}
-            className="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-600"
-          />
-          <label htmlFor="verified-plots" className="ml-2 text-sm text-gray-700">Green Heap Verified Plot</label>
-        </div>
+        
       </div>
 
       {isLoading && <div className="text-center py-12 text-lg text-gray-500">Loading plots...</div>}

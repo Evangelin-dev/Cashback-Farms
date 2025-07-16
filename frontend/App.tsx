@@ -161,7 +161,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/realestate/dashboard" element={<Mydashboard />} />
         </Route>
       </Route>
-
+      
+<Route element={<ProtectedRoute />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
@@ -177,7 +178,7 @@ const AppRoutes: React.FC = () => {
         <Route path="verifiedplot" element={< ManageVerifiedPlots />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
-
+</Route>
 
 
       <Route path="/registration" element={<RegistrationPage />} />
