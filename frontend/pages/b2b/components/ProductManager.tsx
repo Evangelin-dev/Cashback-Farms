@@ -1,29 +1,83 @@
-import { Card, Form, Input, InputNumber, Modal, Table, Tag, Tooltip } from "antd";
+import { Card, Form, Input, InputNumber, Modal, Space, Table, Tag, Tooltip } from "antd";
 import React, { useState } from "react";
 import Button from "../../../components/common/Button";
 
-const initialProducts = [
-  { key: 1, name: "UltraTech Cement", price: 380, quantity: 100, category: "Cement", moq: 50, description: "Premium cement for construction", vendor: "Acme Supplies" },
-  { key: 2, name: "Red Clay Bricks", price: 8, quantity: 1000, category: "Bricks", moq: 500, description: "High quality red bricks", vendor: "BrickMart" },
+interface Product {
+  key: React.Key;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+  moq: number;
+  description: string;
+  vendor: string;
+  status: "Active" | "Inactive";
+}
+
+const initialProducts: Product[] = [
+  { key: 1, name: "UltraTech Cement", price: 380, quantity: 100, category: "Cement", moq: 50, description: "Premium cement for construction", vendor: "Acme Supplies", status: "Active" },
+  { key: 2, name: "Red Clay Bricks", price: 8, quantity: 1000, category: "Bricks", moq: 500, description: "High quality red bricks", vendor: "BrickMart", status: "Active" },
 ];
 
 const ProductManager: React.FC = () => {
-  const [products, setProducts] = useState(
-    initialProducts.map((p) => ({ ...p, status: "Active" }))
-  );
-  const [modalVisible, setModalVisible] = useState(false);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form] = Form.useForm();
 
-  const handleAdd = (values: any) => {
-    setProducts([
-      ...products,
-      { key: Date.now(), ...values, status: "Active" }
-    ]);
-    setModalVisible(false);
+  const handleFormFinish = (values: any) => {
+    if (editingProduct) {
+      setProducts(
+        products.map((product) =>
+          product.key === editingProduct.key
+            ? { ...product, ...values }
+            : product
+        )
+      );
+    } else {
+      setProducts([
+        ...products,
+        { key: Date.now(), ...values, status: "Active" },
+      ]);
+    }
+    setIsModalOpen(false);
+    setEditingProduct(null);
+    form.resetFields();
+  };
+  
+  const showAddModal = () => {
+    setEditingProduct(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const showEditModal = (record: Product) => {
+    setEditingProduct(record);
+    form.setFieldsValue(record);
+    setIsModalOpen(true);
+  };
+  
+  const handleCancelModal = () => {
+    setIsModalOpen(false);
+    setEditingProduct(null);
     form.resetFields();
   };
 
-  const handleToggleStatus = (key: number) => {
+  const handleDelete = (key: React.Key) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this product?',
+      content: 'This action cannot be undone.',
+      okText: 'Yes, Delete',
+      okType: 'danger',
+      cancelText: 'No, Cancel',
+      centered: true,
+      onOk: () => {
+        setProducts(products.filter(p => p.key !== key));
+      },
+    });
+  };
+
+  const handleToggleStatus = (key: React.Key) => {
     setProducts((prev) =>
       prev.map((product) =>
         product.key === key
@@ -86,35 +140,63 @@ const ProductManager: React.FC = () => {
     {
       title: "Status",
       dataIndex: "status",
-      render: (_: any, record: any) => (
+      render: (status: string) => (
         <span
           className={`px-2 py-0.5 rounded text-xs font-semibold shadow-sm ${
-            record.status === "Active"
+            status === "Active"
               ? "bg-green-100 text-green-700 border border-green-300"
               : "bg-red-100 text-red-700 border border-red-300"
           }`}
         >
-          {record.status || "Active"}
+          {status}
         </span>
       ),
     },
     {
       title: "Action",
-      render: (_: any, record: any) => (
-        <Tooltip title={record.status === "Inactive" ? "Activate" : "Deactivate"}>
-          <Button
-            variant={record.status === "Inactive" ? "primary" : "outline"}
-            size="sm"
-            className={`transition-colors duration-150 rounded-full px-2 py-0.5 text-xs ${
-              record.status === "Inactive"
-                ? "bg-primary text-white border-primary hover:bg-primary-dark"
-                : "border-primary text-primary hover:bg-primary hover:text-white"
-            }`}
-            onClick={() => handleToggleStatus(record.key)}
-          >
-            {record.status === "Inactive" ? "Active" : "Inactive"}
-          </Button>
-        </Tooltip>
+      key: 'action',
+      render: (_: any, record: Product) => (
+        <Space size="small">
+          <Tooltip title={record.status === "Inactive" ? "Activate" : "Deactivate"}>
+            <Button
+              variant={record.status === "Inactive" ? "primary" : "outline"}
+              size="sm"
+              className={`transition-colors duration-150 rounded-full px-2 py-0.5 text-xs ${
+                record.status === "Inactive"
+                  ? "bg-primary text-white border-primary hover:bg-primary-dark"
+                  : "border-primary text-primary hover:bg-primary hover:text-white"
+              }`}
+              onClick={() => handleToggleStatus(record.key)}
+            >
+              {record.status === "Inactive" ? "Active" : "Inactive"}
+            </Button>
+          </Tooltip>
+          <Tooltip title="Edit Product">
+            <Button
+              variant="outline"
+              size="sm"
+              className="transition-colors duration-150 rounded-full !p-1.5 border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
+              onClick={() => showEditModal(record)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                <path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
+              </svg>
+            </Button>
+          </Tooltip>
+          <Tooltip title="Delete Product">
+            <Button
+              variant="outline"
+              size="sm"
+              className="transition-colors duration-150 rounded-full !p-1.5 border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+              onClick={() => handleDelete(record.key)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" />
+              </svg>
+            </Button>
+          </Tooltip>
+        </Space>
       ),
     },
   ];
@@ -131,7 +213,7 @@ const ProductManager: React.FC = () => {
         </div>
       }
       extra={
-        <Button variant="primary" onClick={() => setModalVisible(true)}>
+        <Button variant="primary" onClick={showAddModal}>
           <span className="flex items-center gap-1">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -157,25 +239,30 @@ const ProductManager: React.FC = () => {
         bordered={false}
         size="small"
         className="rounded-xl shadow"
+        rowKey="key"
       />
       <Modal
         title={
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5 text-primary" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              {editingProduct ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              )}
             </svg>
-            <span className="font-semibold text-primary-light">Add Product</span>
+            <span className="font-semibold text-primary-light">{editingProduct ? "Edit Product" : "Add New Product"}</span>
           </div>
         }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
+        open={isModalOpen}
+        onCancel={handleCancelModal}
         footer={[
           <div key="footer-actions" style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
             <Button
               key="cancel"
               variant="outline"
               className="transition-colors duration-150 hover:bg-red-600 hover:text-white"
-              onClick={() => setModalVisible(false)}
+              onClick={handleCancelModal}
             >
               Cancel
             </Button>
@@ -185,14 +272,14 @@ const ProductManager: React.FC = () => {
               className="transition-colors duration-150 hover:bg-green-600 hover:text-white"
               onClick={() => form.submit()}
             >
-              Add Product
+              {editingProduct ? "Save Changes" : "Add Product"}
             </Button>
           </div>
         ]}
         centered
         style={{ borderRadius: 16 }}
       >
-        <Form form={form} layout="vertical" onFinish={handleAdd}>
+        <Form form={form} layout="vertical" onFinish={handleFormFinish}>
           <div className="grid grid-cols-2 gap-6 mb-4">
             <Form.Item name="name" label={<span className="font-semibold text-primary">Product Name</span>} rules={[{ required: true }]} className="mb-2">
               <Input
