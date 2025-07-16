@@ -281,13 +281,18 @@ class Booking(models.Model):
 
 
 class EcommerceProduct(models.Model):
-    vendor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='products_sold',
-                               limit_choices_to={'user_type': UserType.B2B_VENDOR})
+    vendor = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='products_sold',
+        limit_choices_to={'user_type': UserType.B2B_VENDOR}
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock_quantity = models.IntegerField(default=0)
-    category = models.CharField(max_length=100, blank=True, null=True) # e.g., 'material', 'tool', 'service', 'architect'
+    category = models.CharField(max_length=100, blank=True, null=True)  # e.g., 'material', 'tool', 'service', 'architect'
+    moq = models.IntegerField(default=1, verbose_name="Minimum Order Quantity")  # Added MOQ field
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -879,13 +879,13 @@ class MaterialProductViewSet(viewsets.ModelViewSet):
     serializer_class = EcommerceProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'price']
-    search_fields = ['title', 'description']
+    search_fields = ['name', 'description']
     ordering_fields = ['price', 'created_at']
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status']:
             return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
         return super().get_permissions()
 
@@ -893,9 +893,15 @@ class MaterialProductViewSet(viewsets.ModelViewSet):
         serializer.save(vendor=self.request.user)
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return EcommerceProduct.objects.filter(category='material')
         return EcommerceProduct.objects.filter(category='material')
+
+    @action(detail=True, methods=['patch'], url_path='toggle-status')
+    def toggle_status(self, request, pk=None):
+        product = self.get_object()
+        product.is_active = not product.is_active
+        product.save()
+        serializer = self.get_serializer(product)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FAQViewSet(viewsets.ModelViewSet):
     queryset = FAQ.objects.all()
