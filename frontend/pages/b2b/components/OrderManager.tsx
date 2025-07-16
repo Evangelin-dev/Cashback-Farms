@@ -4,8 +4,13 @@ import { generateOrderId } from "../../../constants.tsx";
 import apiClient from "../../../src/utils/api/apiClient";
 import dayjs from 'dayjs';
 
+// Import the phone number input component and its styles
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+
+// Define the Order interface to match the component's state needs
 type CustomerType = 'B2C' | 'B2B';
-type OrderStatus = "Pending" | "Confirmed" | "Dispatched" | "Delivered" | "Cancelled";
+type OrderStatus = "PENDING" | "CONFIRMED" | "DISPATCHED" | "DELIVERED" | "CANCELLED";
 
 interface Order {
   id: number;
@@ -26,6 +31,15 @@ interface Order {
   expectedDeliveryDate: string;
 }
 
+// Backend-defined valid transitions
+const validTransitions: { [key in OrderStatus]?: OrderStatus[] } = {
+  "PENDING": ["CONFIRMED", "CANCELLED"],
+  "CONFIRMED": ["PENDING", "DISPATCHED", "CANCELLED"],
+  "DISPATCHED": ["CONFIRMED", "DELIVERED", "CANCELLED"],
+  "DELIVERED": ["DISPATCHED"],
+  "CANCELLED": []
+};
+
 const OrderManager: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,47 +49,30 @@ const OrderManager: React.FC = () => {
   const [customerType, setCustomerType] = useState<CustomerType>('B2C');
   const [form] = Form.useForm();
   
- 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const response = await apiClient.get('/api/web/orders/');
       const transformedData: Order[] = response.map((p: any) => ({
-        id: p.id,
-        key: p.id,
-        orderId: p.order_id,
-        productName: p.product_name,
-        category: p.category,
-        qty: p.qty,
-        unitPrice: parseFloat(p.unit_price),
-        totalAmount: parseFloat(p.total_amount),
-        status: p.status.charAt(0).toUpperCase() + p.status.slice(1),
-        customerType: p.customer_type,
-        buyerName: p.buyer_name,
-        buyerPhoneNumber: p.buyer_phone_number,
-        gstNumber: p.gst_number,
-        shippingAddress: p.shipping_address,
-        orderDate: p.order_date,
+        id: p.id, key: p.id, orderId: p.order_id, productName: p.product_name, category: p.category,
+        qty: p.qty, unitPrice: parseFloat(p.unit_price), totalAmount: parseFloat(p.total_amount),
+        status: p.status.toUpperCase() as OrderStatus, // Ensure status is uppercase
+        customerType: p.customer_type, buyerName: p.buyer_name, buyerPhoneNumber: p.buyer_phone_number,
+        gstNumber: p.gst_number, shippingAddress: p.shipping_address, orderDate: p.order_date,
         expectedDeliveryDate: p.expected_delivery_date,
       })).sort((a: Order, b: Order) => b.id - a.id);
       setOrders(transformedData);
-    } catch (error) {
-      message.error("Failed to load orders.");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { message.error("Failed to load orders."); } 
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  useEffect(() => { fetchOrders(); }, []);
 
- 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+  const handleUpdateStatus = async (orderId: number, newStatus: OrderStatus) => {
     setLoading(true);
     try {
       await apiClient.post(`/orders/${orderId}/update-status/`, { status: newStatus });
-      message.success(`Order status updated to ${newStatus}!`);
+      message.success(`Order status updated to ${newStatus.toLowerCase()}!`);
       await fetchOrders();
     } catch (error) {
       console.error(`Failed to update status to ${newStatus}:`, error);
@@ -84,44 +81,14 @@ const OrderManager: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = (orderId: number, currentStatus: OrderStatus) => {
-    const transitions: { [key in OrderStatus]?: OrderStatus } = {
-      "Pending": "Confirmed",
-      "Confirmed": "Dispatched",
-      "Dispatched": "Delivered",
-    };
-    const nextStatus = transitions[currentStatus];
-    if (nextStatus) {
-      updateOrderStatus(orderId, nextStatus.toLowerCase());
-    }
-  };
-
- 
-  const handleCancelOrder = (orderId: number) => {
-    Modal.confirm({
-      title: 'Are you sure you want to cancel this order?',
-      content: 'This action cannot be undone.',
-      okText: 'Yes, Cancel Order',
-      okType: 'danger',
-      onOk: () => updateOrderStatus(orderId, 'cancelled'),
-    });
-  };
-
- 
   const handleAddOrder = async (values: any) => {
     setSubmitting(true);
     const payload = {
-      order_id: generateOrderId(),
-      product_name: values.productName,
-      category: values.category,
-      qty: values.qty,
-      unit_price: values.unitPrice.toFixed(2),
-      total_amount: (values.qty * values.unitPrice).toFixed(2),
-      customer_type: values.customerType,
-      buyer_name: values.buyerName,
-      buyer_phone_number: values.buyerPhoneNumber,
-      shipping_address: values.shippingAddress,
-      expected_delivery_date: values.expectedDeliveryDate.format('YYYY-MM-DD'),
+      order_id: generateOrderId(), product_name: values.productName, category: values.category,
+      qty: values.qty, unit_price: values.unitPrice.toFixed(2), total_amount: (values.qty * values.unitPrice).toFixed(2),
+      customer_type: values.customerType, buyer_name: values.buyerName,
+      buyer_phone_number: values.buyerPhoneNumber, // Already includes country code
+      shipping_address: values.shippingAddress, expected_delivery_date: values.expectedDeliveryDate.format('YYYY-MM-DD'),
       gst_number: values.customerType === 'B2B' ? values.gstNumber : undefined,
     };
 
@@ -132,22 +99,14 @@ const OrderManager: React.FC = () => {
       await fetchOrders();
     } catch (error: any) {
       const errorData = error.response?.data;
-      let errorMessage = "Failed to post order.";
-      if (typeof errorData === 'object' && errorData !== null) {
-        errorMessage = Object.entries(errorData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`).join('; ');
-      }
-      message.error(errorMessage, 5);
-    } finally {
-      setSubmitting(false);
-    }
+      const errorMessage = typeof errorData === 'object' && errorData !== null ? Object.entries(errorData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`).join('; ') : "Failed to post order.";
+      message.error(errorMessage || "Failed to post order.", 5);
+    } finally { setSubmitting(false); }
   };
   
   const showPostOrderModal = () => {
-    setCustomerType('B2C');
-    setFormTotalPrice(0);
-    form.resetFields();
-    form.setFieldsValue({ customerType: 'B2C' });
-    setIsModalOpen(true);
+    setCustomerType('B2C'); setFormTotalPrice(0); form.resetFields();
+    form.setFieldsValue({ customerType: 'B2C' }); setIsModalOpen(true);
   };
   
   const handleFormValuesChange = (changedValues: any, allValues: any) => {
@@ -156,11 +115,6 @@ const OrderManager: React.FC = () => {
       const { qty = 0, unitPrice = 0 } = allValues;
       setFormTotalPrice(qty * unitPrice);
     }
-  };
-
-  const getNextAction = (status: OrderStatus) => {
-    const transitions = { Pending: "Confirm", Confirmed: "Dispatch", Dispatched: "Deliver" };
-    return status in transitions ? { text: `${transitions[status]} Order`, action: transitions[status] } : null;
   };
 
   const columns = [
@@ -172,22 +126,25 @@ const OrderManager: React.FC = () => {
     {
       title: "Status", dataIndex: "status",
       render: (status: OrderStatus) => {
-        const colorMap = { Pending: "orange", Confirmed: "cyan", Dispatched: "blue", Delivered: "green", Cancelled: "red" };
-        const bgMap = { Pending: "bg-yellow-100 text-yellow-700 border-yellow-300", Confirmed: "bg-cyan-100 text-cyan-700 border-cyan-300", Dispatched: "bg-blue-100 text-blue-700 border-blue-300", Delivered: "bg-green-100 text-green-700 border-green-300", Cancelled: "bg-red-100 text-red-700 border-red-300" };
-        return <Tag color={colorMap[status]} className={`font-bold px-2 py-0.5 rounded-full text-xs border ${bgMap[status]}`}>{status}</Tag>
+        const colorMap: { [key in OrderStatus]: string } = { PENDING: "orange", CONFIRMED: "cyan", DISPATCHED: "blue", DELIVERED: "green", CANCELLED: "red" };
+        const bgMap: { [key in OrderStatus]: string } = { PENDING: "bg-yellow-100 text-yellow-700 border-yellow-300", CONFIRMED: "bg-cyan-100 text-cyan-700 border-cyan-300", DISPATCHED: "bg-blue-100 text-blue-700 border-blue-300", DELIVERED: "bg-green-100 text-green-700 border-green-300", CANCELLED: "bg-red-100 text-red-700 border-red-300" };
+        const capitalizedStatus = status.charAt(0) + status.slice(1).toLowerCase();
+        return <Tag color={colorMap[status]} className={`font-bold px-2 py-0.5 rounded-full text-xs border ${bgMap[status]}`}>{capitalizedStatus}</Tag>;
       }
     },
     {
       title: "Action",
-      render: (_: any, record: Order) => {
-        const nextAction = getNextAction(record.status);
-        return (
-          <Space>
-            {nextAction && <Tooltip title={nextAction.text}><Button size="small" type="primary" className="!bg-green-500 hover:!bg-green-600" onClick={() => handleUpdateStatus(record.id, record.status)} disabled={loading}>{nextAction.action}</Button></Tooltip>}
-            {record.status !== 'Delivered' && record.status !== 'Cancelled' && <Tooltip title="Cancel Order"><Button size="small" danger onClick={() => handleCancelOrder(record.id)} disabled={loading}>Cancel</Button></Tooltip>}
-          </Space>
-        );
-      }
+      render: (_: any, record: Order) => (
+        <Space>
+          {(validTransitions[record.status] || []).map(newStatus => (
+            <Tooltip key={newStatus} title={`Change to ${newStatus.toLowerCase()}`}>
+              <Button size="small" type="primary" danger={newStatus === 'CANCELLED'} onClick={() => handleUpdateStatus(record.id, newStatus)} disabled={loading}>
+                {newStatus.charAt(0) + newStatus.slice(1).toLowerCase()}
+              </Button>
+            </Tooltip>
+          ))}
+        </Space>
+      )
     }
   ];
 
@@ -199,8 +156,7 @@ const OrderManager: React.FC = () => {
         style={{ marginBottom: 16, borderRadius: 14, boxShadow: "0 2px 8px #22c55e11", background: "linear-gradient(135deg, #f0fdf4 0%, #f9fafb 100%)", border: "none" }}
         styles={{ body: { background: "transparent", padding: 16 } }}
       >
-        <Table
-          dataSource={orders} columns={columns} loading={loading} pagination={false} size="small" className="rounded-lg shadow" rowKey="key"
+        <Table dataSource={orders} columns={columns} loading={loading} pagination={false} size="small" className="rounded-lg shadow" rowKey="key"
           expandable={{
             expandedRowRender: record => (
               <div className="p-3 bg-gray-50 rounded text-xs grid grid-cols-2 gap-x-8 gap-y-2">
@@ -214,19 +170,19 @@ const OrderManager: React.FC = () => {
             ),
           }}
         />
-        <style>{`.ant-card-head { background: linear-gradient(90deg,#f0fdf4 60%,#bbf7d0 100%); border-radius: 14px 14px 0 0; } .ant-table-thead > tr > th { background: #f0fdf4; font-weight: 700; font-size: 13px; } .ant-table-tbody > tr > td { font-size: 13px; } .ant-table-row-expand-icon { background: #e0f2fe; border-radius: 4px; }`}</style>
+        <style>{`.phone-input-container .PhoneInputInput { border: 1px solid #d1d5db; border-radius: 0.5rem; padding: 0.5rem 0.75rem; width: 100%; font-size: 1rem; transition: border-color 0.2s; } .phone-input-container .PhoneInputInput:focus { border-color: #22c55e; outline: none; box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2); } .ant-card-head { background: linear-gradient(90deg,#f0fdf4 60%,#bbf7d0 100%); border-radius: 14px 14px 0 0; } .ant-table-thead > tr > th { background: #f0fdf4; font-weight: 700; font-size: 13px; } .ant-table-tbody > tr > td { font-size: 13px; } .ant-table-row-expand-icon { background: #e0f2fe; border-radius: 4px; }`}</style>
       </Card>
       
       <Modal
         title="Post a New Order" open={isModalOpen} onCancel={() => setIsModalOpen(false)}
-        footer={[ <Button key="back" onClick={() => setIsModalOpen(false)} disabled={submitting}>Cancel</Button>, <Button key="submit" type="primary" onClick={() => form.submit()} loading={submitting}>Submit Order</Button> ]}
+        footer={[ <Button key="back" onClick={() => setIsModalOpen(false)} disabled={submitting}>Cancel</Button>, <Button key="submit" type="primary" htmlType="submit" form="order-form" loading={submitting}>Submit Order</Button> ]}
         width={700} centered
       >
-        <Form form={form} layout="vertical" onFinish={handleAddOrder} onValuesChange={handleFormValuesChange} initialValues={{ customerType: 'B2C' }} className="mt-4">
+        <Form form={form} id="order-form" layout="vertical" onFinish={handleAddOrder} onValuesChange={handleFormValuesChange} initialValues={{ customerType: 'B2C' }} className="mt-4">
           <Form.Item name="customerType" label="Select Customer Type" rules={[{ required: true }]}><Radio.Group><Radio.Button value="B2C">Individual (B2C)</Radio.Button><Radio.Button value="B2B">Business (B2B)</Radio.Button></Radio.Group></Form.Item>
           <div className="grid grid-cols-2 gap-x-4">
             <Form.Item name="buyerName" label={customerType === 'B2B' ? "Buyer's Registered Business Name" : "Customer Name"} rules={[{ required: true }]}><Input placeholder={customerType === 'B2B' ? "Enter company name" : "Enter full name"} /></Form.Item>
-            <Form.Item name="buyerPhoneNumber" label="Buyer's Phone Number" rules={[{ required: true, pattern: /^[0-9]{10}$/, message: 'Please enter a valid 10-digit phone number' }]}><Input placeholder="e.g. 9876543210" /></Form.Item>
+            <Form.Item name="buyerPhoneNumber" label="Buyer's Phone Number" rules={[{ required: true, message: 'Phone number is required!' }]}><PhoneInput placeholder="Enter phone number" defaultCountry="IN" className="phone-input-container" /></Form.Item>
             <Form.Item name="productName" label="Product Name" rules={[{ required: true }]}><Input placeholder="e.g. UltraTech Cement" /></Form.Item>
             <Form.Item name="category" label="Category" rules={[{ required: true }]}><Input placeholder="e.g. Cement" /></Form.Item>
             <Form.Item name="qty" label="Quantity" rules={[{ required: true, type: 'number', min: 1 }]}><InputNumber style={{ width: "100%" }} placeholder="e.g. 50" /></Form.Item>
