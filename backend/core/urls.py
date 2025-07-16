@@ -14,7 +14,8 @@ from .views import (
     SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
-    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet
+    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
+    CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -101,4 +102,9 @@ urlpatterns = [
     path('cart/clear/', ClearCartView.as_view(), name='clear-cart'),
     path('cart/checkout/', CheckoutCartView.as_view(), name='checkout-cart'),
     path('orders/<int:pk>/update-status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
+    path('call-request/', CallRequestCreateView.as_view(), name='call-request'),
+    path('b2b/customers/', B2BCustomerListView.as_view(), name='b2b-customers'),
+    path('b2b/customer/<int:pk>/toggle-status/', ToggleCustomerStatusView.as_view(), name='b2b-customer-toggle-status'),
+
+
 ]
