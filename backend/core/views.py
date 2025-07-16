@@ -26,14 +26,14 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 import requests
 from requests.auth import HTTPBasicAuth
-
+from django.db.models import Count
 
 
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -41,7 +41,8 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
+    CallRequestSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1576,8 +1577,8 @@ class UpdateOrderStatusView(APIView):
             "Pending": ["Confirmed"],
             "Confirmed": ["Dispatched"],
             "Dispatched": ["Delivered"],
-            "Delivered": [],
-            "Cancelled": []
+            "Delivered": ["Delivered"],
+            "Cancelled": ["Cancelled"]
         }
 
         try:
@@ -1596,3 +1597,36 @@ class UpdateOrderStatusView(APIView):
         order.status = new_status
         order.save()
         return Response({"message": f"Order status updated to {new_status}."}, status=200)
+
+class CallRequestCreateView(generics.CreateAPIView):
+    queryset = CallRequest.objects.all()
+    serializer_class = CallRequestSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user)
+
+class B2BCustomerListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if request.user.user_type != 'b2b_vendor':
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        call_requests = CallRequest.objects.all().order_by('-created_at')
+        serializer = CallRequestSerializer(call_requests, many=True)
+        return Response(serializer.data, status=200)
+
+
+# Toggle Status View
+class ToggleCustomerStatusView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        try:
+            call_request = CallRequest.objects.get(pk=pk)
+            call_request.status = 'inactive' if call_request.status == 'active' else 'active'
+            call_request.save()
+            return Response({'status': call_request.status}, status=200)
+        except CallRequest.DoesNotExist:
+            return Response({'error': 'Call request not found'}, status=404)
