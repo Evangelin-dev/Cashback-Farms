@@ -56,7 +56,7 @@ const Cart: React.FC = () => {
     };
 
     try {
-        await apiClient.post('/api/call-request/', payload);
+        await apiClient.post('/call-request/', payload);
         message.success("Request submitted successfully!");
         setShowPopup(true);
         setName("");
