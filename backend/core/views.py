@@ -41,7 +41,7 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,
+    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer
 )
 
 # --- Authentication and User Management ---
@@ -874,28 +874,83 @@ class IsOwnerOrAdmin(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user.is_staff or obj.vendor == request.user
 
+# class MaterialProductViewSet(viewsets.ModelViewSet):
+#     queryset = EcommerceProduct.objects.filter(category='material')
+#     serializer_class = EcommerceProductSerializer
+#     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+#     filterset_fields = ['category', 'price']
+#     search_fields = ['name', 'description']  # Changed 'title' to 'name' to match model
+#     ordering_fields = ['price', 'created_at']
+
+#     def get_permissions(self):
+#         if self.action in ['list', 'retrieve']:
+#             return [permissions.AllowAny()]
+#         if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status']:
+#             return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
+#         return super().get_permissions()
+
+#     def perform_create(self, serializer):
+#         serializer.save(vendor=self.request.user)
+
+#     def get_queryset(self):
+#         return EcommerceProduct.objects.filter(category='material')
+
+#     @action(detail=True, methods=['patch'], url_path='toggle-status')
+#     def toggle_status(self, request, pk=None):
+#         product = self.get_object()
+#         product.is_active = not product.is_active
+#         product.save()
+#         serializer = self.get_serializer(product)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+#     @action(detail=False, methods=['get'], url_path='my-products', permission_classes=[IsAuthenticated])
+#     def my_products(self, request):
+#         user = request.user
+#         if user.user_type != 'b2b_vendor':
+#             return Response({'detail': 'Only B2B vendors can access this endpoint.'}, status=status.HTTP_403_FORBIDDEN)
+        
+#         products = self.queryset.filter(vendor=user)
+#         serializer = self.get_serializer(products, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+class IsB2BVendor(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.user_type == 'b2b_vendor'
+
 class MaterialProductViewSet(viewsets.ModelViewSet):
     queryset = EcommerceProduct.objects.filter(category='material')
     serializer_class = EcommerceProductSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'price']
-    search_fields = ['title', 'description']
+    search_fields = ['name', 'description']
     ordering_fields = ['price', 'created_at']
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [permissions.IsAuthenticated(), IsOwnerOrAdmin()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status', 'my_products']:
+            return [permissions.IsAuthenticated(), IsB2BVendor()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
         serializer.save(vendor=self.request.user)
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return EcommerceProduct.objects.filter(category='material')
         return EcommerceProduct.objects.filter(category='material')
+
+    @action(detail=True, methods=['patch'], url_path='toggle-status')
+    def toggle_status(self, request, pk=None):
+        product = self.get_object()
+        product.is_active = not product.is_active
+        product.save()
+        serializer = self.get_serializer(product)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'], url_path='my-products')
+    def my_products(self, request):
+        user = request.user
+        products = self.queryset.filter(vendor=user)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class FAQViewSet(viewsets.ModelViewSet):
     queryset = FAQ.objects.all()
@@ -1490,3 +1545,54 @@ class CheckoutCartView(APIView):
             "bookings_created": bookings_created,
             "orders_created": orders_created
         }, status=200)
+
+# views.py
+class WebOrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by('-order_date')
+    serializer_class = WebOrderSerializer
+    permission_classes = [IsB2BVendor]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == UserType.ADMIN:
+            return Order.objects.all().order_by('-order_date')
+        return Order.objects.filter(client=user).order_by('-order_date')
+
+    def perform_create(self, serializer):
+        serializer.save(client=self.request.user)
+
+
+class UpdateOrderStatusView(APIView):
+    permission_classes = [IsB2BVendor]
+
+    def post(self, request, pk):
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response({"error": "Missing 'status' in request body."}, status=400)
+
+        new_status = new_status.capitalize()
+
+        valid_transitions = {
+            "Pending": ["Confirmed"],
+            "Confirmed": ["Dispatched"],
+            "Dispatched": ["Delivered"],
+            "Delivered": [],
+            "Cancelled": []
+        }
+
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found."}, status=404)
+
+        current_status = order.status.capitalize()
+
+        if new_status not in valid_transitions.get(current_status, []):
+            return Response(
+                {"error": f"Cannot change status from {current_status} to {new_status}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        order.status = new_status
+        order.save()
+        return Response({"message": f"Order status updated to {new_status}."}, status=200)

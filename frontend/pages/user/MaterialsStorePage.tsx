@@ -18,8 +18,9 @@ interface Material {
   price: string;
   stock_quantity: number;
   category: string;
-  is_active: boolean;
-  moq: number; // Assuming MOQ and ImageUrl are part of the type
+  is_active?: boolean;
+  status : string;
+  moq: number;
   imageUrl: string;
 }
 
@@ -69,12 +70,13 @@ const MaterialsStorePage: React.FC = () => {
       try {
         const [materialsResponse, shortlistResponse] = await Promise.all([
           apiClient.get('/materials/', { headers }),
+
           apiClient.get('/cart/', { headers })
         ]);
 
         setMaterials(materialsResponse || []);
         setShortlistedItems(shortlistResponse || []);
-
+        console.log(materialsResponse, 'mats')
       } catch (err) {
         setError("Failed to fetch materials. Please try refreshing the page.");
         console.error("Error fetching materials:", err);
@@ -84,9 +86,9 @@ const MaterialsStorePage: React.FC = () => {
     };
 
     if (currentUser) {
-        fetchPageData();
+      fetchPageData();
     } else {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }, [currentUser]);
 
@@ -121,10 +123,10 @@ const MaterialsStorePage: React.FC = () => {
 
   const filteredMaterials = useMemo(() => {
     return materials.filter(material => {
-      if (!material.is_active) return false;
+      if (material.status !== 'Active') return false; 
       const matchesCategory = !selectedCategory || material.category === selectedCategory;
       const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            material.vendor_username.toLowerCase().includes(searchTerm.toLowerCase());
+        material.vendor_username.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
   }, [materials, selectedCategory, searchTerm]);
@@ -155,23 +157,22 @@ const MaterialsStorePage: React.FC = () => {
 
       <div className="mb-10 p-6 bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="mb-6">
-            <input 
-                type="text"
-                placeholder="Search materials by name or vendor..."
-                className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <input
+            type="text"
+            placeholder="Search materials by name or vendor..."
+            className="w-full px-5 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-shadow"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Browse by Category:</h2>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-              selectedCategory === null 
-                ? 'bg-green-600 text-white shadow-md' 
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${selectedCategory === null
+                ? 'bg-green-600 text-white shadow-md'
                 : 'bg-gray-200 text-gray-700 hover:bg-green-100 hover:text-green-800'
-            }`}
+              }`}
           >
             All Categories
           </button>
@@ -179,57 +180,56 @@ const MaterialsStorePage: React.FC = () => {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 capitalize ${
-                selectedCategory === category
-                  ? 'bg-green-600 text-white shadow-md' 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 capitalize ${selectedCategory === category
+                  ? 'bg-green-600 text-white shadow-md'
                   : 'bg-gray-200 text-gray-700 hover:bg-green-100 hover:text-green-800'
-              }`}
+                }`}
             >
               {category}
             </button>
           ))}
         </div>
       </div>
-      
+
       {filteredMaterials.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filteredMaterials.map(material => {
             const isAlreadyShortlisted = shortlistedItems.some(item => item.item_id === material.id);
             const isCurrentlySubmitting = submittingId === material.id;
-            
+
             return (
-                <CardShell key={material.id} className="relative">
-                    {currentUser && (
-                        <button
-                          onClick={() => handleAddToWishlist(material.id)}
-                          disabled={isAlreadyShortlisted || isCurrentlySubmitting}
-                          className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/70 backdrop-blur-sm transition-colors disabled:cursor-not-allowed"
-                          aria-label="Add to wishlist"
-                        >
-                          {isAlreadyShortlisted ? (
-                            <SolidHeartIcon className="w-6 h-6 text-red-500" />
-                          ) : (
-                            <OutlineHeartIcon className="w-6 h-6 text-gray-700 hover:text-red-500" />
-                          )}
-                        </button>
+              <CardShell key={material.id} className="relative">
+                {currentUser && (
+                  <button
+                    onClick={() => handleAddToWishlist(material.id)}
+                    disabled={isAlreadyShortlisted || isCurrentlySubmitting}
+                    className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/70 backdrop-blur-sm transition-colors disabled:cursor-not-allowed"
+                    aria-label="Add to wishlist"
+                  >
+                    {isAlreadyShortlisted ? (
+                      <SolidHeartIcon className="w-6 h-6 text-red-500" />
+                    ) : (
+                      <OutlineHeartIcon className="w-6 h-6 text-gray-700 hover:text-red-500" />
                     )}
-                    <img src={material.imageUrl || 'https://picsum.photos/seed/material/300/200'} alt={material.name} className="w-full h-40 object-cover"/>
-                    <div className="p-4">
-                        <h3 className="text-md font-semibold text-gray-800 mb-1 truncate">{material.name}</h3>
-                        <p className="text-xs text-gray-500 mb-1 capitalize">Category: {material.category}</p>
-                        <p className="text-sm text-green-600 font-bold mb-1">₹{parseFloat(material.price).toLocaleString('en-IN')}</p>
-                        <p className="text-xs text-gray-500 mb-1">MOQ: {material.moq}</p>
-                        <p className="text-xs text-gray-500 mb-2">Vendor: {material.vendor_username}</p>
-                        <Link to={`/materials/${material.id}`}>
-                        <Button variant="outline" size="sm" className="w-full">View Details</Button>
-                        </Link>
-                    </div>
-                </CardShell>
+                  </button>
+                )}
+                <img src={material.imageUrl || 'https://picsum.photos/seed/material/300/200'} alt={material.name} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h3 className="text-md font-semibold text-gray-800 mb-1 truncate">{material.name}</h3>
+                  <p className="text-xs text-gray-500 mb-1 capitalize">Category: {material.category}</p>
+                  <p className="text-sm text-green-600 font-bold mb-1">₹{parseFloat(material.price).toLocaleString('en-IN')}</p>
+                  <p className="text-xs text-gray-500 mb-1">MOQ: {material.moq}</p>
+                  <p className="text-xs text-gray-500 mb-2">Vendor: {material.vendor_username}</p>
+                  <Link to={`/materials/${material.id}`}>
+                    <Button variant="outline" size="sm" className="w-full">View Details</Button>
+                  </Link>
+                </div>
+              </CardShell>
             );
           })}
         </div>
       ) : (
-         <div className="text-center py-16">
+        <div className="text-center py-16">
           <p className="text-2xl font-semibold text-gray-600">No Materials Found</p>
           <p className="text-gray-400 mt-2">Try adjusting your search or category filters.</p>
         </div>
