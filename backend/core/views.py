@@ -1568,25 +1568,26 @@ class UpdateOrderStatusView(APIView):
 
     def post(self, request, pk):
         new_status = request.data.get("status")
-        if not new_status:
-            return Response({"error": "Missing 'status' in request body."}, status=400)
 
-        new_status = new_status.capitalize()
+        if not isinstance(new_status, str) or not new_status.strip():
+            return Response({"error": "Missing or invalid 'status' in request body."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_status = new_status.upper()
 
         valid_transitions = {
-            "PENDING": ["CONFIRMED"],
-            "CONFIRMED": ["DISPATCHED"],
-            "DISPATCHED": ["DELIVERED"],
-            "DELIVERED": ["DELIVERED"],
-            "CANCELLED": ["CANCELLED"]
+            "PENDING": ["CONFIRMED", "CANCELLED"],
+            "CONFIRMED": ["PENDING", "DISPATCHED", "CANCELLED"],
+            "DISPATCHED": ["CONFIRMED", "DELIVERED", "CANCELLED"],
+            "DELIVERED": ["DISPATCHED"],
+            "CANCELLED": []
         }
 
         try:
             order = Order.objects.get(pk=pk)
         except Order.DoesNotExist:
-            return Response({"error": "Order not found."}, status=404)
+            return Response({"error": "Order not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        current_status = order.status.capitalize()
+        current_status = order.status.upper()
 
         if new_status not in valid_transitions.get(current_status, []):
             return Response(
@@ -1596,7 +1597,8 @@ class UpdateOrderStatusView(APIView):
 
         order.status = new_status
         order.save()
-        return Response({"message": f"Order status updated to {new_status}."}, status=200)
+        return Response({"message": f"Order status updated to {new_status}."}, status=status.HTTP_200_OK)
+
 
 class CallRequestCreateView(generics.CreateAPIView):
     queryset = CallRequest.objects.all()
@@ -1604,7 +1606,8 @@ class CallRequestCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(client=self.request.user)
+        serializer.save(user=self.request.user)
+
 
 class B2BCustomerListView(APIView):
     permission_classes = [IsAuthenticated]
