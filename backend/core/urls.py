@@ -14,7 +14,7 @@ from .views import (
     SubmitMaterialInquiry, SubmitServiceInquiry, AllBookingListView, MyBookingListView, BookingByClientIDView, PublicPlotDetailView,
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
-    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView
+    UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -37,6 +37,7 @@ router.register(r'materials', MaterialProductViewSet, basename='materials')
 router.register(r'ecommerce/materials', MaterialProductViewSet, basename='ecommerce-materials')
 router.register(r'ecommerce/services', EcommerceProductViewSet, basename='ecommerce-services')
 router.register(r'faqs', FAQViewSet, basename='faq')
+
 
 
 support_ticket = SupportTicketViewSet.as_view({
@@ -98,4 +99,5 @@ urlpatterns = [
     path('cart/remove-item/<int:id>/', RemoveCartItemView.as_view(), name='remove-cart-item'),
     path('cart/clear/', ClearCartView.as_view(), name='clear-cart'),
     path('cart/checkout/', CheckoutCartView.as_view(), name='checkout-cart'),
+    path('orders/<int:pk>/update-status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
 ]
