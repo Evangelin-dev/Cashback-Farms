@@ -323,3 +323,11 @@ class ShortlistCartItemSerializer(serializers.ModelSerializer):
         price = self.get_price_per_unit(obj)
         qty = obj.quantity if obj.quantity else 1
         return str(float(price or 0) * qty)
+
+class WebOrderSerializer(serializers.ModelSerializer):
+    client_username = serializers.CharField(source='client.username', read_only=True)
+
+    class Meta:
+        model = Order
+        fields = '__all__'
+        read_only_fields = ('client', 'order_date', 'client_username')
