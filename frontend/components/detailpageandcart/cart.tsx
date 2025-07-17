@@ -72,9 +72,7 @@ console.log(vendor,'vendor')
       email,
       city,
       message: messageText,
-      item_name: itemName,
-      vendor_info: vendor,
-      material_id: itemId,
+      material: itemId,
     };
     
     try {
