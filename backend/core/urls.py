@@ -15,7 +15,7 @@ from .views import (
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
-    CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView
+    CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -103,8 +103,10 @@ urlpatterns = [
     path('cart/checkout/', CheckoutCartView.as_view(), name='checkout-cart'),
     path('orders/<int:pk>/update-status/', UpdateOrderStatusView.as_view(), name='update-order-status'),
     path('call-request/', CallRequestCreateView.as_view(), name='call-request'),
-    path('b2b/customers/', B2BCustomerListView.as_view(), name='b2b-customers'),
+    path('b2b/call-requests/', B2BCustomerListView.as_view(), name='b2b-call-requests'),
     path('b2b/customer/<int:pk>/toggle-status/', ToggleCustomerStatusView.as_view(), name='b2b-customer-toggle-status'),
     path('b2b/profile/', B2BVendorProfileView.as_view(), name='b2b-profile'),
+    path('vendor/payments/summary/', VendorPaymentSummaryView.as_view(), name='vendor-payment-summary'),
+    path('vendor/payments/history/', VendorPaymentHistoryView.as_view(), name='vendor-payment-history'),
 
 ]

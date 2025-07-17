@@ -28,6 +28,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from django.db.models import Count
 from rest_framework.generics import RetrieveUpdateAPIView
+from django.db.models import Sum, F
 
 
 
@@ -1609,7 +1610,6 @@ class CallRequestCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
 class B2BCustomerListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1617,7 +1617,12 @@ class B2BCustomerListView(APIView):
         if request.user.user_type != 'b2b_vendor':
             return Response({"detail": "Unauthorized"}, status=403)
 
-        call_requests = CallRequest.objects.all().order_by('-created_at')
+        # Get all materials posted by this vendor
+        vendor_materials = EcommerceProduct.objects.filter(vendor=request.user)
+
+        # Get call requests linked to those materials
+        call_requests = CallRequest.objects.filter(material__in=vendor_materials).order_by('-created_at')
+
         serializer = CallRequestSerializer(call_requests, many=True)
         return Response(serializer.data, status=200)
 
@@ -1641,3 +1646,78 @@ class B2BVendorProfileView(RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+class VendorPaymentSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        vendor = request.user
+
+        # First: Check if OrderItem-based logic works
+        delivered_items = OrderItem.objects.filter(
+            product__vendor=vendor,
+            order__status__iexact='DELIVERED'
+        )
+
+        total_earned = delivered_items.aggregate(
+            total_amount=Sum(F('quantity') * F('price_at_purchase'))
+        )['total_amount']
+
+        # If no OrderItems exist, fallback to Order model
+        if total_earned is None:
+            total_earned = Order.objects.filter(
+                client=vendor,
+                status__iexact='DELIVERED'
+            ).aggregate(
+                total=Sum('total_amount')
+            )['total'] or Decimal('0.00')
+
+        return Response({
+            "vendor": vendor.username,
+            "total_earned": str(total_earned),
+            "currency": "INR"
+        }, status=200)
+
+
+
+class VendorPaymentHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        vendor = request.user
+
+        history = []
+
+        # First try: fetch OrderItems
+        delivered_items = OrderItem.objects.filter(
+            product__vendor=vendor,
+            order__status__iexact='DELIVERED'
+        ).select_related('order', 'product')
+
+        if delivered_items.exists():
+            for item in delivered_items:
+                history.append({
+                    "order_id": item.order.order_id,
+                    "product": item.product.name,
+                    "quantity": item.quantity,
+                    "unit_price": str(item.price_at_purchase),
+                    "total": str(item.quantity * item.price_at_purchase),
+                    "delivered_on": item.order.order_date.date()
+                })
+        else:
+            # Fallback: use Order model directly (if item model not used)
+            delivered_orders = Order.objects.filter(
+                client=vendor,
+                status__iexact='DELIVERED'
+            )
+            for order in delivered_orders:
+                history.append({
+                    "order_id": order.order_id,
+                    "product": order.product_name,
+                    "quantity": order.qty,
+                    "unit_price": str(order.unit_price),
+                    "total": str(order.total_amount),
+                    "delivered_on": order.order_date.date()
+                })
+
+        return Response(history, status=200)
