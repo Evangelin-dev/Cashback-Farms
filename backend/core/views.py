@@ -33,7 +33,7 @@ from django.db.models import Count
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -42,7 +42,7 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer
+    CallRequestSerializer, B2BVendorProfileSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1633,3 +1633,10 @@ class ToggleCustomerStatusView(APIView):
             return Response({'status': call_request.status}, status=200)
         except CallRequest.DoesNotExist:
             return Response({'error': 'Call request not found'}, status=404)
+
+class B2BVendorProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = B2BVendorProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return B2BVendorProfile.objects.get_or_create(user=self.request.user)[0]
