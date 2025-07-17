@@ -338,10 +338,22 @@ class CallRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['user', 'created_at']
 
-class B2BVendorProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(read_only=True)
+class B2BProfileSerializer(serializers.ModelSerializer):
+    address = serializers.SerializerMethodField()
+    town = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(required=False, allow_blank=True)
+    state = serializers.CharField(required=False, allow_blank=True)
+    country = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
-        model = B2BVendorProfile
-        fields = '__all__'
-        read_only_fields = ['user', 'created_at']
+        model = CustomUser
+        fields = [
+            'first_name', 'last_name', 'email', 'mobile_number', 'gst_number',
+            'town', 'city', 'state', 'country', 'address'
+        ]
+        read_only_fields = ['email', 'address']
+
+    def get_address(self, obj):
+        parts = filter(None, [obj.town, obj.city, obj.state, obj.country])
+        return ', '.join(parts) or "Not Provided"
+

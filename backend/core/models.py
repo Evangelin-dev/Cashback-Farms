@@ -94,6 +94,7 @@ class CustomUser(AbstractUser):
     user_code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
+    gst_number = models.CharField(max_length=15, blank=True, null=True)
 
     is_active = models.BooleanField(default=False)
 
