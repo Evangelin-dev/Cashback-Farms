@@ -840,7 +840,7 @@ class KYCStatusView(APIView):
         documents = request.user.kyc_documents.all()
         serializer = KYCDocumentSerializer(documents, many=True)
         return Response({
-            "status": "not verified",  # You can customize this logic based on document statuses
+            # "status": "pending",  # You can customize this logic based on document statuses
             "documents": serializer.data
         }, status=200)
 
