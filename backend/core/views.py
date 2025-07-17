@@ -1736,22 +1736,31 @@ class InterestedUsersView(APIView):
         if user.user_type != 'real_estate_agent':
             return Response({"detail": "Unauthorized"}, status=403)
 
-        plot_content_type = ContentType.objects.get_for_model(Plot)
+        plot_content_type = ContentType.objects.get_for_model(PlotListing)
 
+        # Get only shortlisted items for PlotListing
         items = ShortlistCartItem.objects.filter(
-            content_type=plot_content_type,
-            content_object__agent=user
-        ).select_related('cart__user', 'content_type')
+            content_type=plot_content_type
+        ).select_related('cart__user')
 
         response_data = []
+
         for item in items:
             plot = item.content_object
+
+            # Safely skip non-PlotListing objects
+            if not isinstance(plot, PlotListing):
+                continue
+
+            if plot.listed_by_agent_id != user.id:
+                continue
+
             buyer = item.cart.user
             response_data.append({
                 "buyer_name": f"{buyer.first_name} {buyer.last_name}",
                 "buyer_phone": getattr(buyer, "mobile_number", ""),
                 "buyer_email": buyer.email,
-                "property_title": getattr(plot, "title", ""),
+                "property_title": plot.title,
                 "contacted_on": item.added_at.strftime('%Y-%m-%d')
             })
 
