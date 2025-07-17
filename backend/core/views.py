@@ -1727,3 +1727,32 @@ class VendorPaymentHistoryView(APIView):
                 })
 
         return Response(history, status=200)
+
+class InterestedUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.user_type != 'real_estate_agent':
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        plot_content_type = ContentType.objects.get_for_model(Plot)
+
+        items = ShortlistCartItem.objects.filter(
+            content_type=plot_content_type,
+            content_object__agent=user
+        ).select_related('cart__user', 'content_type')
+
+        response_data = []
+        for item in items:
+            plot = item.content_object
+            buyer = item.cart.user
+            response_data.append({
+                "buyer_name": f"{buyer.first_name} {buyer.last_name}",
+                "buyer_phone": getattr(buyer, "mobile_number", ""),
+                "buyer_email": buyer.email,
+                "property_title": getattr(plot, "title", ""),
+                "contacted_on": item.added_at.strftime('%Y-%m-%d')
+            })
+
+        return Response(response_data, status=200)
