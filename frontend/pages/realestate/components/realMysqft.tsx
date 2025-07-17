@@ -211,7 +211,6 @@ const RealMySqft: React.FC = () => {
       >
         <Form form={form} layout="vertical" onFinish={handleAdd} style={{ gap: 12, display: "flex", flexDirection: "column" }}>
           <Form.Item name="projectName" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Project Name</span>} rules={[{ required: true }]} style={{ marginBottom: 16 }}><Input style={{borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0",}} placeholder="e.g. Green Acres"/></Form.Item>
-          
           <div style={{ position: 'relative' }}>
             <Form.Item name="location" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Location</span>} rules={[{ required: true, message: "Please select a location" }]} style={{ marginBottom: 16 }}>
               <Input
