@@ -1617,14 +1617,12 @@ class B2BCustomerListView(APIView):
         if request.user.user_type != 'b2b_vendor':
             return Response({"detail": "Unauthorized"}, status=403)
 
-        # Get all materials posted by this vendor
         vendor_materials = EcommerceProduct.objects.filter(vendor=request.user)
-
-        # Get call requests linked to those materials
         call_requests = CallRequest.objects.filter(material__in=vendor_materials).order_by('-created_at')
 
         serializer = CallRequestSerializer(call_requests, many=True)
         return Response(serializer.data, status=200)
+
 
 
 # Toggle Status View
