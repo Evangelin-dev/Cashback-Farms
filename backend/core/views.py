@@ -27,6 +27,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 import requests
 from requests.auth import HTTPBasicAuth
 from django.db.models import Count
+from rest_framework.generics import RetrieveUpdateAPIView
 
 
 
@@ -42,7 +43,7 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BVendorProfileSerializer
+    CallRequestSerializer, B2BProfileSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1634,9 +1635,9 @@ class ToggleCustomerStatusView(APIView):
         except CallRequest.DoesNotExist:
             return Response({'error': 'Call request not found'}, status=404)
 
-class B2BVendorProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = B2BVendorProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class B2BVendorProfileView(RetrieveUpdateAPIView):
+    serializer_class = B2BProfileSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        return B2BVendorProfile.objects.get_or_create(user=self.request.user)[0]
+        return self.request.user
