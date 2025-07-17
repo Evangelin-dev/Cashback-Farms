@@ -348,7 +348,7 @@ class B2BProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = [
-            'first_name', 'last_name', 'email', 'mobile_number', 'gst_number',
+            'first_name', 'last_name', 'email', 'mobile_number', 'gst_number', 'company_name',
             'town', 'city', 'state', 'country', 'address'
         ]
         read_only_fields = ['email', 'address']
