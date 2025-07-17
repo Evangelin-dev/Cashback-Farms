@@ -67,7 +67,7 @@ export const DMaterialDetailPage: React.FC = () => {
             const response = await apiClient.get(`/public/materials/${id}/`);
             const apiMaterial = response;
             const mappedMaterial: Material = {
-              id: apiMaterial.id,
+              id: apiMaterial?.id,
               name: apiMaterial.name,
               description: apiMaterial.description || 'No description available.',
               price: Number(apiMaterial.price),
