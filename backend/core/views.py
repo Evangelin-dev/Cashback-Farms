@@ -840,7 +840,7 @@ class KYCStatusView(APIView):
         documents = request.user.kyc_documents.all()
         serializer = KYCDocumentSerializer(documents, many=True)
         return Response({
-            "status": "pending",  # You can customize this logic based on document statuses
+            "status": "not verified",  # You can customize this logic based on document statuses
             "documents": serializer.data
         }, status=200)
 
@@ -1617,9 +1617,16 @@ class B2BCustomerListView(APIView):
         if request.user.user_type != 'b2b_vendor':
             return Response({"detail": "Unauthorized"}, status=403)
 
+        # Get all materials listed by this vendor
         vendor_materials = EcommerceProduct.objects.filter(vendor=request.user)
-        call_requests = CallRequest.objects.filter(material__in=vendor_materials).order_by('-created_at')
+        vendor_material_ids = list(vendor_materials.values_list('id', flat=True))
+        print("Vendor Materials IDs:", vendor_material_ids)
 
+        # Filter call requests made for those materials
+        call_requests = CallRequest.objects.filter(material__in=vendor_material_ids).order_by('-created_at')
+        print("Call Requests Count:", call_requests.count())
+
+        # Serialize and return the data
         serializer = CallRequestSerializer(call_requests, many=True)
         return Response(serializer.data, status=200)
 
