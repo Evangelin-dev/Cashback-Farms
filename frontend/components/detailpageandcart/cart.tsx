@@ -112,7 +112,6 @@ console.log(vendor,'vendor')
           <h1 className="text-xl font-bold text-green-700 mb-1 text-center">Request a Call</h1>
           <p className="text-gray-600 text-center mb-2 text-sm">Enter your details and our team will call you back.</p>
 
-          {/* 4. Display the item context to the user */}
           <div className="bg-green-50 p-3 rounded-lg w-full text-center mt-2 border border-green-200">
             <p className="text-sm text-gray-600">You are requesting a call about:</p>
             <p className="font-bold text-green-800 text-lg">{itemName}</p>
