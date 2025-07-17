@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../../src/utils/api/apiClient";
-
-
 import { FaSpinner } from 'react-icons/fa';
 import { IoLocationOutline } from "react-icons/io5";
 
@@ -96,7 +94,6 @@ const FilterSidebar: React.FC<{
                 <h3 className="font-bold text-xl">Filters</h3>
                 <button onClick={resetFilters} className="text-sm font-semibold text-red-500">Reset</button>
             </div>
-            {/* --- NEW GEOAPIFY SEARCH BAR --- */}
             <div 
                 className="mb-6 relative" 
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
