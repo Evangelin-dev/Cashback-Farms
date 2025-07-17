@@ -65,7 +65,7 @@ export const DMaterialDetailPage: React.FC = () => {
         setError(null);
         try {
             const response = await apiClient.get(`/public/materials/${id}/`);
-            const apiMaterial = response; // Correctly access response.data
+            const apiMaterial = response;
 
             const mappedMaterial: Material = {
               id: apiMaterial.id,
