@@ -41,7 +41,7 @@ export const DPlotDetailPage: React.FC = () => {
     // ... existing DPlotDetailPage code ...
     return (
         <DDetailPageLayout title="Mock Plot" backLink="/Dplots" backLinkText="Back to Plot Marketplace" children={undefined}>
-            {/* ... JSX ... */}
+           
         </DDetailPageLayout>
     );
 };
@@ -93,10 +93,17 @@ export const DMaterialDetailPage: React.FC = () => {
       if (!currentUser) {
           setShowLoginPopup(true);
       } else {
-          navigate(`/Dcart`);
+          navigate(`/Dcart`, { 
+              state: {
+                  requestType: 'material',
+                  itemId: material?.id,
+                  itemName: material?.name,
+                  vendor: material?.vendor,
+              }
+          });
       }
   };
-
+console.log('test',material?.id , material?.vendor,material?.name);
   if (isLoading) return <DDetailPageLayout title="Loading..." backLink="/Dmaterials" backLinkText="Back to Materials Store"><FaSpinner className="animate-spin" /></DDetailPageLayout>;
   if (error || !material) return <DDetailPageLayout title="Error" backLink="/Dmaterials" backLinkText="Back to Materials Store"><p>{error}</p></DDetailPageLayout>;
 
