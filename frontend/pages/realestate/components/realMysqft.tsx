@@ -25,7 +25,6 @@ const debounce = (func: Function, delay: number) => {
   };
 };
 
-
 const RealMySqft: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -36,28 +35,21 @@ const RealMySqft: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-
+  // --- Geoapify State ---
   const [locationInput, setLocationInput] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
+  // --- NEW STATE TO CONTROL DROPDOWN VISIBILITY ---
+  const [showSuggestions, setShowSuggestions] = useState(true);
 
   const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
 
-
   const fetchLocationSuggestions = useCallback(
     debounce(async (text: string) => {
-      if (!GEOAPIFY_API_KEY) {
-        console.error("Geoapify API key is missing from environment variables.");
-        return;
-      }
-      if (!text || text.length < 3) {
-        setLocationSuggestions([]);
-        return;
-      }
-
+      if (!GEOAPIFY_API_KEY) { console.error("Geoapify API key is missing."); return; }
+      if (!text || text.length < 3) { setLocationSuggestions([]); return; }
       setIsLocationLoading(true);
       const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&apiKey=${GEOAPIFY_API_KEY}`;
-      
       try {
         const response = await fetch(url);
         const data = await response.json();
@@ -73,20 +65,18 @@ const RealMySqft: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchLocationSuggestions(locationInput);
-  }, [locationInput, fetchLocationSuggestions]);
-
+    // Only fetch suggestions if they are supposed to be shown
+    if (showSuggestions) {
+      fetchLocationSuggestions(locationInput);
+    }
+  }, [locationInput, fetchLocationSuggestions, showSuggestions]);
 
   useEffect(() => {
     const fetchProjects = async () => {
       setLoading(true);
       try {
         const accessToken = localStorage.getItem("access_token");
-        const res = await apiClient.get("/sqlft-projects/", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const res = await apiClient.get("/sqlft-projects/", { headers: { Authorization: `Bearer ${accessToken}` } });
         const mappedProjects = (res.data.data || res.data || []).map((project: any) => ({
           key: project.id,
           projectName: project.project_name,
@@ -98,7 +88,7 @@ const RealMySqft: React.FC = () => {
           description: project.description || "",
           images: [],
         }));
-        setProjects(mappedProjects);
+        setProjects(mappedProjects.reverse());
       } catch (err) {
         setProjects([]);
       }
@@ -113,9 +103,7 @@ const RealMySqft: React.FC = () => {
     setImagePreviews([]);
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        setImagePreviews((prev) => [...prev, ev.target?.result as string]);
-      };
+      reader.onload = (ev) => { setImagePreviews((prev) => [...prev, ev.target?.result as string]); };
       reader.readAsDataURL(file);
     });
   };
@@ -128,40 +116,16 @@ const RealMySqft: React.FC = () => {
     setImagePreviews([]);
     setLocationInput("");
     setLocationSuggestions([]);
+    setShowSuggestions(true); // Reset visibility for next time
   };
 
   const handleAdd = async (values: any) => {
     try {
       const accessToken = localStorage.getItem("access_token");
-      const payload = {
-        project_name: values.projectName,
-        location: values.location,
-        plot_type: values.projectType,
-        price: String(values.price),
-        unit: values.unit,
-        description,
-      };
-
-      await apiClient.post("/sqlft-projects/", payload, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      const res = await apiClient.get("/sqlft-projects/", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const mappedProjects = (res.data || res || []).map((project: any) => ({
-        key: project.id,
-        projectName: project.project_name,
-        location: project.location,
-        projectType: project.plot_type,
-        price: Number(project.price) || 0,
-        unit: project.unit || "",
-        status: project.is_active ? "Active" : "Inactive",
-        description: project.description || "",
-        images: [],
-      }));
+      const payload = { project_name: values.projectName, location: values.location, plot_type: values.projectType, price: String(values.price), unit: values.unit, description };
+      await apiClient.post("/sqlft-projects/", payload, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const res = await apiClient.get("/sqlft-projects/", { headers: { Authorization: `Bearer ${accessToken}` } });
+      const mappedProjects = (res.data || res || []).map((project: any) => ({ key: project.id, projectName: project.project_name, location: project.location, projectType: project.plot_type, price: Number(project.price) || 0, unit: project.unit || "", status: project.is_active ? "Active" : "Inactive", description: project.description || "", images: [] }));
       setProjects(mappedProjects);
       resetAndCloseModal();
     } catch (err) {
@@ -170,68 +134,54 @@ const RealMySqft: React.FC = () => {
   };
 
   const handleToggleStatus = (key: number) => {
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.key === key
-          ? { ...project, status: project.status === "Active" ? "Inactive" : "Active" }
-          : project
-      )
-    );
+    setProjects((prev) => prev.map((project) => project.key === key ? { ...project, status: project.status === "Active" ? "Inactive" : "Active" } : project));
+  };
+  
+  const handleLocationBlur = () => {
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 200);
   };
 
-  const columns = [
-    { title: "Project Name", dataIndex: "projectName" },
-    { title: "Location", dataIndex: "location" },
-    { title: "Type", dataIndex: "projectType" },
-    { title: "Price", dataIndex: "price", render: (v: number, record: Project) => `₹${v.toLocaleString("en-IN")} / ${record.unit}` },
-    { title: "Status", dataIndex: "status", render: (_: any, record: any) => ( <Tag color={record.status === "Active" ? "green" : "red"}>{record.status}</Tag> ), },
-    { title: "Description", dataIndex: "description", render: (desc: string) => desc || "-", },
-    { title: "Images", dataIndex: "images", render: (imgs: File[] | undefined) => imgs && imgs.length > 0 ? ( <div style={{ display: "flex", gap: 8 }}>{imgs.map((img, idx) => (<img key={idx} src={URL.createObjectURL(img)} alt={`Project Img ${idx + 1}`} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: "1.5px solid #dbeafe", boxShadow: "0 2px 8px #dbeafe55", cursor: "pointer", background: "#f1f5f9", }} onMouseOver={e => (e.currentTarget.style.transform = "scale(1.08)")} onMouseOut={e => (e.currentTarget.style.transform = "scale(1)")}/>))}</div> ) : ( "-" ), },
-    { title: "Action", render: (_: any, record: any) => ( <Button variant={record.status === "Inactive" ? "primary" : "outline"} size="sm" onClick={() => handleToggleStatus(record.key)}>Set {record.status === "Inactive" ? "Active" : "Inactive"}</Button> ), },
-  ];
+  const columns = [ { title: "Project Name", dataIndex: "projectName" }, { title: "Location", dataIndex: "location" }, { title: "Type", dataIndex: "projectType" }, { title: "Price", dataIndex: "price", render: (v: number, record: Project) => `₹${v.toLocaleString("en-IN")} / ${record.unit}` }, { title: "Status", dataIndex: "status", render: (_: any, record: any) => ( <Tag color={record.status === "Active" ? "green" : "red"}>{record.status}</Tag> ), }, { title: "Description", dataIndex: "description", render: (desc: string) => desc || "-", }, { title: "Images", dataIndex: "images", render: (imgs: File[] | undefined) => imgs && imgs.length > 0 ? ( <div style={{ display: "flex", gap: 8 }}>{imgs.map((img, idx) => (<img key={idx} src={URL.createObjectURL(img)} alt={`Project Img ${idx + 1}`} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: "1.5px solid #dbeafe", boxShadow: "0 2px 8px #dbeafe55", cursor: "pointer", background: "#f1f5f9", }} onMouseOver={e => (e.currentTarget.style.transform = "scale(1.08)")} onMouseOut={e => (e.currentTarget.style.transform = "scale(1)")}/>))}</div> ) : ( "-" ), }, { title: "Action", render: (_: any, record: any) => ( <Button variant={record.status === "Inactive" ? "primary" : "outline"} size="sm" onClick={() => handleToggleStatus(record.key)}>Set {record.status === "Inactive" ? "Active" : "Inactive"}</Button> ), }, ];
 
   return (
     <>
-      <Card
-        title={<span style={{ fontWeight: 700, fontSize: 22, color: "#1e293b" }}>My Sqft Projects</span>}
-        extra={<Button variant="primary" onClick={() => setModalVisible(true)} style={{borderRadius: 8, fontWeight: 600, fontSize: 16, padding: "8px 20px", boxShadow: "0 2px 8px #2563eb22", }}>+ Add Project</Button>}
-        style={{marginBottom: 32, borderRadius: 16, boxShadow: "0 4px 24px #e0e7ef", background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)", border: "none",}}
-        bodyStyle={{background: "#fff", borderRadius: 16, padding: 32,}}
-      >
+      <Card title={<span style={{ fontWeight: 700, fontSize: 22, color: "#1e293b" }}>My Sqft Projects</span>} extra={<Button variant="primary" onClick={() => setModalVisible(true)} style={{borderRadius: 8, fontWeight: 600, fontSize: 16, padding: "8px 20px", boxShadow: "0 2px 8px #2563eb22", }}>+ Add Project</Button>} style={{marginBottom: 32, borderRadius: 16, boxShadow: "0 4px 24px #e0e7ef", background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)", border: "none",}} bodyStyle={{background: "#fff", borderRadius: 16, padding: 32,}}>
         <Table dataSource={projects} columns={columns} pagination={false} rowKey="key" style={{ borderRadius: 12, overflow: "hidden" }} rowClassName={() => "custom-table-row"} loading={loading}/>
       </Card>
 
-      <Modal
-        title={<span style={{ fontWeight: 700, fontSize: 20, color: "#059669" }}>Add Project</span>}
-        open={modalVisible}
-        onCancel={resetAndCloseModal}
-        footer={[<div key="footer-actions" style={{display: "flex", gap: 16, justifyContent: "flex-end", padding: "8px 0",}}><Button key="cancel" variant="outline" onClick={resetAndCloseModal} style={{borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", color: "#059669", borderColor: "#059669", background: "#f0fdf4",}}>Cancel</Button><Button key="submit" variant="primary" onClick={() => form.submit()} style={{borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", boxShadow: "0 2px 8px #05966922", background: "#059669", color: "#fff", border: "none",}}>Add Project</Button></div>,]}
-        style={{borderRadius: 16, overflow: "hidden", top: 40,}}
-        bodyStyle={{borderRadius: 16, background: "#f0fdf4", padding: 28,}}
-      >
+      <Modal title={<span style={{ fontWeight: 700, fontSize: 20, color: "#059669" }}>Add Project</span>} open={modalVisible} onCancel={resetAndCloseModal} footer={[<div key="footer-actions" style={{display: "flex", gap: 16, justifyContent: "flex-end", padding: "8px 0",}}><Button key="cancel" variant="outline" onClick={resetAndCloseModal} style={{borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", color: "#059669", borderColor: "#059669", background: "#f0fdf4",}}>Cancel</Button><Button key="submit" variant="primary" onClick={() => form.submit()} style={{borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", boxShadow: "0 2px 8px #05966922", background: "#059669", color: "#fff", border: "none",}}>Add Project</Button></div>,]} style={{borderRadius: 16, overflow: "hidden", top: 40,}} bodyStyle={{borderRadius: 16, background: "#f0fdf4", padding: 28,}}>
         <Form form={form} layout="vertical" onFinish={handleAdd} style={{ gap: 12, display: "flex", flexDirection: "column" }}>
           <Form.Item name="projectName" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Project Name</span>} rules={[{ required: true }]} style={{ marginBottom: 16 }}><Input style={{borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0",}} placeholder="e.g. Green Acres"/></Form.Item>
-          <div style={{ position: 'relative' }}>
+          
+          <div style={{ position: 'relative' }} onBlur={handleLocationBlur}>
             <Form.Item name="location" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Location</span>} rules={[{ required: true, message: "Please select a location" }]} style={{ marginBottom: 16 }}>
               <Input
                 style={{ borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0", }}
                 placeholder="Start typing an address..."
-                onChange={(e) => setLocationInput(e.target.value)} // This updates our separate state to trigger API calls
+                onChange={(e) => {
+                  setLocationInput(e.target.value);
+                  form.setFieldsValue({ location: e.target.value });
+                  // --- FIX: RE-ENABLE SUGGESTIONS WHEN TYPING ---
+                  setShowSuggestions(true);
+                }}
                 autoComplete="off"
               />
             </Form.Item>
             {isLocationLoading && <span style={{ position: 'absolute', right: 12, top: 40, color: '#065f46' }}>...</span>}
-            {locationSuggestions.length > 0 && (
+            {/* --- FIX: CHECK THE VISIBILITY FLAG --- */}
+            {showSuggestions && locationSuggestions.length > 0 && (
               <ul className="suggestions-list">
                 {locationSuggestions.map((suggestion, index) => (
                   <li
                     key={index}
-                    onClick={() => {
+                    onMouseDown={() => {
                       const selectedAddress = suggestion.properties.formatted;
-                      // IMPORTANT: Update both the AntD form and our local state
                       form.setFieldsValue({ location: selectedAddress });
                       setLocationInput(selectedAddress);
-                      setLocationSuggestions([]); // Hide the list after selection
+                      // --- FIX: HIDE SUGGESTIONS ONCE SELECTED ---
+                      setShowSuggestions(false);
                     }}
                   >
                     {suggestion.properties.formatted}
@@ -261,12 +211,12 @@ const RealMySqft: React.FC = () => {
           left: 0;
           right: 0;
           background: white;
-          border: 1.5px solid #bbf7d0; /* Match form style */
+          border: 1.5px solid #bbf7d0;
           border-radius: 8px;
           list-style: none;
-          margin-top: -12px; /* Pull it up slightly to overlap nicely */
+          margin-top: -12px;
           padding: 4px 0;
-          z-index: 1050; /* Ensure it's above other modal content */
+          z-index: 1050;
           max-height: 200px;
           overflow-y: auto;
           box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -277,7 +227,7 @@ const RealMySqft: React.FC = () => {
           font-size: 14px;
         }
         .suggestions-list li:hover {
-          background-color: #f0fdf4; /* Match form background */
+          background-color: #f0fdf4;
         }
       `}</style>
     </>
