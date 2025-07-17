@@ -23,7 +23,7 @@ const CustomersManager: React.FC = () => {
 	const fetchCustomers = async () => {
 		setLoading(true);
 		try {
-			const response = await apiClient.get('/b2b/customers/');
+			const response = await apiClient.get('/b2b/call-requests/');
 			const transformedData = response.map((c: any) => ({
 				id: c.id,
 				key: c.id,
