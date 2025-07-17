@@ -3,7 +3,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import Button from "../../../components/common/Button";
 import apiClient from "@/src/utils/api/apiClient";
 
-// --- TYPE DEFINITIONS (UNCHANGED) ---
 type Project = {
   key: number;
   projectName: string;
@@ -16,8 +15,6 @@ type Project = {
   images: File[];
 };
 
-// --- DEBOUNCE HELPER FUNCTION ---
-// This utility prevents sending an API request for every single keystroke.
 const debounce = (func: Function, delay: number) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: any[]) => {
@@ -39,25 +36,20 @@ const RealMySqft: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // --- GEOAPIFY AUTOCOMPLETE STATE ---
-  // We need separate state to handle the user's live input for suggestions.
+
   const [locationInput, setLocationInput] = useState("");
   const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
 
-  // Access the API key securely from your environment variables.
   const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
 
 
-  // --- GEOAPIFY API CALL LOGIC ---
   const fetchLocationSuggestions = useCallback(
     debounce(async (text: string) => {
-      // Check if the API key exists before making a call.
       if (!GEOAPIFY_API_KEY) {
         console.error("Geoapify API key is missing from environment variables.");
         return;
       }
-      // Don't search for very short strings.
       if (!text || text.length < 3) {
         setLocationSuggestions([]);
         return;
@@ -76,11 +68,10 @@ const RealMySqft: React.FC = () => {
       } finally {
         setIsLocationLoading(false);
       }
-    }, 400), // 400ms delay to wait for user to stop typing.
+    }, 400),
     []
   );
 
-  // This effect listens for changes in the location input and triggers the API call.
   useEffect(() => {
     fetchLocationSuggestions(locationInput);
   }, [locationInput, fetchLocationSuggestions]);
@@ -135,7 +126,6 @@ const RealMySqft: React.FC = () => {
     setDescription("");
     setImages([]);
     setImagePreviews([]);
-    // Reset location state as well
     setLocationInput("");
     setLocationSuggestions([]);
   };
@@ -222,7 +212,6 @@ const RealMySqft: React.FC = () => {
         <Form form={form} layout="vertical" onFinish={handleAdd} style={{ gap: 12, display: "flex", flexDirection: "column" }}>
           <Form.Item name="projectName" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Project Name</span>} rules={[{ required: true }]} style={{ marginBottom: 16 }}><Input style={{borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0",}} placeholder="e.g. Green Acres"/></Form.Item>
           
-          {/* --- MODIFIED LOCATION FIELD WITH GEOAPIFY --- */}
           <div style={{ position: 'relative' }}>
             <Form.Item name="location" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Location</span>} rules={[{ required: true, message: "Please select a location" }]} style={{ marginBottom: 16 }}>
               <Input
@@ -262,7 +251,6 @@ const RealMySqft: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* --- CSS FOR THE SUGGESTIONS DROPDOWN --- */}
       <style>{`
         .custom-table-row:hover td {
           background: #f0f9ff !important;
