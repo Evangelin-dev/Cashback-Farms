@@ -69,21 +69,31 @@ const Navbar: React.FC = () => {
               {currentUser ? (
                 <>
                   {/* Show buttons based on user type */}
+                  {(currentUser.user_type === 'admin'  ) && (
+                    <button
+                      className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
+                      style={{ marginRight: 8 }}
+                      onClick={() => navigate('/admin/plots')}
+                    >
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      Upload plot
+                    </button>
+                  )}
                   {currentUser.user_type === 'admin' && (
                     <button
                       className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
                       style={{ marginRight: 8 }}
-                      onClick={() => navigate('/verifiedplot')}
+                      onClick={() => navigate('/admin/verifiedplot')}
                     >
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                       Verified Plot
                     </button>
-                  )}
-                  {(currentUser.user_type === 'real_estate_agent' || currentUser.user_type === 'b2b_vendor') && (
+                  )}           
+                  {(currentUser.user_type === 'real_estate_agent' ) && (
                     <button
                       className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-semibold text-green-800 bg-green-100 border border-green-300 shadow hover:bg-green-200 transition whitespace-nowrap"
                       style={{ marginRight: 8 }}
-                      onClick={() => navigate('plots')}
+                      onClick={() => navigate('/realestate/post-plots')}
                     >
                       <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                       Upload plot
@@ -101,9 +111,24 @@ const Navbar: React.FC = () => {
                             <p className="text-sm text-gray-700">Signed in as</p>
                             <p className="text-sm font-medium text-gray-900 truncate">{currentUser.email}</p>
                           </div>
-                          <NavLink to="/user-dashboard" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
+                          <button
+                            onClick={() => {
+                              setIsProfileOpen(false);
+                              if (currentUser && (currentUser.user_type === 'admin' || currentUser.usertype === 'admin')) {
+                                navigate('/admin/dashboard');
+                              } else if (currentUser && (currentUser.user_type === 'b2b_vendor' || currentUser.usertype === 'b2b_vendor')) {
+                                navigate('/b2b/products');
+                              } else if (currentUser && (currentUser.user_type === 'real_estate_agent' || currentUser.usertype === 'real_estate_agent')) {
+                                navigate('/realestate/dashboard');
+                              }
+                              else {
+                                navigate('/user-dashboard');
+                              }
+                            }}
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                          >
                             User Dashboard
-                          </NavLink>
+                          </button>
                           <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 font-semibold hover:bg-red-50">
                             Logout
                           </button>
