@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { IconAlertCircle, IconCheck } from "../../../constants.tsx"; // Your icon imports
-import "../../realestate/AgentProfileSection.css"; // Your custom CSS
-import apiClient from "../../../src/utils/api/apiClient"; // IMPORT your API client
-import { useAuth } from "../../../contexts/AuthContext"; // IMPORT useAuth hook
-import { message } from 'antd'; // Using Ant Design for messages
-
-// --- IMPORT THE PHONE INPUT LIBRARY AND ITS STYLES ---
+import { IconAlertCircle, IconCheck } from "../../../constants.tsx";
+import "../../realestate/AgentProfileSection.css";
+import apiClient from "../../../src/utils/api/apiClient";
+import { useAuth } from "../../../contexts/AuthContext";
+import { message } from 'antd';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
-// Constants for KYC
 const DOCUMENT_TYPES = [
     { value: 'pan_card', label: 'PAN Card' },
     { value: 'aadhaar_card', label: 'Aadhaar Card' },
@@ -26,18 +23,16 @@ const mockRecentListings = [
 
 const B2BProfile: React.FC = () => {
     const { currentUser } = useAuth();
-    const navigate = useNavigate();
-
-    // --- State Management ---
+    const navigate = useNavigate();  
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
-    // Profile State - mobile_number will now hold the full E.164 formatted string (e.g., +919876543210)
+  
     const [profile, setProfile] = useState({
         first_name: "",
         last_name: "",
         company_name: "",
-        mobile_number: "", // This will be populated by the API and managed by PhoneInput
+        mobile_number: "",
         gst_number: "",
         town: "",
         city: "",
@@ -45,17 +40,16 @@ const B2BProfile: React.FC = () => {
         country: "",
     });
 
-    // KYC State
+  
     const [kycStatus, setKycStatus] = useState<'initial' | 'submitted' | 'pending' | 'approved' | 'rejected'>('initial');
     const [isKycLoading, setIsKycLoading] = useState(true);
     const [isKycSubmitting, setIsKycSubmitting] = useState(false);
     const [kycDocumentType, setKycDocumentType] = useState(DOCUMENT_TYPES[0].value);
     const [kycFile, setKycFile] = useState<File | null>(null);
 
-    // Popup State
+
     const [showPopup, setShowPopup] = useState(false);
 
-    // --- Data Fetching and Polling ---
     useEffect(() => {
         const fetchInitialData = async () => {
             setIsLoading(true);
@@ -98,12 +92,12 @@ const B2BProfile: React.FC = () => {
         return () => clearInterval(intervalId);
     }, [kycStatus]);
 
-    // --- Handlers ---
+  
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    // --- SPECIAL HANDLER FOR THE PHONE INPUT COMPONENT ---
+  
     const handlePhoneChange = (value: string | undefined) => {
         setProfile(prev => ({ ...prev, mobile_number: value || '' }));
     };
@@ -113,7 +107,7 @@ const B2BProfile: React.FC = () => {
         setIsSaving(true);
         message.loading({ content: 'Saving profile...', key: 'save_profile' });
         try {
-            // The `profile` state already has the merged phone number from the PhoneInput component
+          
             await apiClient.put('/b2b/profile/', profile);
             message.success({ content: 'Profile saved successfully!', key: 'save_profile', duration: 2 });
             setShowPopup(true);
@@ -129,7 +123,7 @@ const B2BProfile: React.FC = () => {
         }
     };
     
-    // KYC handlers remain the same
+  
     const handleKycFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { setKycFile(e.target.files?.[0] || null); };
     const handleKycSubmit = async (e: React.FormEvent) => { e.preventDefault(); if (!kycFile) { message.error("Please select a document file to upload."); return; } setIsKycSubmitting(true); message.loading({ content: 'Submitting KYC document...', key: 'kyc_submit' }); const formData = new FormData(); formData.append('document_type', kycDocumentType); formData.append('file', kycFile); try { await apiClient.post('/user/kyc/submit/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }); message.success({ content: 'KYC document submitted! Verification is in progress.', key: 'kyc_submit', duration: 4 }); setKycStatus('submitted'); setKycFile(null); } catch (error: any) { const errorMsg = error.response?.data?.detail || "An error occurred."; message.error({ content: `Submission failed: ${errorMsg}`, key: 'kyc_submit', duration: 3 }); } finally { setIsKycSubmitting(false); } };
     const renderKycSection = () => { if (isKycLoading) return <div className="text-sm text-gray-500">Loading KYC status...</div>; switch (kycStatus) { case 'approved': return (<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg"><IconCheck className="w-6 h-6 text-green-600" /><div><p className="font-semibold text-green-700">KYC Verified</p><p className="text-xs text-green-600">Your account is fully verified.</p></div></div>); case 'submitted': case 'pending': return (<div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"><svg className="w-6 h-6 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg><div><p className="font-semibold text-blue-700">Verification in Progress</p><p className="text-xs text-blue-600">We are reviewing your documents.</p></div></div>); default: return (<form onSubmit={handleKycSubmit} className="p-4 border border-gray-300 rounded-lg space-y-3 bg-gray-50">{kycStatus === 'rejected' && <div className="flex items-center gap-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm"><IconAlertCircle className="w-5 h-5" /><span>Previous submission rejected. Please re-upload.</span></div>}<h3 className="font-semibold text-gray-800">Complete Your KYC</h3><div><label className="block text-xs text-gray-600 mb-1">Document Type</label><select value={kycDocumentType} onChange={(e) => setKycDocumentType(e.target.value)} className="border rounded px-3 py-2 w-full text-base bg-white focus:border-primary transition">{DOCUMENT_TYPES.map(doc => <option key={doc.value} value={doc.value}>{doc.label}</option>)}</select></div><div><label className="block text-xs text-gray-600 mb-1">Upload Document</label><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleKycFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" required/></div><button type="submit" className="w-full bg-primary text-white px-4 py-2 rounded text-sm font-semibold shadow hover:bg-primary-dark transition disabled:bg-gray-400" disabled={isKycSubmitting || !kycFile}>{isKycSubmitting ? 'Submitting...' : 'Submit for Verification'}</button></form>); } };
