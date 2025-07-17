@@ -846,13 +846,13 @@ class KYCStatusView(APIView):
 
 
 class KYCUpdateView(APIView):
-    permission_classes = [permissions.BasePermission]
+    permission_classes = [IsAuthenticated]
 
     def put(self, request):
         kyc_id = request.data.get('id')
         try:
             kyc_doc = KYCDocument.objects.get(id=kyc_id)
-            if request.user.is_staff or request.user == kyc_doc.user:
+            if request.user.is_staff:  # ✅ only admin allowed
                 serializer = KYCDocumentSerializer(kyc_doc, data=request.data, partial=True)
                 if serializer.is_valid():
                     serializer.save()
@@ -862,6 +862,7 @@ class KYCUpdateView(APIView):
                 return Response({"detail": "Permission denied."}, status=403)
         except KYCDocument.DoesNotExist:
             return Response({"detail": "KYC document not found."}, status=404)
+
 
 class MicroPlotListView(generics.ListAPIView):
     queryset = SQLFTProject.objects.all()
