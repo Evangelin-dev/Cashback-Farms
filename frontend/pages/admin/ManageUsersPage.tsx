@@ -1,83 +1,182 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Form, Input, Modal, Select, Table, Tag, message, Tooltip } from 'antd';
 import Button from '../../components/Button';
-import Card from '../../components/Card';
-import Modal from '../../components/Modal';
-import { IconPencil, IconPlus, IconTrash, MOCK_USERS } from '../../constants';
-import { User, UserRole } from '../../types';
+import apiClient from '../../src/utils/api/apiClient';
+import { IconPencil, IconPlus } from '../../constants';
 
-const initialUserFormState: Omit<User, 'id' | 'createdAt'> = {
-  name: '',
-  email: '',
-  role: UserRole.USER,
-};
+// --- NEW: Import the phone number input library ---
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'; // This is also needed
+
+// --- Type definition for a user from the API ---
+interface User {
+  id: number;
+  key: number;
+  username: string;
+  email: string;
+  mobile_number: string;
+  first_name: string;
+  last_name: string;
+  user_type: 'client' | 'real_estate_agent' | 'admin' | 'b2b_vendor';
+  is_active: boolean;
+  date_joined: string;
+  company_name: string | null;
+  gst_number: string | null;
+}
+
+const USER_TYPES = ['client', 'real_estate_agent', 'b2b_vendor', 'admin'];
 
 const ManageUsersPage: React.FC = () => {
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [users, setUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userFormData, setUserFormData] = useState<Omit<User, 'id' | 'createdAt'>>(initialUserFormState);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form] = Form.useForm();
+
+  // --- NEW: State for the block/unblock confirmation modal ---
+  const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
+  const [userToToggle, setUserToToggle] = useState<User | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      const response = await apiClient.get('/admin/users/', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const mappedUsers = (response || []).map((user: any) => ({
+        ...user,
+        key: user.id,
+      }));
+      setUsers(mappedUsers.sort((a: User, b: User) => b.id - a.id));
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      message.error("Could not load user data.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (editingUser) {
-      const { id, createdAt, ...editableData } = editingUser;
-      setUserFormData(editableData);
-    } else {
-      setUserFormData(initialUserFormState);
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleFormSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    const accessToken = localStorage.getItem("access_token");
+    const payload = {
+      ...values,
+      gst_number: values.gst_number || "",
+    };
+
+    try {
+      if (editingUser) {
+        await apiClient.put(`/admin/users/${editingUser.id}/`, payload, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        message.success("User updated successfully!");
+      } else {
+        await apiClient.post('/admin/users/', { ...payload, is_active: true }, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        message.success("User created successfully!");
+      }
+      closeModal();
+      fetchUsers();
+    } catch (error: any) {
+      // --- NEW: Advanced error handling ---
+      if (error.response && error.response.data && typeof error.response.data === 'object') {
+        const errorData = error.response.data;
+        const fieldErrors = Object.keys(errorData).map(key => ({
+            name: key, // e.g., 'email' or 'mobile_number'
+            errors: Array.isArray(errorData[key]) ? errorData[key] : [errorData[key]],
+        }));
+        form.setFields(fieldErrors);
+        message.error("Please correct the errors below.");
+      } else {
+        message.error("An unknown error occurred. Please try again.", 5);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [editingUser]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setUserFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...editingUser, ...userFormData } : u));
-    } else {
-      const newUser: User = { 
-        ...userFormData, 
-        id: `user-${Date.now().toString()}`, // Simple unique ID
-        createdAt: new Date().toISOString().split('T')[0], 
-      };
-      setUsers([...users, newUser]);
+  
+  // --- NEW: Renamed to handle the final confirmation ---
+  const handleConfirmToggleStatus = async () => {
+    if (!userToToggle) return;
+    const actionText = userToToggle.is_active ? 'block' : 'unblock';
+    try {
+        const accessToken = localStorage.getItem("access_token");
+        await apiClient.post(`/admin/users/${userToToggle.id}/toggle-status/`, {}, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        message.success(`User has been ${actionText}ed.`);
+        fetchUsers();
+    } catch (error) {
+        message.error(`Failed to ${actionText} user.`);
+    } finally {
+        setIsBlockModalVisible(false);
+        setUserToToggle(null);
     }
-    closeModal();
-  };
-
-  const openModalForEdit = (user: User) => {
-    setEditingUser(user);
-    setIsModalOpen(true);
   };
 
   const openModalForNew = () => {
     setEditingUser(null);
-    setUserFormData(initialUserFormState)
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const openModalForEdit = (user: User) => {
+    setEditingUser(user);
+    form.setFieldsValue(user);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingUser(null);
-     setUserFormData(initialUserFormState);
+    form.resetFields();
+  };
+  
+  // --- NEW: Function to show the confirmation modal ---
+  const showBlockModal = (user: User) => {
+    setUserToToggle(user);
+    setIsBlockModalVisible(true);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.id !== userId));
-    }
-  };
+  const columns = [
+    { title: 'Username', dataIndex: 'username', key: 'username', render: (text: string) => <span className="font-semibold text-neutral-900">{text}</span> },
+    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: 'Mobile Number', dataIndex: 'mobile_number', key: 'mobile_number' },
+    { title: 'User Role', dataIndex: 'user_type', key: 'user_type', render: (role: string) => <Tag color="blue">{role.replace(/_/g, ' ').toUpperCase()}</Tag> },
+    { title: 'Status', dataIndex: 'is_active', key: 'is_active', render: (isActive: boolean) => <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Active' : 'Blocked'}</Tag> },
+    { title: 'Date Joined', dataIndex: 'date_joined', key: 'date_joined', render: (date: string) => new Date(date).toLocaleDateString() },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_: any, record: User) => (
+        <div className="space-x-2">
+          <Tooltip title="Edit User">
+            <Button size="sm" variant="outline" onClick={() => openModalForEdit(record)} leftIcon={<IconPencil className="w-4 h-4"/>} />
+          </Tooltip>
+          <Tooltip title={record.is_active ? 'Block User' : 'Unblock User'}>
+            {/* --- CHANGED: This button now opens the modal --- */}
+            <Button size="sm" variant={record.is_active ? 'danger' : 'primary'} onClick={() => showBlockModal(record)}>
+              {record.is_active ? 'Block' : 'Unblock'}
+            </Button>
+          </Tooltip>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-3">
           <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary shadow">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87" />
-            </svg>
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
           </span>
           <div>
             <h1 className="text-2xl font-bold text-primary mb-1">Manage Users</h1>
@@ -91,138 +190,75 @@ const ManageUsersPage: React.FC = () => {
       
       <Card bodyClassName="p-0">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-neutral-200">
-            <thead className="bg-gradient-to-r from-primary/10 via-white to-primary/10">
-              <tr>
-                {['Name', 'Email', 'Role', 'Created At', 'Actions'].map(header => (
-                  <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">{header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-neutral-100">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-primary/5 transition">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">{user.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary font-semibold">{user.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{user.createdAt}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => openModalForEdit(user)} leftIcon={<IconPencil className="w-4 h-4"/>}>Edit</Button>
-                    <Button size="sm" variant="danger" onClick={() => handleDeleteUser(user.id)} leftIcon={<IconTrash className="w-4 h-4"/>}>Delete</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-           {users.length === 0 && (
-             <div className="text-center py-10 text-neutral-400 text-lg">
-               <svg className="w-16 h-16 mx-auto mb-2 text-primary/20" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87" />
-               </svg>
-               No users found. Click "Add New User" to get started.
-             </div>
-           )}
+          <Table dataSource={users} columns={columns} loading={isLoading} rowKey="key" pagination={{ pageSize: 10 }} />
         </div>
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUser ? 'Edit User' : 'Add New User'}>
-        <form onSubmit={handleSubmit} className="space-y-3 text-sm">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="name" className="block text-xs font-medium text-neutral-700">Full Name</label>
-              <input type="text" name="name" id="name" value={userFormData.name} onChange={handleInputChange} required 
-                     className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 rounded shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs" />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-xs font-medium text-neutral-700">Email Address</label>
-              <input type="email" name="email" id="email" value={userFormData.email} onChange={handleInputChange} required 
-                     className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 rounded shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs" />
-            </div>
+      <Modal
+        open={isModalOpen}
+        title={<span className="font-semibold text-lg">{editingUser ? 'Edit User' : 'Add New User'}</span>}
+        onCancel={closeModal}
+        footer={null}
+        destroyOnClose
+        centered
+      >
+        <Form form={form} layout="vertical" onFinish={handleFormSubmit} className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+            <Form.Item name="username" label="Username" rules={[{ required: true }]}><Input placeholder="unique_username" /></Form.Item>
+            <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}><Input placeholder="user@example.com" /></Form.Item>
+            <Form.Item name="first_name" label="First Name" rules={[{ required: true }]}><Input placeholder="Enter first name" /></Form.Item>
+            <Form.Item name="last_name" label="Last Name" rules={[{ required: true }]}><Input placeholder="Enter last name" /></Form.Item>
+            
+            {/* --- NEW: Phone Number Input --- */}
+            <Form.Item
+              name="mobile_number"
+              label="Mobile Number"
+              rules={[{ required: true, message: 'Mobile number is required!' }]}
+            >
+              <PhoneInput
+                placeholder="Enter phone number"
+                defaultCountry="IN"
+                international
+                withCountryCallingCode
+                className="ant-phone-input"
+              />
+            </Form.Item>
+
+            <Form.Item name="user_type" label="User Role" rules={[{ required: true }]}>
+              <Select placeholder="Select a role">
+                {USER_TYPES.map(role => <Select.Option key={role} value={role}>{role.replace('_', ' ').toUpperCase()}</Select.Option>)}
+              </Select>
+            </Form.Item>
+            <Form.Item name="company_name" label="Company Name (Optional)"><Input placeholder="Test Co" /></Form.Item>
+            <Form.Item name="gst_number" label="GST Number (Optional)"><Input placeholder="22AAAAA0000A1Z5" /></Form.Item>
           </div>
-          <div>
-            <label htmlFor="role" className="block text-xs font-medium text-neutral-700">Role</label>
-            <select name="role" id="role" value={userFormData.role} onChange={handleInputChange} 
-                    className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 bg-white rounded shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs">
-              {Object.values(UserRole).map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button type="button" variant="secondary" onClick={closeModal} disabled={isSubmitting}>Cancel</Button>
+            <Button type="submit" variant="primary" loading={isSubmitting}>{editingUser ? 'Save Changes' : 'Add User'}</Button>
           </div>
-          {/* KYC Documents Upload */}
-          <div className="bg-gradient-to-r from-blue-50 via-white to-blue-100 rounded-lg p-2 shadow-inner mt-2">
-            <h3 className="text-xs font-semibold text-primary mb-1 flex items-center gap-2">
-              <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              KYC Documents
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Aadhar Upload</label>
-                <label className="inline-flex items-center px-2 py-1.5 bg-gradient-to-r from-green-400 to-green-600 text-white rounded shadow cursor-pointer hover:from-green-500 hover:to-green-700 transition font-semibold text-xs gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Choose File</span>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" />
-                </label>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">PAN Upload</label>
-                <label className="inline-flex items-center px-2 py-1.5 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded shadow cursor-pointer hover:from-blue-500 hover:to-blue-700 transition font-semibold text-xs gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Choose File</span>
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" />
-                </label>
-              </div>
-            </div>
-          </div>
-          {/* Bank Details Section */}
-          <div className="bg-gradient-to-r from-green-50 via-white to-green-100 rounded-lg p-2 shadow-inner mt-2">
-            <h3 className="text-xs font-semibold text-green-700 mb-1 flex items-center gap-2">
-              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-              Bank Details
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Account Holder Name</label>
-                <input type="text" name="accountHolder" placeholder="Account Holder Name"
-                  className="border rounded px-2 py-1.5 w-full text-xs focus:border-primary transition" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Account Number</label>
-                <input type="text" name="accountNumber" placeholder="Account Number"
-                  className="border rounded px-2 py-1.5 w-full text-xs focus:border-primary transition" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">IFSC Code</label>
-                <input type="text" name="ifsc" placeholder="IFSC Code"
-                  className="border rounded px-2 py-1.5 w-full text-xs focus:border-primary transition" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Bank Name</label>
-                <input type="text" name="bankName" placeholder="Bank Name"
-                  className="border rounded px-2 py-1.5 w-full text-xs focus:border-primary transition" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">D.O.B (for bank KYC)</label>
-                <input type="date" name="bankDob"
-                  className="border rounded px-2 py-1.5 w-full text-xs focus:border-primary transition" />
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button type="button" variant="secondary" onClick={closeModal} className="text-xs px-3 py-1.5">Cancel</Button>
-            <Button type="submit" variant="primary" className="text-xs px-3 py-1.5">{editingUser ? 'Save Changes' : 'Add User'}</Button>
-          </div>
-        </form>
+        </Form>
       </Modal>
-      <style>{`
-        .animate-fadein { animation: fadein 0.7s; }
-        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-        .animate-listitem { animation: fadein 0.8s; }
-      `}</style>
+
+      {/* --- NEW: Block/Unblock Confirmation Modal --- */}
+      <Modal
+        title={`Confirm Action: ${userToToggle?.is_active ? 'Block' : 'Unblock'} User`}
+        open={isBlockModalVisible}
+        onCancel={() => setIsBlockModalVisible(false)}
+        footer={null}
+        width={400}
+        centered
+      >
+        <p className="py-4">Are you sure you want to {userToToggle?.is_active ? 'block' : 'unblock'} the user: <strong className="text-primary">{userToToggle?.username}</strong>?</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setIsBlockModalVisible(false)}>Cancel</Button>
+          <Button
+            variant={userToToggle?.is_active ? 'danger' : 'primary'}
+            onClick={handleConfirmToggleStatus}
+          >
+            {userToToggle?.is_active ? 'Confirm Block' : 'Confirm Unblock'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };
