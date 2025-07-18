@@ -29,6 +29,7 @@ from requests.auth import HTTPBasicAuth
 from django.db.models import Count
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.db.models import Sum, F
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 
@@ -44,7 +45,7 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BProfileSerializer
+    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1765,3 +1766,9 @@ class InterestedUsersView(APIView):
             })
 
         return Response(response_data, status=200)
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+class UsernameTokenObtainPairView(TokenObtainPairView):
+    serializer_class = UsernameTokenObtainPairSerializer
