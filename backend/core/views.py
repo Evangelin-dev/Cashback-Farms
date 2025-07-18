@@ -50,6 +50,15 @@ from .serializers import (
     UserAdminSerializer, CommercialPropertySerializer
 )
 
+
+class IsAdminUserType(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type == 'admin'
+        )
+
 # --- Authentication and User Management ---
 class UserRegistrationView(APIView):
     authentication_classes = []
@@ -923,6 +932,15 @@ class IsB2BVendor(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.user_type == 'b2b_vendor'
 
+class IsB2BVendorOrAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type in ['b2b_vendor', 'admin']
+        )
+
+
 class MaterialProductViewSet(viewsets.ModelViewSet):
     queryset = EcommerceProduct.objects.filter(category='material')
     serializer_class = EcommerceProductSerializer
@@ -935,7 +953,7 @@ class MaterialProductViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status', 'my_products']:
-            return [permissions.IsAuthenticated(), IsB2BVendor()]
+            return [permissions.IsAuthenticated(), IsB2BVendorOrAdmin()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -1774,14 +1792,6 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     serializer_class = UsernameTokenObtainPairSerializer
-
-class IsAdminUserType(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.user_type == 'admin'
-        )
 
 class VerifiedPlotViewSet(viewsets.ModelViewSet):
     queryset = VerifiedPlot.objects.filter(is_flagship=True).order_by('-created_at')
