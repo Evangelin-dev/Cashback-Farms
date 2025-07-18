@@ -1786,3 +1786,41 @@ class VerifiedPlotViewSet(viewsets.ModelViewSet):
     queryset = VerifiedPlot.objects.filter(is_flagship=True).order_by('-created_at')
     serializer_class = VerifiedPlotSerializer
     permission_classes = [IsAdminUserType]
+
+
+class BookingViewSetAdmin(viewsets.ModelViewSet):
+    queryset = Booking.objects.all().select_related('client', 'plot_listing')
+    serializer_class = BookingSerializer
+    permission_classes = [IsAdminUserType]
+
+    # def perform_create(self, serializer):
+    #     serializer.save(client=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.user_type == 'admin':
+            return Booking.objects.all().order_by('-booking_date')
+        return Booking.objects.filter(client=self.request.user)
+
+    @action(detail=True, methods=['patch'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        try:
+            booking = self.get_object()
+            new_status = request.data.get("status")
+
+            if new_status not in ['pending', 'confirmed', 'cancelled', 'completed']:
+                return Response({'error': 'Invalid status value'}, status=400)
+
+            booking.status = new_status
+            booking.save()
+
+            # Optional: mark plot availability
+            if new_status == 'confirmed':
+                booking.plot_listing.is_available = False
+                booking.plot_listing.save()
+            elif new_status == 'cancelled':
+                booking.plot_listing.is_available = True
+                booking.plot_listing.save()
+
+            return Response({'message': 'Booking status updated successfully'}, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
