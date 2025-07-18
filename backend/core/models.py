@@ -574,3 +574,55 @@ class VerifiedPlot(models.Model):
 
     def __str__(self):
         return self.title
+
+class CommercialProperty(models.Model):
+    COMMERCIAL_TYPE_CHOICES = [
+        ('Office Space', 'Office Space'),
+        ('Shop', 'Shop'),
+        ('Warehouse', 'Warehouse'),
+        ('Showroom', 'Showroom'),
+        ('Co-working', 'Co-working'),
+        # Add more types as needed
+    ]
+
+    AVAILABILITY_CHOICES = [
+        ('Available', 'Available'),
+        ('Leased', 'Leased'),
+        ('Sold', 'Sold'),
+        ('Under Offer', 'Under Offer'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='commercial_properties')
+    property_name = models.CharField(max_length=255)
+    commercial_type = models.CharField(max_length=50, choices=COMMERCIAL_TYPE_CHOICES)
+    
+    address_line1 = models.CharField(max_length=255, blank=True)
+    locality = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=20, blank=True)
+
+    area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
+    is_for_sale = models.BooleanField(default=False)
+    sale_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+
+    is_for_rent = models.BooleanField(default=False)
+    rent_per_month = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+
+    availability_status = models.CharField(max_length=50, choices=AVAILABILITY_CHOICES, default='Available')
+    description = models.TextField(blank=True)
+    
+    amenities = models.JSONField(default=list, blank=True)
+    images_urls = models.JSONField(default=list, blank=True)
+
+    floor = models.CharField(max_length=50, blank=True)
+    total_floors = models.PositiveIntegerField(null=True, blank=True)
+    parking_spaces = models.PositiveIntegerField(null=True, blank=True)
+    year_built = models.PositiveIntegerField(null=True, blank=True)
+
+    contact_person = models.CharField(max_length=100)
+    contact_number = models.CharField(max_length=20)
+
+    added_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.property_name} - {self.city}"
