@@ -9,7 +9,7 @@ import { FiHeart } from 'react-icons/fi';
 import { GoCalendar, GoVerified } from "react-icons/go";
 import { LuPencil, LuRectangleHorizontal } from "react-icons/lu";
 
-// --- TYPE DEFINITIONS (Unchanged) ---
+// --- TYPE DEFINITIONS ---
 interface Plot {
     id: number;
     title: string;
@@ -44,7 +44,6 @@ interface ShortlistItem {
   item_type: string;
 }
 
-// A utility function for debouncing API calls
 const debounce = (func: Function, delay: number) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: any[]) => {
@@ -55,7 +54,7 @@ const debounce = (func: Function, delay: number) => {
   };
 };
 
-// --- CARD COMPONENT (Unchanged) ---
+// --- CARD COMPONENT ---
 const PlotCard: React.FC<{ plot: Plot; onToggleWishlist: (plotId: number) => void; onViewDetails: (id: number) => void; isWishlistLoading: boolean; }> = ({ plot, onToggleWishlist, onViewDetails, isWishlistLoading }) => {
     const total_price = plot.area * plot.pricePerSqFt;
     return (
@@ -84,7 +83,7 @@ const PlotCard: React.FC<{ plot: Plot; onToggleWishlist: (plotId: number) => voi
     );
 };
 
-// --- SIDEBAR COMPONENT (Unchanged) ---
+// --- SIDEBAR COMPONENT ---
 const FilterSidebar: React.FC<{
     priceRange: { min: number; max: number }; setPriceRange: React.Dispatch<React.SetStateAction<{ min: number; max: number }>>;
     areaRange: { min: number; max: number }; setAreaRange: React.Dispatch<React.SetStateAction<{ min: number; max: number }>>;
@@ -92,24 +91,25 @@ const FilterSidebar: React.FC<{
     showVerified: boolean; setShowVerified: React.Dispatch<React.SetStateAction<boolean>>;
     resetFilters: () => void;
 }> = ({ priceRange, setPriceRange, areaRange, setAreaRange, showWithPhotos, setShowWithPhotos, showVerified, setShowVerified, resetFilters }) => {
+    const formatPriceLabel = (price: number) => {
+        if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)} Cr`;
+        return `₹${(price / 100000).toFixed(1)} Lacs`;
+    };
+
     return (
         <div className="w-full lg:w-1/4 lg:sticky lg:top-24 bg-white p-4 border rounded-lg shadow-sm h-fit">
             <div className="flex justify-between items-center mb-4 pb-3 border-b"><h3 className="font-bold text-xl">Filters</h3><button onClick={resetFilters} className="text-sm font-semibold text-red-500">Reset</button></div>
             <div className="mb-6">
                 <label className="font-semibold text-gray-700">Show Only</label>
                 <div className="mt-2 grid grid-cols-1 gap-3">
-                    <div className="flex items-center min-h-[56px] w-full bg-green-50 border border-green-200 rounded-lg px-3 py-2 shadow-sm flex-grow">
-                        <input type="checkbox" id="with-photos" checked={showWithPhotos} onChange={(e) => setShowWithPhotos(e.target.checked)} className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
-                        <span className="ml-3 text-green-700 font-semibold flex items-center"><LuRectangleHorizontal className="mr-2 text-xl" /> Plots with Photos</span>
-                    </div>
                     <div className="flex items-center min-h-[56px] w-full bg-green-100 border border-green-300 rounded-lg px-3 py-2 shadow-sm flex-grow">
                         <input type="checkbox" id="verified-plots" checked={showVerified} onChange={(e) => setShowVerified(e.target.checked)} className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
-                        <span className="ml-3 text-green-800 font-bold flex items-center"><GoVerified className="mr-2 text-2xl text-green-600" /> Green Heap Verified Plot</span>
+                        <span className="ml-3 text-green-800 font-bold flex items-center"><GoVerified className="mr-2 text-2xl text-green-600" /> Green Heap Verified</span>
                     </div>
                 </div>
             </div>
-            <div className="mb-6"><label className="font-semibold text-gray-700">Total Price Range</label><p className="text-sm text-gray-500 mb-2">Up to ₹{(priceRange.max / 100000).toFixed(1)} Lacs</p><input type="range" min="0" max="200000000" step="100000" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
-            <div className="mb-6"><label className="font-semibold text-gray-700">Plot Area (sq. ft.)</label><p className="text-sm text-gray-500 mb-2">Up to {areaRange.max.toLocaleString('en-IN')} sq.ft.</p><input type="range" min="0" max="10000" step="100" value={areaRange.max} onChange={(e) => setAreaRange({ ...areaRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700">Total Price Range</label><p className="text-sm text-gray-500 mb-2">Up to {formatPriceLabel(priceRange.max)}</p><input type="range" min="0" max="1000000000" step="100000" value={priceRange.max} onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
+            <div className="mb-6"><label className="font-semibold text-gray-700">Plot Area (sq. ft.)</label><p className="text-sm text-gray-500 mb-2">Up to {areaRange.max.toLocaleString('en-IN')} sq.ft.</p><input type="range" min="0" max="100000" step="100" value={areaRange.max} onChange={(e) => setAreaRange({ ...areaRange, max: Number(e.target.value) })} className="w-full accent-green-600" /></div>
         </div>
     );
 };
@@ -125,24 +125,21 @@ const DPlotMarketplacePage: React.FC = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
 
-    // --- Filter States ---
-    const initialPriceRange = { min: 0, max: 200000000 };
-    const initialAreaRange = { min: 0, max: 10000 };
+    const initialPriceRange = { min: 0, max: 1000000000 };
+    const initialAreaRange = { min: 0, max: 100000 };
     const [priceRange, setPriceRange] = useState(initialPriceRange);
     const [areaRange, setAreaRange] = useState(initialAreaRange);
     const [showWithPhotos, setShowWithPhotos] = useState(false);
     const [showVerified, setShowVerified] = useState(false);
     const [locationFilter, setLocationFilter] = useState('All Locations');
     
-    // --- **NEW** GEOAPIFY SEARCH STATES ---
-    const [searchTerm, setSearchTerm] = useState(''); // This will hold the final location to filter by
-    const [locationSearchInput, setLocationSearchInput] = useState(''); // For the live input field
+    const [searchTerm, setSearchTerm] = useState('');
+    const [locationSearchInput, setLocationSearchInput] = useState('');
     const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
     const [isLocationSearching, setIsLocationSearching] = useState(false);
     const [showLocationSuggestions, setShowLocationSuggestions] = useState(true);
     const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
 
-    // --- **NEW** METROPOLITAN CITIES LIST ---
     const metropolitanCities = ["All Locations", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad"];
 
     const fetchShortlist = useCallback(async () => {
@@ -161,7 +158,6 @@ const DPlotMarketplacePage: React.FC = () => {
             setError(null);
             const accessToken = localStorage.getItem('access_token');
             const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-
             try {
                 const [plotsResponse, shortlistResponse] = await Promise.all([
                     apiClient.get('/public/plots/'),
@@ -173,7 +169,6 @@ const DPlotMarketplacePage: React.FC = () => {
 
             } catch (err) {
                 setError('Failed to fetch data. Please try again later.');
-                console.error(err);
             } finally {
                 setIsLoading(false);
             }
@@ -181,14 +176,10 @@ const DPlotMarketplacePage: React.FC = () => {
         fetchPageData();
     }, [currentUser]);
 
-    // --- **NEW** GEOAPIFY FETCH LOGIC ---
     const fetchLocationSuggestions = useCallback(
       debounce(async (text: string) => {
         if (!GEOAPIFY_API_KEY) return;
-        if (!text || text.length < 3) {
-          setLocationSuggestions([]);
-          return;
-        }
+        if (!text || text.length < 3) { setLocationSuggestions([]); return; }
         setIsLocationSearching(true);
         const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&apiKey=${GEOAPIFY_API_KEY}`;
         try {
@@ -220,9 +211,7 @@ const DPlotMarketplacePage: React.FC = () => {
         try {
             if (isCurrentlyShortlisted) {
                 const itemToRemove = shortlistedItems.find(item => item.item_id === plotId);
-                if (itemToRemove) {
-                    await apiClient.delete(`/cart/remove-item/${itemToRemove.id}/`, { headers });
-                }
+                if (itemToRemove) await apiClient.delete(`/cart/remove-item/${itemToRemove.id}/`, { headers });
             } else {
                 await apiClient.post('/cart/add/', { item_type: "plot", item_id: plotId, quantity: 1 }, { headers });
             }
@@ -261,30 +250,30 @@ const DPlotMarketplacePage: React.FC = () => {
                 const hasPhotosMatch = !showWithPhotos || (showWithPhotos && plot.hasPhotos);
                 const verifiedMatch = !showVerified || (showVerified && plot.isVerified);
                 const matchesLocation = locationFilter === 'All Locations' || plot.location.toLowerCase().includes(locationFilter.toLowerCase());
-                // --- **UPDATED** SEARCH LOGIC ---
                 const matchesSearch = !searchTerm || plot.location.toLowerCase().includes(searchTerm.toLowerCase());
                 return withinPrice && withinArea && hasPhotosMatch && verifiedMatch && matchesLocation && matchesSearch;
             });
     }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified]);
 
     const resetFilters = () => {
-        setPriceRange(initialPriceRange); setAreaRange(initialAreaRange);
-        setShowWithPhotos(false); setShowVerified(false); 
-        setSearchTerm(''); setLocationSearchInput(''); // Reset both search terms
+        setPriceRange(initialPriceRange);
+        setAreaRange(initialAreaRange);
+        setShowWithPhotos(false);
+        setShowVerified(false); 
+        setSearchTerm('');
+        setLocationSearchInput('');
         setLocationFilter('All Locations');
     };
 
     return (
         <div className="bg-gray-50 min-h-screen">
-             <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center"><div className="text-2xl font-bold text-green-600">PLOT-MARKET</div></div></header>
+            <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center"><div className="text-2xl font-bold text-green-600">PLOT-MARKET</div></div></header>
             <main className="max-w-screen-xl mx-auto p-4">
                 <div className="bg-white p-3 rounded-lg border shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4">
-                    {/* --- **UPDATED** DROPDOWN --- */}
                     <select className="w-full md:w-auto md:min-w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>{metropolitanCities.map(city => (<option key={city} value={city}>{city}</option>))}</select>
                     
-                    {/* --- **UPDATED** GEOAPIFY SEARCH BAR --- */}
                     <div 
-                        className="flex-grow relative" 
+                        className="flex-grow relative w-full" 
                         onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
                     >
                         <input 
@@ -294,6 +283,9 @@ const DPlotMarketplacePage: React.FC = () => {
                             value={locationSearchInput} 
                             onChange={(e) => {
                                 setLocationSearchInput(e.target.value);
+                                if(e.target.value === '') {
+                                    setSearchTerm('');
+                                }
                                 setShowLocationSuggestions(true);
                             }}
                         />
@@ -307,8 +299,8 @@ const DPlotMarketplacePage: React.FC = () => {
                                         onMouseDown={() => {
                                             const term = s.properties.name || s.properties.city || s.properties.formatted;
                                             setLocationSearchInput(term);
-                                            setSearchTerm(term); // Set the filter term
-                                            setShowLocationSuggestions(false); // Hide suggestions
+                                            setSearchTerm(term);
+                                            setShowLocationSuggestions(false);
                                         }}
                                     >
                                         {s.properties.formatted}
@@ -317,17 +309,22 @@ const DPlotMarketplacePage: React.FC = () => {
                             </ul>
                         )}
                     </div>
-
                     <button 
                         className="bg-green-600 text-white font-bold px-8 py-2 rounded-md w-full md:w-auto hover:bg-green-700"
-                        onClick={() => setSearchTerm(locationSearchInput)} // Set filter on click
+                        onClick={() => setSearchTerm(locationSearchInput)}
                     >
                         Search
                     </button>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6">
-                    <FilterSidebar priceRange={priceRange} setPriceRange={setPriceRange} areaRange={areaRange} setAreaRange={setAreaRange} showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos} showVerified={showVerified} setShowVerified={setShowVerified} resetFilters={resetFilters} />
+                    <FilterSidebar 
+                        priceRange={priceRange} setPriceRange={setPriceRange} 
+                        areaRange={areaRange} setAreaRange={setAreaRange}
+                        showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos} 
+                        showVerified={showVerified} setShowVerified={setShowVerified} 
+                        resetFilters={resetFilters} 
+                    />
                     <div className="flex-1">
                         {isLoading ? ( <div className="flex justify-center items-center h-96"><FaSpinner className="animate-spin text-green-600 text-5xl" /></div>
                         ) : error ? ( <div className="text-center py-20 bg-white border rounded-lg"><p className="text-xl text-red-600">{error}</p></div>

@@ -87,6 +87,7 @@ import PlotDetailsPage from './pages/user/DetailMySqftListing';
 import RefundPolicyPage from './components/RefundPolicy';
 import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
 import B2bProtectedRoute from './components/ProtectedB2BRoute';
+import AdminLogin from './pages/admin/AdminLogin';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -164,6 +165,8 @@ const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
+
+<Route path="/admin/login" element={<AdminLogin />} />
 <Route element={<ProtectedRoute />}>
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
