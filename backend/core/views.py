@@ -36,7 +36,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
+    VerifiedPlot
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -45,7 +46,7 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer
+    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1772,3 +1773,16 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     serializer_class = UsernameTokenObtainPairSerializer
+
+class IsAdminUserType(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type == 'admin'
+        )
+
+class VerifiedPlotViewSet(viewsets.ModelViewSet):
+    queryset = VerifiedPlot.objects.filter(is_flagship=True).order_by('-created_at')
+    serializer_class = VerifiedPlotSerializer
+    permission_classes = [IsAdminUserType]
