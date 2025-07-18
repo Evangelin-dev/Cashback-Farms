@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot
 )
 
 # User and Authentication Serializers
@@ -393,3 +393,8 @@ class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
             "user_type": self.user.user_type
         }
         return data
+
+class VerifiedPlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerifiedPlot
+        fields = '__all__'

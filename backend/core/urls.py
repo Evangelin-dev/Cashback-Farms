@@ -16,7 +16,7 @@ from .views import (
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
-    InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView
+    InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -40,6 +40,7 @@ router.register(r'ecommerce/materials', MaterialProductViewSet, basename='ecomme
 router.register(r'ecommerce/services', EcommerceProductViewSet, basename='ecommerce-services')
 router.register(r'faqs', FAQViewSet, basename='faq')
 router.register(r'web/orders', WebOrderViewSet, basename='web-orders')
+router.register(r'admin/verified-plots', VerifiedPlotViewSet, basename='verified-plots')
 
 
 
