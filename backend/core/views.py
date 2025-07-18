@@ -37,7 +37,7 @@ from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
     SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
-    VerifiedPlot
+    VerifiedPlot, CommercialProperty
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -47,8 +47,17 @@ from .serializers import (
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
-    UserAdminSerializer
+    UserAdminSerializer, CommercialPropertySerializer
 )
+
+
+class IsAdminUserType(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type == 'admin'
+        )
 
 # --- Authentication and User Management ---
 class UserRegistrationView(APIView):
@@ -923,6 +932,15 @@ class IsB2BVendor(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.user_type == 'b2b_vendor'
 
+class IsB2BVendorOrAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type in ['b2b_vendor', 'admin']
+        )
+
+
 class MaterialProductViewSet(viewsets.ModelViewSet):
     queryset = EcommerceProduct.objects.filter(category='material')
     serializer_class = EcommerceProductSerializer
@@ -935,7 +953,7 @@ class MaterialProductViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status', 'my_products']:
-            return [permissions.IsAuthenticated(), IsB2BVendor()]
+            return [permissions.IsAuthenticated(), IsB2BVendorOrAdmin()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -1775,14 +1793,6 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 class UsernameTokenObtainPairView(TokenObtainPairView):
     serializer_class = UsernameTokenObtainPairSerializer
 
-class IsAdminUserType(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return (
-            request.user
-            and request.user.is_authenticated
-            and request.user.user_type == 'admin'
-        )
-
 class VerifiedPlotViewSet(viewsets.ModelViewSet):
     queryset = VerifiedPlot.objects.filter(is_flagship=True).order_by('-created_at')
     serializer_class = VerifiedPlotSerializer
@@ -1846,3 +1856,18 @@ class ToggleUserStatusView(APIView):
             })
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class CommercialPropertyListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+
+    def get_queryset(self):
+        return CommercialProperty.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class CommercialPropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+    queryset = CommercialProperty.objects.all()
