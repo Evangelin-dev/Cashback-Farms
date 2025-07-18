@@ -834,7 +834,7 @@ class UserProfileView(APIView):
         return Response({"message": "User account deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 class KYCSubmitView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, *args, **kwargs):
@@ -846,7 +846,7 @@ class KYCSubmitView(APIView):
 
 
 class KYCStatusView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         documents = request.user.kyc_documents.all()
