@@ -127,7 +127,13 @@ const Navbar: React.FC = () => {
                             }}
                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                           >
-                            User Dashboard
+                            {(() => {
+                              const type = (currentUser.user_type || currentUser.usertype || '').toLowerCase();
+                              if (type === 'admin') return 'Admin Dashboard';
+                              if (type === 'b2b_vendor') return 'B2B Dashboard';
+                              if (type === 'real_estate_agent') return 'Agent Dashboard';
+                              return 'User Dashboard';
+                            })()}
                           </button>
                           <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm text-red-600 font-semibold hover:bg-red-50">
                             Logout
@@ -196,8 +202,24 @@ const Navbar: React.FC = () => {
                       <p className="text-xs text-gray-500">Signed in as</p>
                       <p className="text-sm font-medium text-gray-800 truncate">{currentUser.email}</p>
                     </div>
-                    <NavLink to="/user-dashboard" onClick={() => setIsOpen(false)} className="block w-full text-left px-4 py-3 rounded-xl text-base font-semibold text-green-700 hover:bg-green-100">
-                      User Dashboard
+                    <NavLink
+                      to={(() => {
+                        const type = (currentUser.user_type || currentUser.usertype || '').toLowerCase();
+                        if (type === 'admin') return '/admin/dashboard';
+                        if (type === 'b2b_vendor') return '/b2b/products';
+                        if (type === 'real_estate_agent') return '/realestate/dashboard';
+                        return '/user-dashboard';
+                      })()}
+                      onClick={() => setIsOpen(false)}
+                      className="block w-full text-left px-4 py-3 rounded-xl text-base font-semibold text-green-700 hover:bg-green-100"
+                    >
+                      {(() => {
+                        const type = (currentUser.user_type || currentUser.usertype || '').toLowerCase();
+                        if (type === 'admin') return 'Admin Dashboard';
+                        if (type === 'b2b_vendor') return 'B2B Dashboard';
+                        if (type === 'real_estate_agent') return 'Agent Dashboard';
+                        return 'User Dashboard';
+                      })()}
                     </NavLink>
                     <div className="mt-auto">
                       <button onClick={handleLogout} className="w-full mt-2 px-4 py-3 rounded-xl font-bold text-white bg-red-600 shadow hover:bg-red-700 transition">
