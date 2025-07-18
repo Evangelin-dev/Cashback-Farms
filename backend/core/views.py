@@ -45,7 +45,7 @@ from .serializers import (
     BookingSerializer, EcommerceProductSerializer, OrderSerializer,
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
-    SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
+    SupportTicketSerializer, InquirySerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
     UserAdminSerializer, CommercialPropertySerializer
 )
@@ -1871,3 +1871,14 @@ class CommercialPropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CommercialPropertySerializer
     permission_classes = [IsAdminUserType]
     queryset = CommercialProperty.objects.all()
+
+class AllKYCListView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        documents = KYCDocument.objects.all().order_by('-upload_date')  # ✅ use upload_date
+        serializer = KYCDocumentSerializer(documents, many=True)
+        return Response({
+            "count": documents.count(),
+            "documents": serializer.data
+        }, status=200)
