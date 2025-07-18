@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { IconAlertCircle, IconCheck } from "../../../constants.tsx";
 import "../../realestate/AgentProfileSection.css";
 import apiClient from "../../../src/utils/api/apiClient";
@@ -7,6 +6,15 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { message } from 'antd';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+
+// Interface for the KYC document structure from your API
+interface IKycDocument {
+    id: number;
+    document_type: string;
+    file: string;
+    status: 'submitted' | 'pending' | 'approved' | 'rejected';
+    upload_date: string;
+}
 
 const DOCUMENT_TYPES = [
     { value: 'pan_card', label: 'PAN Card' },
@@ -23,11 +31,9 @@ const mockRecentListings = [
 
 const B2BProfile: React.FC = () => {
     const { currentUser } = useAuth();
-    const navigate = useNavigate();  
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    
-  
+
     const [profile, setProfile] = useState({
         first_name: "",
         last_name: "",
@@ -40,14 +46,11 @@ const B2BProfile: React.FC = () => {
         country: "",
     });
 
-  
-    const [kycStatus, setKycStatus] = useState<'initial' | 'submitted' | 'pending' | 'approved' | 'rejected'>('initial');
+    const [kycDocuments, setKycDocuments] = useState<IKycDocument[]>([]);
     const [isKycLoading, setIsKycLoading] = useState(true);
     const [isKycSubmitting, setIsKycSubmitting] = useState(false);
     const [kycDocumentType, setKycDocumentType] = useState(DOCUMENT_TYPES[0].value);
     const [kycFile, setKycFile] = useState<File | null>(null);
-
-
     const [showPopup, setShowPopup] = useState(false);
 
     useEffect(() => {
@@ -59,17 +62,11 @@ const B2BProfile: React.FC = () => {
                     apiClient.get('/b2b/profile/'),
                     apiClient.get('/user/kyc/status/')
                 ]);
-
-                if (profileResponse) {
-                    setProfile(profileResponse);
-                }
-
-                if (kycStatusResponse?.status) {
-                    setKycStatus(kycStatusResponse.status);
-                }
+                if (profileResponse) setProfile(profileResponse);
+                if (kycStatusResponse?.documents) setKycDocuments(kycStatusResponse.documents);
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
-                message.error("Could not load your profile data. Please check your API connection.");
+                message.error("Could not load profile data.");
             } finally {
                 setIsLoading(false);
                 setIsKycLoading(false);
@@ -79,25 +76,21 @@ const B2BProfile: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
-        const fetchKycStatus = async () => {
+        const hasPendingDocuments = kycDocuments.some(doc => doc.status === 'submitted' || doc.status === 'pending');
+        if (!hasPendingDocuments) return;
+        const intervalId = setInterval(async () => {
             try {
-                const { data } = await apiClient.get('/user/kyc/status/');
-                if (data.status !== kycStatus) setKycStatus(data.status);
+                const kycStatusResponse = await apiClient.get('/user/kyc/status/');
+                if (kycStatusResponse?.documents) setKycDocuments(kycStatusResponse.documents);
             } catch (error) { console.error("Polling KYC status failed:", error); }
-        };
-        if (kycStatus === 'submitted' || kycStatus === 'pending') {
-            intervalId = setInterval(fetchKycStatus, 30000);
-        }
+        }, 30000);
         return () => clearInterval(intervalId);
-    }, [kycStatus]);
+    }, [kycDocuments]);
 
-  
     const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-  
     const handlePhoneChange = (value: string | undefined) => {
         setProfile(prev => ({ ...prev, mobile_number: value || '' }));
     };
@@ -107,13 +100,12 @@ const B2BProfile: React.FC = () => {
         setIsSaving(true);
         message.loading({ content: 'Saving profile...', key: 'save_profile' });
         try {
-          
             await apiClient.put('/b2b/profile/', profile);
             message.success({ content: 'Profile saved successfully!', key: 'save_profile', duration: 2 });
             setShowPopup(true);
+            // FIX 1: Popup will hide itself, but no navigation will occur.
             setTimeout(() => {
                 setShowPopup(false);
-                navigate("/b2b/products");
             }, 2500);
         } catch (error: any) {
             const errorMsg = error.response?.data?.detail || "An error occurred.";
@@ -122,11 +114,70 @@ const B2BProfile: React.FC = () => {
             setIsSaving(false);
         }
     };
-    
-  
+
     const handleKycFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { setKycFile(e.target.files?.[0] || null); };
-    const handleKycSubmit = async (e: React.FormEvent) => { e.preventDefault(); if (!kycFile) { message.error("Please select a document file to upload."); return; } setIsKycSubmitting(true); message.loading({ content: 'Submitting KYC document...', key: 'kyc_submit' }); const formData = new FormData(); formData.append('document_type', kycDocumentType); formData.append('file', kycFile); try { await apiClient.post('/user/kyc/submit/', formData, { headers: { 'Content-Type': 'multipart/form-data' } }); message.success({ content: 'KYC document submitted! Verification is in progress.', key: 'kyc_submit', duration: 4 }); setKycStatus('submitted'); setKycFile(null); } catch (error: any) { const errorMsg = error.response?.data?.detail || "An error occurred."; message.error({ content: `Submission failed: ${errorMsg}`, key: 'kyc_submit', duration: 3 }); } finally { setIsKycSubmitting(false); } };
-    const renderKycSection = () => { if (isKycLoading) return <div className="text-sm text-gray-500">Loading KYC status...</div>; switch (kycStatus) { case 'approved': return (<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg"><IconCheck className="w-6 h-6 text-green-600" /><div><p className="font-semibold text-green-700">KYC Verified</p><p className="text-xs text-green-600">Your account is fully verified.</p></div></div>); case 'submitted': case 'pending': return (<div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"><svg className="w-6 h-6 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg><div><p className="font-semibold text-blue-700">Verification in Progress</p><p className="text-xs text-blue-600">We are reviewing your documents.</p></div></div>); default: return (<form onSubmit={handleKycSubmit} className="p-4 border border-gray-300 rounded-lg space-y-3 bg-gray-50">{kycStatus === 'rejected' && <div className="flex items-center gap-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm"><IconAlertCircle className="w-5 h-5" /><span>Previous submission rejected. Please re-upload.</span></div>}<h3 className="font-semibold text-gray-800">Complete Your KYC</h3><div><label className="block text-xs text-gray-600 mb-1">Document Type</label><select value={kycDocumentType} onChange={(e) => setKycDocumentType(e.target.value)} className="border rounded px-3 py-2 w-full text-base bg-white focus:border-primary transition">{DOCUMENT_TYPES.map(doc => <option key={doc.value} value={doc.value}>{doc.label}</option>)}</select></div><div><label className="block text-xs text-gray-600 mb-1">Upload Document</label><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleKycFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" required/></div><button type="submit" className="w-full bg-primary text-white px-4 py-2 rounded text-sm font-semibold shadow hover:bg-primary-dark transition disabled:bg-gray-400" disabled={isKycSubmitting || !kycFile}>{isKycSubmitting ? 'Submitting...' : 'Submit for Verification'}</button></form>); } };
+    
+    const handleKycSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!kycFile) { message.error("Please select a document file to upload."); return; }
+        setIsKycSubmitting(true);
+        message.loading({ content: 'Submitting KYC document...', key: 'kyc_submit' });
+        
+        const formData = new FormData();
+        formData.append('document_type', kycDocumentType);
+        formData.append('file', kycFile);
+        
+        try {
+            // We just need to know if the API call was successful.
+            await apiClient.post('/user/kyc/submit/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            
+            message.success({ content: 'KYC document submitted! Verification is in progress.', key: 'kyc_submit', duration: 4 });
+            
+            // --- FIX 2: OPTIMISTIC UI UPDATE ---
+            // Create a fake document object that looks like your API response.
+            // This forces the UI to re-render immediately with the correct "pending" status.
+            const optimisticNewDocument: IKycDocument = {
+              id: Date.now(), // Use a temporary unique ID for React's key prop
+              document_type: kycDocumentType,
+              status: 'submitted', // Set the status to 'submitted' manually
+              file: '', // Not needed for display
+              upload_date: new Date().toISOString(),
+            };
+            
+            // Update the state with this new object. This is the crucial step.
+            setKycDocuments(prevDocs => [optimisticNewDocument, ...prevDocs]);
+            
+            setKycFile(null); // Clear the file input
+        } catch (error: any) {
+            const errorMsg = error.response?.data?.detail || "An error occurred.";
+            message.error({ content: `Submission failed: ${errorMsg}`, key: 'kyc_submit', duration: 3 });
+        } finally {
+            setIsKycSubmitting(false);
+        }
+    };
+
+    const renderKycSection = () => {
+        if (isKycLoading) return <div className="text-sm text-gray-500">Loading KYC status...</div>;
+
+        const latestDocument = kycDocuments.length > 0 ? kycDocuments[0] : null;
+
+        if (latestDocument) {
+            switch (latestDocument.status) {
+                case 'approved': return (<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg"><IconCheck className="w-6 h-6 text-green-600" /><div><p className="font-semibold text-green-700">KYC Verified</p><p className="text-xs text-green-600">Your account is fully verified.</p></div></div>);
+                case 'submitted': case 'pending': return (<div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg"><svg className="w-6 h-6 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg><div><p className="font-semibold text-blue-700">Verification in Progress</p><p className="text-xs text-blue-600">We are reviewing your documents.</p></div></div>);
+            }
+        }
+
+        return (
+            <form onSubmit={handleKycSubmit} className="p-4 border border-gray-300 rounded-lg space-y-3 bg-gray-50">
+                {latestDocument?.status === 'rejected' && (<div className="flex items-center gap-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-md text-sm"><IconAlertCircle className="w-5 h-5" /><span>Previous submission rejected. Please re-upload.</span></div>)}
+                <h3 className="font-semibold text-gray-800">Complete Your KYC</h3>
+                <div><label className="block text-xs text-gray-600 mb-1">Document Type</label><select value={kycDocumentType} onChange={(e) => setKycDocumentType(e.target.value)} className="border rounded px-3 py-2 w-full text-base bg-white focus:border-primary transition">{DOCUMENT_TYPES.map(doc => <option key={doc.value} value={doc.value}>{doc.label}</option>)}</select></div>
+                <div><label className="block text-xs text-gray-600 mb-1">Upload Document</label><input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleKycFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" required /></div>
+                <button type="submit" className="w-full bg-primary text-white px-4 py-2 rounded text-sm font-semibold shadow hover:bg-primary-dark transition disabled:bg-gray-400" disabled={isKycSubmitting || !kycFile}>{isKycSubmitting ? 'Submitting...' : 'Submit for Verification'}</button>
+            </form>
+        );
+    };
     
     if (isLoading) return <div className="text-center py-20 text-lg font-semibold text-gray-600">Loading Profile...</div>;
 
@@ -145,15 +196,7 @@ const B2BProfile: React.FC = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="w-full">
                                 <label className="block text-xs text-gray-500 mb-1">Phone Number</label>
-                                {/* --- REPLACED WITH PHONEINPUT COMPONENT --- */}
-                                <PhoneInput
-                                    placeholder="Enter phone number"
-                                    value={profile.mobile_number || ''}
-                                    onChange={handlePhoneChange}
-                                    defaultCountry="IN"
-                                    className="phone-input-container"
-                                    required
-                                />
+                                <PhoneInput placeholder="Enter phone number" value={profile.mobile_number || ''} onChange={handlePhoneChange} defaultCountry="IN" className="phone-input-container" required />
                             </div>
                             <div><label className="block text-xs text-gray-500 mb-1">GST Number (Optional)</label><input name="gst_number" className="border rounded px-3 py-2 w-full" value={profile.gst_number || ''} onChange={handleProfileChange} /></div>
                         </div>
@@ -182,21 +225,20 @@ const B2BProfile: React.FC = () => {
                         </ul>
                     </div>
                 </div>
-                {showPopup && ( <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"><div className="relative bg-gradient-to-br from-blue-100 via-white to-blue-200 rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center animate-adminpop"><div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg animate-bounce-slow"><svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></div><div className="text-2xl font-bold text-primary mb-2 text-center">Profile Saved!</div><div className="text-base text-gray-700 mb-4 text-center">Your profile changes have been saved.<br/>Redirecting...</div></div><style>{`@keyframes adminpop { 0% { transform: scale(0.8) rotate(-5deg); opacity: 0; } 60% { transform: scale(1.05) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } } .animate-adminpop { animation: adminpop 0.6s cubic-bezier(.68,-0.55,.27,1.55); } @keyframes bounce-slow { 0%, 100% { transform: translateY(0);} 50% { transform: translateY(-10px);} } .animate-bounce-slow { animation: bounce-slow 1.5s infinite; }`}</style></div> )}
+                {showPopup && ( <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"><div className="relative bg-gradient-to-br from-blue-100 via-white to-blue-200 rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center animate-adminpop"><div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-4 shadow-lg animate-bounce-slow"><svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></div><div className="text-2xl font-bold text-primary mb-2 text-center">Profile Saved!</div><div className="text-base text-gray-700 mb-4 text-center">Your profile changes have been saved.</div></div><style>{`@keyframes adminpop { 0% { transform: scale(0.8) rotate(-5deg); opacity: 0; } 60% { transform: scale(1.05) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } } .animate-adminpop { animation: adminpop 0.6s cubic-bezier(.68,-0.55,.27,1.55); } @keyframes bounce-slow { 0%, 100% { transform: translateY(0);} 50% { transform: translateY(-10px);} } .animate-bounce-slow { animation: bounce-slow 1.5s infinite; }`}</style></div> )}
             </div>
-            {/* --- ADD THIS STYLE BLOCK FOR THE PHONE INPUT --- */}
             <style>{`
                 .phone-input-container .PhoneInputInput {
-                  border: 1px solid #d1d5db; /* Corresponds to Tailwind's border */
-                  border-radius: 0.375rem; /* Corresponds to Tailwind's rounded-md */
+                  border: 1px solid #d1d5db;
+                  border-radius: 0.375rem;
                   padding-left: 0.75rem;
                   padding-right: 0.75rem;
-                  height: 42px; /* Match other inputs' height */
+                  height: 42px;
                   width: 100%;
                   transition: border-color 0.2s;
                 }
                 .phone-input-container .PhoneInputInput:focus {
-                  border-color: #2563eb; /* Primary color on focus */
+                  border-color: #2563eb;
                   outline: none;
                   box-shadow: 0 0 0 1px #2563eb;
                 }
