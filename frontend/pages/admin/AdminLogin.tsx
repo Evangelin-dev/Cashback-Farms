@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../../src/utils/api/apiClient';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,7 +10,24 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
-    const { setCurrentUser } = useAuth();
+    const { setCurrentUser, currentUser, isLoading: authIsLoading } = useAuth();
+
+    useEffect(() => {
+        if (!authIsLoading && currentUser) {
+            if (currentUser.user_type === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (currentUser.user_type === 'client') {
+                navigate('/user-dashboard');
+            } else if (currentUser.user_type === 'b2b_vendor') {
+                navigate('/b2b/products');
+            }else if (currentUser.user_type === 'real_estate_agent' ) {
+                navigate('/realestate/dashboard');
+            } 
+            else {
+                navigate('/');
+            }
+        }
+    }, [currentUser, authIsLoading, navigate]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -30,7 +47,12 @@ const AdminLogin = () => {
             localStorage.setItem('currentUser', JSON.stringify(user));
 
             setCurrentUser(user);
-            navigate('/admin/dashboard');
+            
+            if (user.user_type === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/');
+            }
 
         } catch (err: any) {
             const errorMessage = err.response?.data?.detail || 'Invalid username or password.';
@@ -40,6 +62,15 @@ const AdminLogin = () => {
             setLoading(false);
         }
     };
+
+    if (authIsLoading || currentUser) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-100">
+                <span className="loader" style={{width: '48px', height: '48px'}}></span>
+                <style>{`.loader { border: 4px solid #f3f3f3; border-top: 4px solid #15a349; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
 
     return (
         <div className="flex justify-center items-center h-screen bg-gray-100">
