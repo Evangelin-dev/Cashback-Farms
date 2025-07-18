@@ -858,7 +858,7 @@ class KYCStatusView(APIView):
 
 
 class KYCUpdateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUserType]
 
     def put(self, request):
         kyc_id = request.data.get('id')
