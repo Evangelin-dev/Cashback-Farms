@@ -27,15 +27,13 @@ const ManageSitePage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would be an API call. Here, we update the MOCK_SITE_DETAILS directly.
-    // This is not ideal for module state but works for this mock setup.
     MOCK_SITE_DETAILS.name = formData.name;
     MOCK_SITE_DETAILS.location = formData.location;
     MOCK_SITE_DETAILS.description = formData.description;
     MOCK_SITE_DETAILS.amenities = formData.amenities;
     MOCK_SITE_DETAILS.sitePlanImageUrl = formData.sitePlanImageUrl;
     
-    setSiteDetails({...MOCK_SITE_DETAILS}); // Trigger re-render with updated values
+    setSiteDetails({...MOCK_SITE_DETAILS});
     alert('Site details updated successfully!');
   };
   
