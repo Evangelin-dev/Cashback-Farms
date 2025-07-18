@@ -5,19 +5,19 @@ import { MOCK_BOOKINGS, MOCK_PAYMENTS, MOCK_PLOTS, MOCK_USERS } from '../../cons
 import { PaymentStatus } from '../../types';
 
 interface MonthlyBookingData {
-  monthYear: string; // e.g., "Jan 2024"
+  monthYear: string; 
   count: number;
 }
 
-// Moved monthNameToNumber function definition here
+
 const monthNameToNumber = (monthName: string) => {
   return new Date(Date.parse(monthName +" 1, 2012")).getMonth()+1;
 }
 
 const AdminDashboardPage: React.FC = () => {
-  const [bookingTimeFilter, setBookingTimeFilter] = useState<string>('all'); // '3months', '6months', 'all'
+  const [bookingTimeFilter, setBookingTimeFilter] = useState<string>('all'); 
 
-  // KPI Calculations
+  
   const totalPlots = useMemo(() => MOCK_PLOTS.length, [MOCK_PLOTS]);
   const bookedPlots = useMemo(() => MOCK_PLOTS.filter(p => !p.isAvailable).length, [MOCK_PLOTS]);
   const availablePlots = useMemo(() => totalPlots - bookedPlots, [totalPlots, bookedPlots]);
@@ -27,15 +27,15 @@ const AdminDashboardPage: React.FC = () => {
     [MOCK_PAYMENTS]
   );
 
-  // Bookings Trend Data
+  
   const monthlyBookingsData = useMemo((): MonthlyBookingData[] => {
     const now = new Date();
-    let startDate = new Date(0); // Default for 'all'
+    let startDate = new Date(0); 
 
     if (bookingTimeFilter === '3months') {
-      startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1); // Start of 3 months ago
+      startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
     } else if (bookingTimeFilter === '6months') {
-      startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1); // Start of 6 months ago
+      startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     }
 
     const filteredBookings = MOCK_BOOKINGS.filter(booking => {
@@ -54,7 +54,7 @@ const AdminDashboardPage: React.FC = () => {
       aggregation[monthYear]++;
     });
     
-    // Sort by date for correct chart order
+   
     const sortedData = Object.entries(aggregation)
       .map(([monthYear, count]) => ({ monthYear, count, date: new Date(monthYear.split(' ')[1] + '-' + monthNameToNumber(monthYear.split(' ')[0]) + '-01') }))
       .sort((a,b) => a.date.getTime() - b.date.getTime())
@@ -68,7 +68,7 @@ const AdminDashboardPage: React.FC = () => {
   , [monthlyBookingsData]);
 
 
-  // Add icons for visual enhancement
+ 
   const kpiCardData = [
     { title: "Total Plots", value: totalPlots.toLocaleString(), color: "bg-gradient-to-r from-blue-500 to-blue-400", icon: <span className="inline-block mr-2"><svg width="24" height="24" fill="currentColor" className="text-white opacity-80"><rect x="4" y="8" width="16" height="8" rx="2"/></svg></span> },
     { title: "Booked Plots", value: bookedPlots.toLocaleString(), color: "bg-gradient-to-r from-red-500 to-red-400", icon: <span className="inline-block mr-2"><svg width="24" height="24" fill="currentColor" className="text-white opacity-80"><circle cx="12" cy="12" r="8"/></svg></span> },

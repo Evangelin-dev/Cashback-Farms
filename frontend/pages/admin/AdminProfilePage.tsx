@@ -45,7 +45,6 @@ const AdminProfilePage: React.FC = () => {
   const [gstStage, setGstStage] = useState<"none" | "submitted" | "verifying" | "verified">("none");
   const navigate = useNavigate();
 
-  // Validation
   const validate = () => {
     const errs: { [key: string]: string } = {};
     if (!editProfile.firstName.trim()) errs.firstName = "First name is required";
@@ -73,7 +72,6 @@ const AdminProfilePage: React.FC = () => {
     setShowPopup(true);
     setTimeout(() => {
       setProfileAnim(false);
-      // Keep popup for a moment before navigating
       setTimeout(() => {
         setShowPopup(false);
         navigate("/admin/dashboard");
@@ -81,7 +79,6 @@ const AdminProfilePage: React.FC = () => {
     }, 1200);
   };
 
-  // KYC simulation
   const handleKyc = () => {
     setShowKyc(true);
     setTimeout(() => {
@@ -91,7 +88,6 @@ const AdminProfilePage: React.FC = () => {
     }, 2000);
   };
 
-  // GST file upload and verification simulation
   const handleGstFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -314,7 +310,6 @@ const AdminProfilePage: React.FC = () => {
                 </button>
               )}
             </div>
-            {/* --- GST File Verification Section --- */}
             <div className="flex flex-col items-start mt-4">
               <label className="text-xs text-gray-500 mb-1">GST File Verification:</label>
               <div className="flex items-center gap-2">
@@ -381,7 +376,6 @@ const AdminProfilePage: React.FC = () => {
               </button>
             </div>
           </form>
-          {/* Creative confirmation popup */}
           {showPopup && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
               <div className="relative bg-gradient-to-br from-blue-100 via-white to-blue-200 rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center animate-adminpop">
@@ -433,7 +427,6 @@ const AdminProfilePage: React.FC = () => {
             </div>
           )}
         </div>
-        {/* Right: Admin Summary */}
         <div className="w-[22rem] flex-shrink-0">
           <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
             <h3 className="text-lg font-bold text-primary-light mb-3 animate-fadein">Admin Summary</h3>
