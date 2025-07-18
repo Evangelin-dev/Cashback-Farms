@@ -146,7 +146,7 @@ class PlotListingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = (
             'owner',
-            'is_verified', 'available_sqft_for_investment', 'joint_owners',
+            'available_sqft_for_investment', 'joint_owners',
             'owner_username', 'listed_by_agent_username'
         )
 
@@ -383,8 +383,8 @@ class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if self.user.user_type != 'admin':
-            raise serializers.ValidationError("Only admin users are allowed to login here.")
+        # if self.user.user_type != 'admin':
+        #     raise serializers.ValidationError("Only admin users are allowed to login here.")
 
         data['user'] = {
             "id": self.user.id,
