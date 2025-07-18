@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot
 )
 
 # User and Authentication Serializers
@@ -146,7 +146,7 @@ class PlotListingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = (
             'owner',
-            'is_verified', 'available_sqft_for_investment', 'joint_owners',
+            'available_sqft_for_investment', 'joint_owners',
             'owner_username', 'listed_by_agent_username'
         )
 
@@ -383,8 +383,8 @@ class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
-        if self.user.user_type != 'admin':
-            raise serializers.ValidationError("Only admin users are allowed to login here.")
+        # if self.user.user_type != 'admin':
+        #     raise serializers.ValidationError("Only admin users are allowed to login here.")
 
         data['user'] = {
             "id": self.user.id,
@@ -393,3 +393,8 @@ class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
             "user_type": self.user.user_type
         }
         return data
+
+class VerifiedPlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerifiedPlot
+        fields = '__all__'
