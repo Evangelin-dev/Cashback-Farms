@@ -862,18 +862,19 @@ class KYCUpdateView(APIView):
 
     def put(self, request):
         kyc_id = request.data.get('id')
+        if not kyc_id:
+            return Response({"detail": "KYC document ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             kyc_doc = KYCDocument.objects.get(id=kyc_id)
-            if request.user.is_staff:  # ✅ only admin allowed
-                serializer = KYCDocumentSerializer(kyc_doc, data=request.data, partial=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status=200)
-                return Response(serializer.errors, status=400)
-            else:
-                return Response({"detail": "Permission denied."}, status=403)
         except KYCDocument.DoesNotExist:
-            return Response({"detail": "KYC document not found."}, status=404)
+            return Response({"detail": "KYC document not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = KYCDocumentSerializer(kyc_doc, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class MicroPlotListView(generics.ListAPIView):
