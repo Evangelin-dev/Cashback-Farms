@@ -398,3 +398,15 @@ class VerifiedPlotSerializer(serializers.ModelSerializer):
     class Meta:
         model = VerifiedPlot
         fields = '__all__'
+
+class UserAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'mobile_number', 'first_name', 'last_name',
+            'gender', 'date_of_birth', 'town', 'city', 'state', 'country',
+            'aadhaar_card', 'pan_card', 'kyc_status', 'user_type', 'user_code',
+            'referral_code', 'referred_by', 'gst_number', 'company_name',
+            'is_active', 'date_joined'
+        ]
+        read_only_fields = ['user_code', 'referral_code', 'date_joined']
