@@ -380,19 +380,16 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        # Optional: Add custom claims here if needed
-        token['username'] = user.username
-        return token
-
     def validate(self, attrs):
         data = super().validate(attrs)
+
+        if self.user.user_type != 'admin':
+            raise serializers.ValidationError("Only admin users are allowed to login here.")
+
         data['user'] = {
             "id": self.user.id,
-            "username": self.user.username,
             "email": self.user.email,
-            "user_type": getattr(self.user, 'user_type', ''),
+            "username": self.user.username,
+            "user_type": self.user.user_type
         }
         return data
