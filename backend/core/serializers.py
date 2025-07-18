@@ -74,14 +74,24 @@ class OTPVerificationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Either email or mobile number is required for OTP verification.")
         return data
 
+class CustomUserSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'mobile_number', 'gender', 'date_of_birth',
+            'town', 'city', 'state', 'country', 'is_active', 'user_type'
+        ]
+
 class KYCDocumentSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer2(read_only=True)  # ✅ Show full user info in response
+
     class Meta:
         model = KYCDocument
-        fields = ['id', 'document_type', 'file', 'status', 'upload_date']
-        read_only_fields = ['status', 'upload_date']
+        fields = ['id', 'document_type', 'file', 'status', 'upload_date', 'user']
+        read_only_fields = ['status', 'upload_date', 'user']
 
     def create(self, validated_data):
-        # Remove user from validated_data if it's already there
         validated_data['user'] = self.context['request'].user
         return KYCDocument.objects.create(**validated_data)
 
