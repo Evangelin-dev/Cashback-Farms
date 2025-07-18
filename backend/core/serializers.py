@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty
 )
 
 # User and Authentication Serializers
@@ -410,3 +410,9 @@ class UserAdminSerializer(serializers.ModelSerializer):
             'is_active', 'date_joined'
         ]
         read_only_fields = ['user_code', 'referral_code', 'date_joined']
+
+class CommercialPropertySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommercialProperty
+        fields = '__all__'
+        read_only_fields = ['id', 'user', 'added_date']

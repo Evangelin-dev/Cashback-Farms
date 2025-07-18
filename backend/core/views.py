@@ -37,7 +37,7 @@ from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
     SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
-    VerifiedPlot
+    VerifiedPlot, CommercialProperty
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -47,7 +47,7 @@ from .serializers import (
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
-    UserAdminSerializer
+    UserAdminSerializer, CommercialPropertySerializer
 )
 
 # --- Authentication and User Management ---
@@ -1846,3 +1846,18 @@ class ToggleUserStatusView(APIView):
             })
         except CustomUser.DoesNotExist:
             return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class CommercialPropertyListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+
+    def get_queryset(self):
+        return CommercialProperty.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class CommercialPropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+    queryset = CommercialProperty.objects.all()
