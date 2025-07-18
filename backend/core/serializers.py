@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty
 )
 
 # User and Authentication Serializers
@@ -146,7 +146,7 @@ class PlotListingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = (
             'owner',
-            'is_verified', 'available_sqft_for_investment', 'joint_owners',
+            'available_sqft_for_investment', 'joint_owners',
             'owner_username', 'listed_by_agent_username'
         )
 
@@ -380,19 +380,39 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
 
 class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-        # Optional: Add custom claims here if needed
-        token['username'] = user.username
-        return token
-
     def validate(self, attrs):
         data = super().validate(attrs)
+
+        # if self.user.user_type != 'admin':
+        #     raise serializers.ValidationError("Only admin users are allowed to login here.")
+
         data['user'] = {
             "id": self.user.id,
-            "username": self.user.username,
             "email": self.user.email,
-            "user_type": getattr(self.user, 'user_type', ''),
+            "username": self.user.username,
+            "user_type": self.user.user_type
         }
         return data
+
+class VerifiedPlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerifiedPlot
+        fields = '__all__'
+
+class UserAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'username', 'email', 'mobile_number', 'first_name', 'last_name',
+            'gender', 'date_of_birth', 'town', 'city', 'state', 'country',
+            'aadhaar_card', 'pan_card', 'kyc_status', 'user_type', 'user_code',
+            'referral_code', 'referred_by', 'gst_number', 'company_name',
+            'is_active', 'date_joined'
+        ]
+        read_only_fields = ['user_code', 'referral_code', 'date_joined']
+
+class CommercialPropertySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommercialProperty
+        fields = '__all__'
+        read_only_fields = ['id', 'user', 'added_date']

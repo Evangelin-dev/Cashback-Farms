@@ -36,7 +36,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
+    VerifiedPlot, CommercialProperty
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -45,8 +46,18 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer
+    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
+    UserAdminSerializer, CommercialPropertySerializer
 )
+
+
+class IsAdminUserType(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type == 'admin'
+        )
 
 # --- Authentication and User Management ---
 class UserRegistrationView(APIView):
@@ -921,6 +932,15 @@ class IsB2BVendor(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.user_type == 'b2b_vendor'
 
+class IsB2BVendorOrAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (
+            request.user
+            and request.user.is_authenticated
+            and request.user.user_type in ['b2b_vendor', 'admin']
+        )
+
+
 class MaterialProductViewSet(viewsets.ModelViewSet):
     queryset = EcommerceProduct.objects.filter(category='material')
     serializer_class = EcommerceProductSerializer
@@ -933,7 +953,7 @@ class MaterialProductViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         if self.action in ['create', 'update', 'partial_update', 'destroy', 'toggle_status', 'my_products']:
-            return [permissions.IsAuthenticated(), IsB2BVendor()]
+            return [permissions.IsAuthenticated(), IsB2BVendorOrAdmin()]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -1772,3 +1792,82 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 
 class UsernameTokenObtainPairView(TokenObtainPairView):
     serializer_class = UsernameTokenObtainPairSerializer
+
+class VerifiedPlotViewSet(viewsets.ModelViewSet):
+    queryset = VerifiedPlot.objects.filter(is_flagship=True).order_by('-created_at')
+    serializer_class = VerifiedPlotSerializer
+    permission_classes = [IsAdminUserType]
+
+
+class BookingViewSetAdmin(viewsets.ModelViewSet):
+    queryset = Booking.objects.all().select_related('client', 'plot_listing')
+    serializer_class = BookingSerializer
+    permission_classes = [IsAdminUserType]
+
+    # def perform_create(self, serializer):
+    #     serializer.save(client=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.user_type == 'admin':
+            return Booking.objects.all().order_by('-booking_date')
+        return Booking.objects.filter(client=self.request.user)
+
+    @action(detail=True, methods=['patch'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        try:
+            booking = self.get_object()
+            new_status = request.data.get("status")
+
+            if new_status not in ['pending', 'confirmed', 'cancelled', 'completed']:
+                return Response({'error': 'Invalid status value'}, status=400)
+
+            booking.status = new_status
+            booking.save()
+
+            # Optional: mark plot availability
+            if new_status == 'confirmed':
+                booking.plot_listing.is_available = False
+                booking.plot_listing.save()
+            elif new_status == 'cancelled':
+                booking.plot_listing.is_available = True
+                booking.plot_listing.save()
+
+            return Response({'message': 'Booking status updated successfully'}, status=200)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all().order_by('-date_joined')
+    serializer_class = UserAdminSerializer
+    permission_classes = [IsAdminUserType]
+
+class ToggleUserStatusView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def post(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+            user.is_active = not user.is_active
+            user.save()
+            return Response({
+                "success": True,
+                "user_id": user.id,
+                "new_status": "active" if user.is_active else "inactive"
+            })
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class CommercialPropertyListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+
+    def get_queryset(self):
+        return CommercialProperty.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class CommercialPropertyDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = CommercialPropertySerializer
+    permission_classes = [IsAdminUserType]
+    queryset = CommercialProperty.objects.all()
