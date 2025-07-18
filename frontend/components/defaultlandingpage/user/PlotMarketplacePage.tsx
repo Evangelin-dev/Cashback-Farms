@@ -9,7 +9,7 @@ import { FiHeart } from 'react-icons/fi';
 import { GoCalendar, GoVerified } from "react-icons/go";
 import { LuPencil, LuRectangleHorizontal } from "react-icons/lu";
 
-// --- TYPE DEFINITIONS ---
+// --- TYPE DEFINITIONS (Unchanged) ---
 interface Plot {
     id: number;
     title: string;
@@ -44,7 +44,18 @@ interface ShortlistItem {
   item_type: string;
 }
 
-// --- CARD COMPONENT ---
+// A utility function for debouncing API calls
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func(...args);
+    }, delay);
+  };
+};
+
+// --- CARD COMPONENT (Unchanged) ---
 const PlotCard: React.FC<{ plot: Plot; onToggleWishlist: (plotId: number) => void; onViewDetails: (id: number) => void; isWishlistLoading: boolean; }> = ({ plot, onToggleWishlist, onViewDetails, isWishlistLoading }) => {
     const total_price = plot.area * plot.pricePerSqFt;
     return (
@@ -73,7 +84,7 @@ const PlotCard: React.FC<{ plot: Plot; onToggleWishlist: (plotId: number) => voi
     );
 };
 
-// --- SIDEBAR COMPONENT ---
+// --- SIDEBAR COMPONENT (Unchanged) ---
 const FilterSidebar: React.FC<{
     priceRange: { min: number; max: number }; setPriceRange: React.Dispatch<React.SetStateAction<{ min: number; max: number }>>;
     areaRange: { min: number; max: number }; setAreaRange: React.Dispatch<React.SetStateAction<{ min: number; max: number }>>;
@@ -114,15 +125,25 @@ const DPlotMarketplacePage: React.FC = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
 
+    // --- Filter States ---
     const initialPriceRange = { min: 0, max: 200000000 };
     const initialAreaRange = { min: 0, max: 10000 };
     const [priceRange, setPriceRange] = useState(initialPriceRange);
     const [areaRange, setAreaRange] = useState(initialAreaRange);
     const [showWithPhotos, setShowWithPhotos] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [locationFilter, setLocationFilter] = useState('All Locations');
     const [showVerified, setShowVerified] = useState(false);
-    const tamilNaduCities = ["All Locations", "Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli"];
+    const [locationFilter, setLocationFilter] = useState('All Locations');
+    
+    // --- **NEW** GEOAPIFY SEARCH STATES ---
+    const [searchTerm, setSearchTerm] = useState(''); // This will hold the final location to filter by
+    const [locationSearchInput, setLocationSearchInput] = useState(''); // For the live input field
+    const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+    const [isLocationSearching, setIsLocationSearching] = useState(false);
+    const [showLocationSuggestions, setShowLocationSuggestions] = useState(true);
+    const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
+
+    // --- **NEW** METROPOLITAN CITIES LIST ---
+    const metropolitanCities = ["All Locations", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Kolkata", "Pune", "Ahmedabad"];
 
     const fetchShortlist = useCallback(async () => {
         if (!currentUser) return;
@@ -134,7 +155,6 @@ const DPlotMarketplacePage: React.FC = () => {
         } catch (err) { console.error("Could not refresh shortlist:", err); }
     }, [currentUser]);
 
-    // **MAJOR FIX HERE**
     useEffect(() => {
         const fetchPageData = async () => {
             setIsLoading(true);
@@ -144,8 +164,8 @@ const DPlotMarketplacePage: React.FC = () => {
 
             try {
                 const [plotsResponse, shortlistResponse] = await Promise.all([
-                    apiClient.get('/public/plots/'), // Always fetch public plots
-                    currentUser ? apiClient.get('/cart/', { headers }) : Promise.resolve([]), // Only fetch cart if logged in
+                    apiClient.get('/public/plots/'),
+                    currentUser ? apiClient.get('/cart/', { headers }) : Promise.resolve([]),
                 ]);
                 
                 setPlots(plotsResponse || []);
@@ -161,16 +181,42 @@ const DPlotMarketplacePage: React.FC = () => {
         fetchPageData();
     }, [currentUser]);
 
+    // --- **NEW** GEOAPIFY FETCH LOGIC ---
+    const fetchLocationSuggestions = useCallback(
+      debounce(async (text: string) => {
+        if (!GEOAPIFY_API_KEY) return;
+        if (!text || text.length < 3) {
+          setLocationSuggestions([]);
+          return;
+        }
+        setIsLocationSearching(true);
+        const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&apiKey=${GEOAPIFY_API_KEY}`;
+        try {
+          const response = await fetch(url);
+          const data = await response.json();
+          setLocationSuggestions(data.features || []);
+        } catch (error) {
+          console.error("Error fetching location suggestions:", error);
+        } finally {
+          setIsLocationSearching(false);
+        }
+      }, 400),
+      [GEOAPIFY_API_KEY]
+    );
+
+    useEffect(() => {
+      if (showLocationSuggestions) {
+        fetchLocationSuggestions(locationSearchInput);
+      }
+    }, [locationSearchInput, showLocationSuggestions, fetchLocationSuggestions]);
+
     const [ showAuth,setShowAuth] = useState(false);
     const handleToggleWishlist = async (plotId: number) => {
         if (!currentUser) { setShowAuth(true); return; }
-        
         setWishlistLoadingId(plotId); 
         const accessToken = localStorage.getItem("access_token");
         const headers = { Authorization: `Bearer ${accessToken}` };
-        
         const isCurrentlyShortlisted = shortlistedItems.some(item => item.item_id === plotId);
-
         try {
             if (isCurrentlyShortlisted) {
                 const itemToRemove = shortlistedItems.find(item => item.item_id === plotId);
@@ -189,14 +235,12 @@ const DPlotMarketplacePage: React.FC = () => {
         }
     };
     
-    const handleViewDetails = (id: number) => {
-        navigate(`/Dbook-my-sqft/${id}`);
-    };
+    const handleViewDetails = (id: number) => { navigate(`/Dbook-my-sqft/${id}`); };
 
     const finalFilteredPlots = useMemo(() => {
         const shortlistedIds = new Set(shortlistedItems.map(item => item.item_id));
         return plots
-            .map(apiPlot => ({ // Map raw API plots to client-side plots
+            .map(apiPlot => ({
                 id: apiPlot.id,
                 title: apiPlot.title,
                 location: apiPlot.location,
@@ -217,34 +261,73 @@ const DPlotMarketplacePage: React.FC = () => {
                 const hasPhotosMatch = !showWithPhotos || (showWithPhotos && plot.hasPhotos);
                 const verifiedMatch = !showVerified || (showVerified && plot.isVerified);
                 const matchesLocation = locationFilter === 'All Locations' || plot.location.toLowerCase().includes(locationFilter.toLowerCase());
-                const matchesSearch = plot.title.toLowerCase().includes(searchTerm.toLowerCase());
+                // --- **UPDATED** SEARCH LOGIC ---
+                const matchesSearch = !searchTerm || plot.location.toLowerCase().includes(searchTerm.toLowerCase());
                 return withinPrice && withinArea && hasPhotosMatch && verifiedMatch && matchesLocation && matchesSearch;
             });
-    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm]);
+    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified]);
 
     const resetFilters = () => {
         setPriceRange(initialPriceRange); setAreaRange(initialAreaRange);
-        setShowWithPhotos(false); setShowVerified(false); setSearchTerm(''); setLocationFilter('All Locations');
+        setShowWithPhotos(false); setShowVerified(false); 
+        setSearchTerm(''); setLocationSearchInput(''); // Reset both search terms
+        setLocationFilter('All Locations');
     };
-    
 
     return (
         <div className="bg-gray-50 min-h-screen">
              <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center"><div className="text-2xl font-bold text-green-600">PLOT-MARKET</div></div></header>
             <main className="max-w-screen-xl mx-auto p-4">
                 <div className="bg-white p-3 rounded-lg border shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4">
-                    <select className="w-full md:w-auto md:min-w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>{tamilNaduCities.map(city => (<option key={city} value={city}>{city}</option>))}</select>
-                    <div className="flex-grow"><input type="text" placeholder="Search by plot title..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}/></div>
-                    <button className="bg-green-600 text-white font-bold px-8 py-2 rounded-md w-full md:w-auto hover:bg-green-700">Search</button>
+                    {/* --- **UPDATED** DROPDOWN --- */}
+                    <select className="w-full md:w-auto md:min-w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>{metropolitanCities.map(city => (<option key={city} value={city}>{city}</option>))}</select>
+                    
+                    {/* --- **UPDATED** GEOAPIFY SEARCH BAR --- */}
+                    <div 
+                        className="flex-grow relative" 
+                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                    >
+                        <input 
+                            type="text" 
+                            placeholder="Search by location (e.g., Koramangala, Bangalore)..." 
+                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" 
+                            value={locationSearchInput} 
+                            onChange={(e) => {
+                                setLocationSearchInput(e.target.value);
+                                setShowLocationSuggestions(true);
+                            }}
+                        />
+                        {isLocationSearching && <FaSpinner className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />}
+                        {showLocationSuggestions && locationSuggestions.length > 0 && (
+                            <ul className="absolute top-full left-0 right-0 bg-white border mt-1 rounded-md shadow-lg z-20 max-h-60 overflow-y-auto">
+                                {locationSuggestions.map((s, i) => (
+                                    <li 
+                                        key={s.properties.place_id || i}
+                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onMouseDown={() => {
+                                            const term = s.properties.name || s.properties.city || s.properties.formatted;
+                                            setLocationSearchInput(term);
+                                            setSearchTerm(term); // Set the filter term
+                                            setShowLocationSuggestions(false); // Hide suggestions
+                                        }}
+                                    >
+                                        {s.properties.formatted}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+
+                    <button 
+                        className="bg-green-600 text-white font-bold px-8 py-2 rounded-md w-full md:w-auto hover:bg-green-700"
+                        onClick={() => setSearchTerm(locationSearchInput)} // Set filter on click
+                    >
+                        Search
+                    </button>
                 </div>
+
                 <div className="flex flex-col lg:flex-row gap-6">
-                    <FilterSidebar 
-                        priceRange={priceRange} setPriceRange={setPriceRange}
-                        areaRange={areaRange} setAreaRange={setAreaRange}
-                        showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos}
-                        showVerified={showVerified} setShowVerified={setShowVerified}
-                        resetFilters={resetFilters}
-                    />
+                    <FilterSidebar priceRange={priceRange} setPriceRange={setPriceRange} areaRange={areaRange} setAreaRange={setAreaRange} showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos} showVerified={showVerified} setShowVerified={setShowVerified} resetFilters={resetFilters} />
                     <div className="flex-1">
                         {isLoading ? ( <div className="flex justify-center items-center h-96"><FaSpinner className="animate-spin text-green-600 text-5xl" /></div>
                         ) : error ? ( <div className="text-center py-20 bg-white border rounded-lg"><p className="text-xl text-red-600">{error}</p></div>

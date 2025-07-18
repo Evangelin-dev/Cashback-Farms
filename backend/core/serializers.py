@@ -1,5 +1,7 @@
 # core/serializers.py
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
@@ -357,3 +359,40 @@ class B2BProfileSerializer(serializers.ModelSerializer):
         parts = filter(None, [obj.town, obj.city, obj.state, obj.country])
         return ', '.join(parts) or "Not Provided"
 
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'email'
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+
+        if not email or not password:
+            raise serializers.ValidationError("Must include 'email' and 'password'.")
+
+        user = authenticate(request=self.context.get('request'), email=email, password=password)
+
+        if not user:
+            raise serializers.ValidationError("Invalid email or password.")
+
+        data = super().validate(attrs)
+        data['user_id'] = user.id
+        data['email'] = user.email
+        return data
+
+class UsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Optional: Add custom claims here if needed
+        token['username'] = user.username
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['user'] = {
+            "id": self.user.id,
+            "username": self.user.username,
+            "email": self.user.email,
+            "user_type": getattr(self.user, 'user_type', ''),
+        }
+        return data
