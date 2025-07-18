@@ -88,6 +88,7 @@ import RefundPolicyPage from './components/RefundPolicy';
 import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
 import B2bProtectedRoute from './components/ProtectedB2BRoute';
 import AdminLogin from './pages/admin/AdminLogin';
+import ManageKYC from './pages/admin/ManageKYC';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -181,6 +182,7 @@ const AppRoutes: React.FC = () => {
         <Route path="profile" element={<AdminProfilePage />} />
         <Route path="microplot" element={< ManageMysqft />} />
         <Route path="verifiedplot" element={< ManageVerifiedPlots />} />
+        <Route path="kyc" element={<ManageKYC />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
 </Route>
