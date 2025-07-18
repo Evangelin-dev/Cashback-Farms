@@ -17,7 +17,7 @@ from .views import (
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
     InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin, AdminUserViewSet,
-    ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView
+    ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView, AllKYCListView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -119,5 +119,6 @@ urlpatterns = [
     path('admin/users/<int:pk>/toggle-status/', ToggleUserStatusView.as_view(), name='admin-user-toggle-status'),
     path('admin/commercial-properties/', CommercialPropertyListCreateView.as_view(), name='commercial-list-create'),
     path('admin/commercial-properties/<int:pk>/', CommercialPropertyDetailView.as_view(), name='commercial-detail'),
+    path('admin/kyc-documents/', AllKYCListView.as_view(), name='admin-kyc-list'),
 
 ]
