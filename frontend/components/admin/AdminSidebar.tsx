@@ -174,6 +174,7 @@ const AdminSidebar: React.FC = () => {
         <nav className="flex-grow space-y-1">
           <AdminNavItem to="/admin/dashboard" icon={<IconDashboard className="w-5 h-5" />} label="Dashboard" />
           <div className="pt-2 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Content</div>
+           <AdminNavItem to="/admin/kyc" icon={<IconCreditCard className="w-5 h-5" />} label="KYC Management" onClick={handleNavClick} />
           <AdminNavItem to="/admin/plots" icon={<IconTableCells className="w-5 h-5" />} label="Plots (Residential)" onClick={handleNavClick} />
           <AdminNavItem to="/admin/verifiedplot" icon={<IconTableCells className="w-5 h-5" />} label="Greenheap Verified Plots" onClick={handleNavClick} />
           <AdminNavItem to="/admin/microplot" icon={<IconMapPin className="w-5 h-5" />} label="Micro Plots" onClick={handleNavClick} />
@@ -183,11 +184,10 @@ const AdminSidebar: React.FC = () => {
 
           <div className="pt-4 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Site</div>
           <AdminNavItem to="/admin/users" icon={<IconUsers className="w-5 h-5" />} label="Users" onClick={handleNavClick} />
-          <AdminNavItem to="/admin/site" icon={<IconBuildingOffice className="w-5 h-5" />} label="Project Site Details" onClick={handleNavClick} />
+          
           <AdminNavItem to="/admin/materials" icon={<IconCubeTransparent className="w-5 h-5" />} label="Construction Materials" onClick={handleNavClick} />
 
-          <div className="pt-4 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">System</div>
-          <AdminNavItem to="/admin/settings" icon={<IconCog className="w-5 h-5" />} label="Settings" onClick={handleNavClick} />
+         
         </nav>
 
         {/* Exit Button */}
