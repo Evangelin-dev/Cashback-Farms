@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import apiClient from '../../src/utils/api/apiClient'; // Adjust path if necessary
-import { useAuth } from '../../contexts/AuthContext'; // Adjust path to your AuthContext
+import apiClient from '../../src/utils/api/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLogin = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    
-    // Hooks for navigation and authentication context
+
     const navigate = useNavigate();
     const { setCurrentUser } = useAuth();
 
@@ -24,23 +23,16 @@ const AdminLogin = () => {
                 password,
             });
 
-            // On success, the API should return tokens and user info
             const { access, refresh, user } = response;
 
-            // 1. Store tokens and user in localStorage
             localStorage.setItem('access_token', access);
             localStorage.setItem('refresh_token', refresh);
             localStorage.setItem('currentUser', JSON.stringify(user));
 
-            // 2. Update the global state using AuthContext
             setCurrentUser(user);
-            
-            // 3. Redirect to the admin dashboard
-            // You can change this to any route you need for admins
             navigate('/admin/dashboard');
 
         } catch (err: any) {
-            // Handle login errors
             const errorMessage = err.response?.data?.detail || 'Invalid username or password.';
             setError(errorMessage);
             console.error("Login failed:", err);
@@ -52,10 +44,9 @@ const AdminLogin = () => {
     return (
         <div className="flex justify-center items-center h-screen bg-gray-100">
             <div className='bg-white p-8 rounded-lg shadow-xl w-full max-w-sm relative'>
-                
-                {/* Back to Home Link */}
-                <Link 
-                    to="/" 
+
+                <Link
+                    to="/"
                     className="absolute top-4 left-4 text-gray-400 hover:text-gray-700 transition-colors"
                     aria-label="Go back to homepage"
                 >
@@ -105,7 +96,6 @@ const AdminLogin = () => {
                         />
                     </div>
 
-                    {/* Display error message if it exists */}
                     {error && (
                         <p className="text-red-500 text-sm text-center animate-shake">
                             {error}
@@ -130,7 +120,6 @@ const AdminLogin = () => {
                     </div>
                 </form>
             </div>
-            {/* Simple CSS for the loader animation */}
             <style>{`.loader { border: 2px solid #f3f3f3; border-top: 2px solid #15a349; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .animate-shake { animation: shake 0.5s; } @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }`}</style>
         </div>
     );

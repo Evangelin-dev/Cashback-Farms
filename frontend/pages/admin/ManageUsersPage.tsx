@@ -3,12 +3,9 @@ import { Card, Form, Input, Modal, Select, Table, Tag, message, Tooltip } from '
 import Button from '../../components/Button';
 import apiClient from '../../src/utils/api/apiClient';
 import { IconPencil, IconPlus } from '../../constants';
-
-// --- NEW: Import the phone number input library ---
 import PhoneInput from 'react-phone-number-input';
-import 'react-phone-number-input/style.css'; // This is also needed
+import 'react-phone-number-input/style.css';
 
-// --- Type definition for a user from the API ---
 interface User {
   id: number;
   key: number;
@@ -34,7 +31,7 @@ const ManageUsersPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form] = Form.useForm();
 
-  // --- NEW: State for the block/unblock confirmation modal ---
+
   const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
   const [userToToggle, setUserToToggle] = useState<User | null>(null);
 
@@ -85,11 +82,11 @@ const ManageUsersPage: React.FC = () => {
       closeModal();
       fetchUsers();
     } catch (error: any) {
-      // --- NEW: Advanced error handling ---
+    
       if (error.response && error.response.data && typeof error.response.data === 'object') {
         const errorData = error.response.data;
         const fieldErrors = Object.keys(errorData).map(key => ({
-            name: key, // e.g., 'email' or 'mobile_number'
+            name: key,
             errors: Array.isArray(errorData[key]) ? errorData[key] : [errorData[key]],
         }));
         form.setFields(fieldErrors);
@@ -102,7 +99,6 @@ const ManageUsersPage: React.FC = () => {
     }
   };
   
-  // --- NEW: Renamed to handle the final confirmation ---
   const handleConfirmToggleStatus = async () => {
     if (!userToToggle) return;
     const actionText = userToToggle.is_active ? 'block' : 'unblock';
@@ -139,7 +135,6 @@ const ManageUsersPage: React.FC = () => {
     form.resetFields();
   };
   
-  // --- NEW: Function to show the confirmation modal ---
   const showBlockModal = (user: User) => {
     setUserToToggle(user);
     setIsBlockModalVisible(true);
@@ -161,7 +156,6 @@ const ManageUsersPage: React.FC = () => {
             <Button size="sm" variant="outline" onClick={() => openModalForEdit(record)} leftIcon={<IconPencil className="w-4 h-4"/>} />
           </Tooltip>
           <Tooltip title={record.is_active ? 'Block User' : 'Unblock User'}>
-            {/* --- CHANGED: This button now opens the modal --- */}
             <Button size="sm" variant={record.is_active ? 'danger' : 'primary'} onClick={() => showBlockModal(record)}>
               {record.is_active ? 'Block' : 'Unblock'}
             </Button>
@@ -209,7 +203,6 @@ const ManageUsersPage: React.FC = () => {
             <Form.Item name="first_name" label="First Name" rules={[{ required: true }]}><Input placeholder="Enter first name" /></Form.Item>
             <Form.Item name="last_name" label="Last Name" rules={[{ required: true }]}><Input placeholder="Enter last name" /></Form.Item>
             
-            {/* --- NEW: Phone Number Input --- */}
             <Form.Item
               name="mobile_number"
               label="Mobile Number"
@@ -239,7 +232,6 @@ const ManageUsersPage: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* --- NEW: Block/Unblock Confirmation Modal --- */}
       <Modal
         title={`Confirm Action: ${userToToggle?.is_active ? 'Block' : 'Unblock'} User`}
         open={isBlockModalVisible}

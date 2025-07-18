@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Form, Input, InputNumber, Modal, Table, Tag, message, Upload } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
-import Button from '../../components/common/Button'; // Assuming your custom button
+import Button from '../../components/common/Button';
 import apiClient from '@/src/utils/api/apiClient';
-import { IconPencil, IconPlus, IconTrash } from '../../constants'; // Your custom icons
+import { IconPencil, IconPlus } from '../../constants';
 
 type Plot = {
   id: number;
