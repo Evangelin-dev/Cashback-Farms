@@ -1,16 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from "react-router-dom";
 import apiClient from '../../src/utils/api/apiClient'; // Adjust path if needed
 import { IconEdit } from "../../constants";
 
-// --- Country codes data (can be moved to a separate file if needed) ---
-const countryCodes = [
-  { code: "+91", label: "India", flag: "🇮🇳" },
-  { code: "+1", label: "USA", flag: "🇺🇸" },
-  { code: "+44", label: "UK", flag: "🇬🇧" },
-  { code: "+61", label: "Australia", flag: "🇦🇺" },
-  { code: "+971", label: "UAE", flag: "🇦🇪" },
-];
+// --- NEW: Import the phone number input library and its CSS ---
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css'; 
 
 // Initial state matching the API structure (flattened)
 const initialProfileState = {
@@ -19,8 +13,7 @@ const initialProfileState = {
     gender: "",
     dob: "",
     email: "",
-    phone: "",
-    countryCode: "+91",
+    phone: "", // This will now store the full international number
     photo: "",
     town: "",
     city: "",
@@ -35,16 +28,12 @@ const AdminProfilePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showPopup, setShowPopup] = useState(false);
-  const navigate = useNavigate();
 
-  // --- Fetch Admin Profile Data on Load ---
   const fetchProfile = useCallback(async () => {
     setIsLoading(true);
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) {
       setIsLoading(false);
-      // Optional: Redirect to login if no token
-      // navigate('/admin/login');
       return;
     }
     try {
@@ -57,8 +46,7 @@ const AdminProfilePage: React.FC = () => {
         lastName: user.last_name || "",
         email: user.email || "",
         phone: user.mobile_number || "",
-        countryCode: user.country_code || "+91",
-        photo: user.photo_url || "", // Assuming a photo URL is provided
+        photo: user.photo_url || "",
         town: user.town || "",
         city: user.city || "",
         state: user.state || "",
@@ -80,9 +68,7 @@ const AdminProfilePage: React.FC = () => {
     fetchProfile();
   }, [fetchProfile]);
   
-  // --- Save Updated Profile Data ---
   const handleSave = async () => {
-    // Basic validation can be added here if needed
     setIsSaving(true);
     setErrors({});
     const accessToken = localStorage.getItem("access_token");
@@ -91,26 +77,23 @@ const AdminProfilePage: React.FC = () => {
       first_name: editProfile.firstName,
       last_name: editProfile.lastName,
       email: editProfile.email,
-      mobile_number: editProfile.phone,
-      country_code: editProfile.countryCode,
+      mobile_number: editProfile.phone, // Send the full international number
       gender: editProfile.gender,
       date_of_birth: editProfile.dob,
       town: editProfile.town,
       city: editProfile.city,
       state: editProfile.state,
       country: editProfile.country,
-      // Note: Photo upload would typically be a separate multipart/form-data request
     };
 
     try {
       await apiClient.put('/user/profile/', payload, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      setProfile(editProfile); // Update the main profile state
+      setProfile(editProfile);
       setShowPopup(true);
       setTimeout(() => {
         setShowPopup(false);
-        navigate("/admin/dashboard");
       }, 2000);
     } catch (error: any) {
       console.error("Failed to save profile:", error.response?.data);
@@ -188,21 +171,24 @@ const AdminProfilePage: React.FC = () => {
                 <input type="date" className="border rounded px-3 py-2 w-full text-base focus:border-primary transition" value={editProfile.dob} onChange={e => setEditProfile({ ...editProfile, dob: e.target.value })} required />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Phone Number</label>
-                <div className="flex gap-2">
-                  <select className="border rounded px-2 py-2 bg-white text-base focus:border-primary transition" value={editProfile.countryCode} onChange={e => setEditProfile({ ...editProfile, countryCode: e.target.value })} required>
-                    {countryCodes.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
-                  </select>
-                  <input className="border rounded px-2 py-2 w-full text-base focus:border-primary transition" value={editProfile.phone} onChange={e => setEditProfile({ ...editProfile, phone: e.target.value })} placeholder="Phone Number" required maxLength={15} pattern="\d*" />
-                </div>
-              </div>
-              <div>
+            
+            {/* --- PHONE AND EMAIL ON SEPARATE LINES FOR BETTER LAYOUT --- */}
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Phone Number</label>
+              <PhoneInput
+                placeholder="Enter phone number"
+                value={editProfile.phone}
+                onChange={(value) => setEditProfile({ ...editProfile, phone: value || '' })}
+                defaultCountry="IN"
+                international
+                className="text-base focus:border-primary transition"
+              />
+            </div>
+             <div>
                 <label className="block text-xs text-gray-500 mb-1">Email</label>
                 <input disabled className="border rounded px-3 py-2 w-full text-base bg-gray-100 cursor-not-allowed" value={editProfile.email} type="email" />
-              </div>
             </div>
+
             <div>
               <label className="block text-xs text-gray-500 mb-1">Address</label>
               <div className="grid grid-cols-2 gap-4">
@@ -255,4 +241,4 @@ const AdminProfilePage: React.FC = () => {
   );
 };
 
-export default AdminProfilePage;
+export default AdminProfilePage
