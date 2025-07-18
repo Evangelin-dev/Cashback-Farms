@@ -46,7 +46,8 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer
+    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
+    UserAdminSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1824,3 +1825,24 @@ class BookingViewSetAdmin(viewsets.ModelViewSet):
             return Response({'message': 'Booking status updated successfully'}, status=200)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all().order_by('-date_joined')
+    serializer_class = UserAdminSerializer
+    permission_classes = [IsAdminUserType]
+
+class ToggleUserStatusView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def post(self, request, pk):
+        try:
+            user = CustomUser.objects.get(pk=pk)
+            user.is_active = not user.is_active
+            user.save()
+            return Response({
+                "success": True,
+                "user_id": user.id,
+                "new_status": "active" if user.is_active else "inactive"
+            })
+        except CustomUser.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)

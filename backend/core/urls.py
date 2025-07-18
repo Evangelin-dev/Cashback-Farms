@@ -16,7 +16,8 @@ from .views import (
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
-    InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin
+    InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin, AdminUserViewSet,
+    ToggleUserStatusView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -42,6 +43,7 @@ router.register(r'faqs', FAQViewSet, basename='faq')
 router.register(r'web/orders', WebOrderViewSet, basename='web-orders')
 router.register(r'admin/verified-plots', VerifiedPlotViewSet, basename='verified-plots')
 router.register(r'admin/bookings', BookingViewSetAdmin, basename='admin-bookings')
+router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
 
 
 
@@ -114,5 +116,6 @@ urlpatterns = [
     path('agents/interested-users/', InterestedUsersView.as_view(), name='interested-users'),
     path('auth/email-login/', EmailTokenObtainPairView.as_view(), name='email_token_obtain_pair'),
     path('auth/username-login/', UsernameTokenObtainPairView.as_view(), name='username_token_obtain_pair'),
+    path('admin/users/<int:pk>/toggle-status/', ToggleUserStatusView.as_view(), name='admin-user-toggle-status'),
 
 ]
