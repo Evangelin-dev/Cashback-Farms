@@ -89,7 +89,7 @@ class KYCDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = KYCDocument
         fields = ['id', 'document_type', 'file', 'status', 'upload_date', 'user']
-        read_only_fields = ['status', 'upload_date', 'user']
+        read_only_fields = ['upload_date', 'user']
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
