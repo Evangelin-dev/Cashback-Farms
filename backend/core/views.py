@@ -29,6 +29,7 @@ from requests.auth import HTTPBasicAuth
 from django.db.models import Count
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.db.models import Sum, F
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 
@@ -44,7 +45,7 @@ from .serializers import (
     OrderItemSerializer, RealEstateAgentProfileSerializer, RealEstateAgentRegistrationSerializer, PlotInquirySerializer,
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, KYCDocumentSerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
-    CallRequestSerializer, B2BProfileSerializer
+    CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer
 )
 
 # --- Authentication and User Management ---
@@ -1727,3 +1728,47 @@ class VendorPaymentHistoryView(APIView):
                 })
 
         return Response(history, status=200)
+
+class InterestedUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.user_type != 'real_estate_agent':
+            return Response({"detail": "Unauthorized"}, status=403)
+
+        plot_content_type = ContentType.objects.get_for_model(PlotListing)
+
+        # Get only shortlisted items for PlotListing
+        items = ShortlistCartItem.objects.filter(
+            content_type=plot_content_type
+        ).select_related('cart__user')
+
+        response_data = []
+
+        for item in items:
+            plot = item.content_object
+
+            # Safely skip non-PlotListing objects
+            if not isinstance(plot, PlotListing):
+                continue
+
+            if plot.listed_by_agent_id != user.id:
+                continue
+
+            buyer = item.cart.user
+            response_data.append({
+                "buyer_name": f"{buyer.first_name} {buyer.last_name}",
+                "buyer_phone": getattr(buyer, "mobile_number", ""),
+                "buyer_email": buyer.email,
+                "property_title": plot.title,
+                "contacted_on": item.added_at.strftime('%Y-%m-%d')
+            })
+
+        return Response(response_data, status=200)
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+class UsernameTokenObtainPairView(TokenObtainPairView):
+    serializer_class = UsernameTokenObtainPairSerializer

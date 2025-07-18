@@ -15,7 +15,8 @@ from .views import (
     PublicPlotListView, PublicMicroPlotListView, MyBookingListView, MyPaymentsView,
     PublicMaterialListView, PublicMaterialDetailView, PublicMicroPlotDetailView,PublicServiceDetailView,PublicServiceListView,
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
-    CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView
+    CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
+    InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -108,5 +109,8 @@ urlpatterns = [
     path('b2b/profile/', B2BVendorProfileView.as_view(), name='b2b-profile'),
     path('vendor/payments/summary/', VendorPaymentSummaryView.as_view(), name='vendor-payment-summary'),
     path('vendor/payments/history/', VendorPaymentHistoryView.as_view(), name='vendor-payment-history'),
+    path('agents/interested-users/', InterestedUsersView.as_view(), name='interested-users'),
+    path('auth/email-login/', EmailTokenObtainPairView.as_view(), name='email_token_obtain_pair'),
+    path('auth/username-login/', UsernameTokenObtainPairView.as_view(), name='username_token_obtain_pair'),
 
 ]
