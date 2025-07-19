@@ -30,14 +30,25 @@ from django.db.models import Count
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.db.models import Sum, F
 from rest_framework_simplejwt.views import TokenObtainPairView
+import razorpay
+import hmac
+import hashlib
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+import json
 
+
+
+from .models import SubPlotUnit
+from .serializers import SubPlotUnitSerializer
 
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
-    VerifiedPlot, CommercialProperty
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,Payment,
+    VerifiedPlot, CommercialProperty,
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -47,8 +58,15 @@ from .serializers import (
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
-    UserAdminSerializer, CommercialPropertySerializer
+    UserAdminSerializer, CommercialPropertySerializer,PaymentTransactionSerializer, ShortlistCartItemSerializer,
 )
+
+from django.contrib.auth.decorators import login_required
+import json
+
+
+
+
 
 
 class IsAdminUserType(permissions.BasePermission):
@@ -782,6 +800,48 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
             instance.delete()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+
+
+class SubPlotUnitViewSet(viewsets.ModelViewSet):
+    queryset = SubPlotUnit.objects.all()
+    serializer_class = SubPlotUnitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == "ADMIN":  # Adjust this according to your user model
+            return SubPlotUnit.objects.all()
+        return SubPlotUnit.objects.all()  # You can filter this if needed
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({"data": serializer.data})
+
+    def perform_create(self, serializer):
+        try:
+            serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_update(self, serializer):
+        try:
+            serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
 
 class BankDetailViewSet(viewsets.ModelViewSet):
     queryset = BankDetail.objects.all()
@@ -1883,3 +1943,76 @@ class AllKYCListView(APIView):
             "count": documents.count(),
             "documents": serializer.data
         }, status=200)
+   
+class CreateOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            data = request.data
+            amount = int(data.get('amount')) * 100  # in paise
+            plot_id = data.get('plot_id')
+        except Exception:
+            return Response({'error': 'Invalid payload'}, status=400)
+
+        if not amount or not plot_id:
+            return Response({'error': 'Amount and plot_id are required'}, status=400)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order = client.order.create({'amount': amount, 'currency': 'INR', 'payment_capture': '1'})
+        Payment.objects.create(
+            user=request.user,
+            plot_id=plot_id,
+            razorpay_order_id=order['id'],
+            amount=amount / 100,
+            status='created'
+        )
+        return Response({
+            'order_id': order['id'],
+            'amount': amount,
+            'key_id': settings.RAZORPAY_KEY_ID
+        })
+
+class VerifyPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        try:
+            razorpay_order_id = data.get("razorpay_order_id")
+            razorpay_payment_id = data.get("razorpay_payment_id")
+            razorpay_signature = data.get("razorpay_signature")
+
+            generated_signature = hmac.new(
+                settings.RAZORPAY_KEY_SECRET.encode(),
+                f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+                hashlib.sha256
+            ).hexdigest()
+
+            if hmac.compare_digest(generated_signature, razorpay_signature):
+                # Mark Payment as Paid
+                payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
+                payment.razorpay_payment_id = razorpay_payment_id
+                payment.razorpay_signature = razorpay_signature
+                payment.status = "paid"
+                payment.save()
+
+                return Response({"status": "success"})
+            else:
+                return Response({"error": "Signature mismatch"}, status=400)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+@login_required
+def payment_history(request):
+    payments = Payment.objects.filter(user=request.user).order_by('-created_at')
+    data = [
+        {
+            'plot_id': p.plot_id,
+            'amount': p.amount,
+            'status': p.status,
+            'created_at': p.created_at
+        } for p in payments
+    ]
+    return JsonResponse({'payments': data})
