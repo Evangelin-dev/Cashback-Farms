@@ -5,7 +5,8 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty,SubPlotUnit
+
 )
 
 # User and Authentication Serializers
@@ -267,6 +268,14 @@ class SQLFTProjectSerializer(serializers.ModelSerializer):
             'project_video', 'land_document', 'created_at'
         ]
 
+
+class SubPlotUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubPlotUnit
+        fields = [
+            'id', 'project', 'plot_number', 'dimensions', 'area', 'total_price',
+            'status', 'facing', 'remarks', 'created_at'
+        ]
 
 class BankDetailSerializer(serializers.ModelSerializer):
     class Meta:
