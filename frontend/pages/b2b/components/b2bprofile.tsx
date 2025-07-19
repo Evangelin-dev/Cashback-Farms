@@ -184,7 +184,6 @@ const B2BProfile: React.FC = () => {
             </form>
         );
     };
-    
     if (isLoading) return <div className="text-center py-20 text-lg font-semibold text-gray-600">Loading Profile...</div>;
 
     return (
