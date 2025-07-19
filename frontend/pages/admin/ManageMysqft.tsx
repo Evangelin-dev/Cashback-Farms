@@ -1,4 +1,4 @@
-import { Edit, HomeWork, LocationOn } from '@mui/icons-material';
+import { Edit, HomeWork, LocationOn, Delete } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -10,21 +10,22 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  Modal,
   Select,
   Stack,
   TextField,
   Typography,
-  useMediaQuery,
   useTheme,
-  CircularProgress
+  CircularProgress,
+  IconButton
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { message } from 'antd';
-import apiClient from '@/src/utils/api/apiClient'; // Ensure this path is correct
+import apiClient from '@/src/utils/api/apiClient'; 
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-// --- Interfaces for API Data ---
+
 interface IProject {
   id: number;
   project_name: string;
@@ -34,7 +35,6 @@ interface IProject {
   plot_type: 'Residential' | 'Commercial' | 'Plot' | 'Villa' | 'Skyrise';
   unit: 'sqft' | 'sqyd';
   price: number;
-  // File URLs will be strings from the server
   project_layout?: string;
   project_image?: string;
   project_video?: string;
@@ -50,15 +50,15 @@ interface ISubplot {
   status: 'Available' | 'Sold' | 'On Hold';
   facing: 'North' | 'South' | 'East' | 'West';
   remarks: string;
-  project: number; // Foreign Key
+  project: number;
 }
 
-// --- Interfaces for Local Form Data ---
+
 interface ProjectData {
   projectName: string;
   location: string;
-  googleMapLink: string; // Added for the form
-  projectType: 'Plot' | 'Villa' | 'Skyrise' | 'Residential' | 'Commercial'; // Expanded types
+  googleMapLink: string;
+  projectType: 'Plot' | 'Villa' | 'Skyrise' | 'Residential' | 'Commercial';
   price: number;
   description: string;
   amenities: string[];
@@ -66,14 +66,15 @@ interface ProjectData {
 }
 
 interface PlotData {
-  plotNumber: string;
-  dimensions: string;
-  areaSqft: number;
-  sqftPrice: number;
-  totalPrice: number;
-  status: 'Available' | 'Sold' | 'On Hold';
-  facing: 'North' | 'South' | 'East' | 'West';
-  remarks: string;
+    id?: number;
+    plotNumber: string;
+    dimensions: string;
+    areaSqft: number;
+    sqftPrice: number;
+    totalPrice: number;
+    status: 'Available' | 'Sold' | 'On Hold';
+    facing: 'North' | 'South' | 'East' | 'West';
+    remarks: string;
 }
 
 const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
@@ -81,27 +82,14 @@ const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
 const ManageMysqft: React.FC = () => {
   const theme = useTheme();
   
-  // --- All original state is preserved for the form flow ---
+  
   const [projectData, setProjectData] = useState<ProjectData>({
-    projectName: '',
-    location: '',
-    googleMapLink: '',
-    projectType: 'Plot',
-    price: 0,
-    description: '',
-    amenities: [],
-    unit: 'sqft',
+    projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', amenities: [], unit: 'sqft',
   });
-  const [plotData, setPlotData] = useState<PlotData[]>([]);
+  const [activeProject, setActiveProject] = useState<IProject | null>(null);
+  const [subplots, setSubplots] = useState<ISubplot[]>([]);
   const [newPlot, setNewPlot] = useState<PlotData>({
-    plotNumber: '',
-    dimensions: '',
-    areaSqft: 0,
-    sqftPrice: 0,
-    totalPrice: 0,
-    status: 'Available',
-    facing: 'North',
-    remarks: '',
+    id: undefined, plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '',
   });
 
   const [projectLayoutFile, setProjectLayoutFile] = useState<File | null>(null);
@@ -110,203 +98,207 @@ const ManageMysqft: React.FC = () => {
   const [landDocumentFile, setLandDocumentFile] = useState<File | null>(null);
   
   const [projectCreated, setProjectCreated] = useState(false);
-  const [savedPlots, setSavedPlots] = useState(false);
-  const [editPlotIdx, setEditPlotIdx] = useState<number | null>(null);
-
-  // --- NEW state for API data and loading ---
-  const [fetchedProjects, setFetchedProjects] = useState<IProject[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   
-  // --- NEW: State to hold backend validation errors ---
+  
+  const [fetchedProjects, setFetchedProjects] = useState<IProject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+  
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<IProject | null>(null);
+  const [editingProjectFiles, setEditingProjectFiles] = useState<Record<string, File | null>>({});
 
-
-  // --- API Functions ---
+  
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.get<{data: IProject[]}>('/sqlft-projects/');
-      // Making sure the response is an array before setting it
-      setFetchedProjects(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      message.error("Could not fetch existing projects.");
-      setFetchedProjects([]); // Set to empty array on error
-    } finally {
-      setIsLoading(false);
-    }
+      const response = await apiClient.get<IProject[]>('/sqlft-projects/');
+      setFetchedProjects(Array.isArray(response.data) ? response.data.reverse() : []);
+    } catch (error) { message.error("Could not fetch projects."); } 
+    finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  const fetchSubplots = async (projectId: number) => {
+    try {
+      const response = await apiClient.get<ISubplot[]>(`/sub-plots/?project=${projectId}`);
+      setSubplots(response.data || []);
+    } catch { message.error("Could not fetch subplots."); }
+  };
+  
+  useEffect(() => { fetchProjects(); }, []);
 
-  const handleAddProject = async () => {
-    // Clear previous errors before a new submission
-    setFormErrors({});
+  const handleDeleteProject = async (projectId: number) => {
+    if (window.confirm("Are you sure? This will delete the project and ALL its subplots.")) {
+      try {
+        await apiClient.delete(`/sqlft-projects/${projectId}/`);
+        message.success("Project deleted.");
+        fetchProjects();
+      } catch { message.error("Failed to delete project."); }
+    }
+  };
+  
+  const handleUpdateProject = async () => {
+    if (!editingProject) return;
     setIsSubmitting(true);
-    const loadingMessage = message.loading('Submitting project...', 0);
+    const formData = new FormData();
+    const initialProject = fetchedProjects.find(p => p.id === editingProject.id);
 
-    const projectPayload = new FormData();
-    projectPayload.append('project_name', projectData.projectName);
-    projectPayload.append('location', projectData.location);
-    projectPayload.append('google_map_link', projectData.googleMapLink);
-    projectPayload.append('description', projectData.description);
-    projectPayload.append('plot_type', projectData.projectType);
-    projectPayload.append('unit', projectData.unit);
-    projectPayload.append('price', String(projectData.price));
+    Object.entries(editingProject).forEach(([key, value]) => {
+      if (key !== 'id' && value !== initialProject?.[key as keyof IProject]) {
+        formData.append(key, value as string);
+      }
+    });
 
-    if (projectLayoutFile) projectPayload.append('project_layout', projectLayoutFile);
-    if (projectImageFile) projectPayload.append('project_image', projectImageFile);
-    if (projectVideoFile) projectPayload.append('project_video', projectVideoFile);
-    if (landDocumentFile) projectPayload.append('land_document', landDocumentFile);
+    Object.entries(editingProjectFiles).forEach(([key, file]) => {
+      if (file) formData.append(key, file);
+    });
+
+    if (Array.from(formData.keys()).length === 0) {
+      message.info("No changes were made.");
+      setEditModalOpen(false);
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const projectResponse = await apiClient.post<IProject>('/sqlft-projects/', projectPayload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      // It's good practice to check if the response and ID exist
-      const newProjectId = projectResponse?.data?.id; 
-      if (!newProjectId) {
-          throw new Error("Project created but did not return an ID.");
-      }
-      message.success('Project created successfully! Now submitting subplots...');
-
-      const subplotPromises = plotData.map(plot => {
-        const subplotPayload = {
-          project: newProjectId,
-          plot_number: plot.plotNumber,
-          dimensions: plot.dimensions,
-          area: plot.areaSqft,
-          total_price: plot.totalPrice,
-          status: plot.status,
-          facing: plot.facing,
-          remarks: plot.remarks,
-        };
-        return apiClient.post('/api/subplot-units/', subplotPayload);
-      });
-
-      await Promise.all(subplotPromises);
-      message.success('All subplots submitted successfully!');
-      
-      setProjectCreated(false);
-      setSavedPlots(false);
-      setProjectData({ projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', amenities: [], unit: 'sqft' });
-      setPlotData([]);
-      setNewPlot({ plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
-      setProjectLayoutFile(null);
-      setProjectImageFile(null);
-      setProjectVideoFile(null);
-      setLandDocumentFile(null);
-
+      await apiClient.patch(`/sqlft-projects/${editingProject.id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      message.success("Project updated successfully.");
+      setEditModalOpen(false);
       fetchProjects();
-
-    } catch (error: any) {
-      // --- MODIFIED CATCH BLOCK ---
-      if (error.response && error.response.data && typeof error.response.data === 'object') {
-        // This catches validation errors from the backend (e.g., DRF)
-        setFormErrors(error.response.data);
-        message.error('Please correct the errors shown in the form.');
-      } else {
-        // Generic error for network issues, etc.
-        console.error("Submission failed:", error);
-        message.error('An unexpected error occurred during submission.');
-      }
+    } catch(err: any) { 
+        if(err.response?.data) { message.error(Object.values(err.response.data)[0] as string); }
+        else { message.error("Failed to update project."); }
     } finally {
       setIsSubmitting(false);
-      loadingMessage();
     }
   };
+
   
-  const handleFormChange = (field: keyof ProjectData, value: any) => {
-      setProjectData(prev => ({...prev, [field]: value}));
-      // When user starts typing, clear the error for that specific field
-      if (formErrors[field]) {
-          const newErrors = {...formErrors};
-          delete newErrors[field];
-          setFormErrors(newErrors);
+  const handleProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setFormErrors({});
+    const payload = new FormData();
+    Object.entries(projectData).forEach(([key, value]) => {
+      payload.append(key === 'projectName' ? 'project_name' : key === 'googleMapLink' ? 'google_map_link' : key === 'projectType' ? 'plot_type' : key, Array.isArray(value) ? JSON.stringify(value) : String(value));
+    });
+    if (projectLayoutFile) payload.append('project_layout', projectLayoutFile);
+    if (projectImageFile) payload.append('project_image', projectImageFile);
+    if (projectVideoFile) payload.append('project_video', projectVideoFile);
+    if (landDocumentFile) payload.append('land_document', landDocumentFile);
+
+    try {
+      const response = await apiClient.post<IProject>('/sqlft-projects/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setActiveProject(response.data);
+      setProjectCreated(true);
+      message.success("Project draft created. Now add its plots/units.");
+    } catch (error: any) {
+      if (error.response?.data) setFormErrors(error.response.data);
+      message.error("Please correct the form errors.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePlotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeProject) return;
+    
+    const formData = new FormData();
+    formData.append('project', String(activeProject.id));
+    formData.append('plot_number', newPlot.plotNumber);
+    formData.append('dimensions', newPlot.dimensions);
+    formData.append('area', String(newPlot.areaSqft));
+    formData.append('total_price', String(newPlot.totalPrice));
+    formData.append('status', newPlot.status);
+    formData.append('facing', newPlot.facing);
+    formData.append('remarks', newPlot.remarks);
+
+    try {
+      if (newPlot.id) { 
+        await apiClient.put(`/sub-plots/${newPlot.id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        message.success("Subplot updated.");
+      } else { 
+        await apiClient.post('/sub-plots/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+        message.success("Subplot added.");
       }
-  }
-
-
-  // --- All original handlers are preserved ---
-  const handleProjectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProjectCreated(true);
+      setNewPlot({ plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
+      fetchSubplots(activeProject.id);
+    } catch { message.error(`Failed to save subplot.`); }
   };
 
-  const handleEditProject = () => {
-    setProjectCreated(false);
-    setSavedPlots(false);
+  const handleEditPlot = (plot: ISubplot) => {
+    setNewPlot({
+      id: plot.id, plotNumber: plot.plot_number, dimensions: plot.dimensions, areaSqft: plot.area,
+      sqftPrice: plot.area > 0 ? Math.round(plot.total_price / plot.area) : 0, totalPrice: plot.total_price,
+      status: plot.status, facing: plot.facing, remarks: plot.remarks
+    });
   };
 
-  const handlePlotSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editPlotIdx !== null) {
-      const updatedPlots = [...plotData];
-      updatedPlots[editPlotIdx] = newPlot;
-      setPlotData(updatedPlots);
-      setEditPlotIdx(null);
-    } else {
-      setPlotData([...plotData, newPlot]);
+  const handleDeletePlot = async (plotId: number) => {
+    if (window.confirm("Delete this subplot?")) {
+      try {
+        await apiClient.delete(`/sub-plots/${plotId}/`);
+        message.success("Subplot deleted.");
+        if (activeProject) fetchSubplots(activeProject.id);
+      } catch { message.error("Failed to delete subplot."); }
     }
-    setNewPlot({ plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
-  };
-  
-  const handleAmenityToggle = (amenity: string) => {
-    const current = projectData.amenities;
-    setProjectData({ ...projectData, amenities: current.includes(amenity) ? current.filter((a) => a !== amenity) : [...current, amenity] });
   };
 
-  const handleEditPlot = (idx: number) => {
-    setEditPlotIdx(idx);
-    setNewPlot(plotData[idx]);
-    setSavedPlots(false);
+  const handleFinalSubmit = () => {
+    message.success("Project workflow completed!");
+    setProjectCreated(false);
+    setActiveProject(null);
+    setSubplots([]);
+    setNewPlot({ id: undefined, plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
+    setProjectData({ projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', amenities: [], unit: 'sqft' });
+    setProjectLayoutFile(null);
+    setProjectImageFile(null);
+    setProjectVideoFile(null);
+    setLandDocumentFile(null);
+    fetchProjects();
   };
   
-  const getFileUrl = (file: File | null | undefined) => file ? URL.createObjectURL(file) : undefined;
+  const handleFormChange = (field: keyof typeof projectData, value: any) => {
+    setProjectData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field as keyof typeof formErrors]) {
+      const newErrors = { ...formErrors };
+      delete newErrors[field as keyof typeof formErrors];
+      setFormErrors(newErrors);
+    }
+  };
 
+  const handleOpenEditModal = (project: IProject) => {
+    setEditingProject({ ...project });
+    setEditingProjectFiles({});
+    setEditModalOpen(true);
+  };
+  
   const plotColumns: GridColDef[] = [
-    { field: 'plotNumber', headerName: 'Plot Number', flex: 1, minWidth: 120 },
-    { field: 'dimensions', headerName: 'Dimensions', flex: 1, minWidth: 120 },
-    { field: 'areaSqft', headerName: `Area (${projectData.unit})`, flex: 1, minWidth: 100 },
-    { field: 'sqftPrice', headerName: `Price/${projectData.unit}`, flex: 1, minWidth: 100, valueFormatter: (value: any) => `₹${value}` },
-    { field: 'totalPrice', headerName: 'Total Price', flex: 1, minWidth: 120, valueFormatter: (value: any) => `₹${value}` },
-    { field: 'status', headerName: 'Status', flex: 1, minWidth: 100, renderCell: (params: any) => (<Chip label={params.value} color={params.value === 'Available' ? 'success' : params.value === 'Sold' ? 'error' : 'warning'} size="small"/>) },
-    { field: 'facing', headerName: 'Facing', flex: 1, minWidth: 100 },
-    { field: 'remarks', headerName: 'Remarks', flex: 1.5, minWidth: 150 }
+    { field: 'plot_number', headerName: 'Plot Number', flex: 1 },
+    { field: 'dimensions', headerName: 'Dimensions', flex: 1 },
+    { field: 'area', headerName: `Area (${activeProject?.unit || ''})`, flex: 1 },
+    { field: 'total_price', headerName: 'Total Price', flex: 1, valueFormatter: ({ value }) => `₹${Number(value).toLocaleString()}` },
+    { field: 'status', headerName: 'Status', flex: 1, renderCell: (params) => (<Chip label={params.value} color={params.value === 'Available' ? 'success' : params.value === 'Sold' ? 'error' : 'warning'} size="small"/>) },
+    { field: 'actions', headerName: 'Actions', flex: 1.5, renderCell: (params) => (
+        <Stack direction="row" spacing={0}>
+            <IconButton size="small" onClick={() => handleEditPlot(params.row)}><Edit fontSize="small" /></IconButton>
+            <IconButton size="small" color="error" onClick={() => handleDeletePlot(params.row.id)}><Delete fontSize="small" /></IconButton>
+        </Stack>
+    )}
   ];
-
+  
   const projectTableColumns: GridColDef[] = [
-    { 
-      field: 'project_image', 
-      headerName: 'Image', 
-      width: 100,
-      renderCell: (params) => params.value ? <img src={params.value} alt="Project" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}/> : "No Image"
-    },
+    { field: 'project_image', headerName: 'Image', width: 100, renderCell: (params) => params.value ? <img src={params.value as string} alt="Project" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}/> : "No Image" },
     { field: 'project_name', headerName: 'Plot Title', flex: 1.5 },
     { field: 'location', headerName: 'Location', flex: 2 },
-    {
-      field: 'price',
-      headerName: 'Price/sqft',
-      flex: 1,
-      renderCell: (params) => `₹${params.row.price.toLocaleString('en-IN')}`
-    },
-    {
-        field: 'status',
-        headerName: 'Status',
-        flex: 1,
-        renderCell: () => <Chip label="Verified" color="success" size="small" variant="outlined" />
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      sortable: false,
-      flex: 1.5,
-      renderCell: (params) => (
+    { field: 'price', headerName: 'Price/sqft', flex: 1, renderCell: (params) => `₹${params.row.price.toLocaleString('en-IN')}` },
+    { field: 'status', headerName: 'Status', flex: 1, renderCell: () => <Chip label="Verified" color="success" size="small" variant="outlined" /> },
+    { field: 'actions', headerName: 'Actions', sortable: false, flex: 1.5, renderCell: (params) => (
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" size="small">Edit</Button>
-          <Button variant="outlined" size="small" color="error">Delete</Button>
+          <Button variant="outlined" size="small" startIcon={<Edit />} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
+          <Button variant="outlined" size="small" color="error" startIcon={<Delete />} onClick={() => handleDeleteProject(params.row.id)}>Delete</Button>
         </Stack>
       )
     }
@@ -319,12 +311,6 @@ const ManageMysqft: React.FC = () => {
       </Typography>
 
       {!projectCreated ? (
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Button variant="contained" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 18, px: 4, py: 2 }} onClick={() => setProjectCreated(true)}>
-            Create Project
-          </Button>
-        </Box>
-      ) : (
         <Box sx={{ mb: 4, bgcolor: '#f6fff8', borderRadius: 3, p: 3, maxWidth: 900, mx: 'auto' }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: '#166534' }}>Create Project</Typography>
             <form onSubmit={handleProjectSubmit}>
@@ -340,117 +326,95 @@ const ManageMysqft: React.FC = () => {
                         <FormControl fullWidth><InputLabel>Unit</InputLabel><Select label="Unit" value={projectData.unit} onChange={e => handleFormChange('unit', e.target.value)}><MenuItem value="sqft">Sqft</MenuItem><MenuItem value="sqyd">Sqyd</MenuItem></Select></FormControl>
                     </Stack>
                     <TextField fullWidth label="Description" multiline rows={2} value={projectData.description} onChange={e => handleFormChange('description', e.target.value)} error={!!formErrors.description} helperText={formErrors.description?.[0]}/>
-                    <Box sx={{ width: '100%' }}><Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>{amenitiesList.map((a) => (<Chip key={a} label={a} color={projectData.amenities.includes(a) ? 'success' : 'default'} onClick={() => handleAmenityToggle(a)}/>))}</Box></Box>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
                         <Button component="label" variant='outlined'>Project Layout<input type="file" hidden onChange={(e) => setProjectLayoutFile(e.target.files?.[0] || null)} /></Button>
                         <Button component="label" variant='outlined'>Project Image<input type="file" hidden onChange={(e) => setProjectImageFile(e.target.files?.[0] || null)} /></Button>
                         <Button component="label" variant='outlined'>Project Video<input type="file" hidden onChange={(e) => setProjectVideoFile(e.target.files?.[0] || null)} /></Button>
                         <Button component="label" variant='outlined'>Land Document<input type="file" hidden onChange={(e) => setLandDocumentFile(e.target.files?.[0] || null)} /></Button>
                     </Stack>
-                    <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a', mt: 2 }}>Create Project & Add Plots</Button>
+                    <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a', mt: 2 }} disabled={isSubmitting}>{isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Create and Add Sub-Plots'}</Button>
                 </Stack>
             </form>
         </Box>
-      )}
-
-       <Box sx={{ display: { xs: 'block', md: 'flex' }, gap: 4, alignItems: 'flex-start' }}>
-        {projectCreated && (
-          <>
+      ) : (
+        <Box sx={{ display: { xs: 'block', md: 'flex' }, gap: 4, alignItems: 'flex-start' }}>
             <Box sx={{ flex: 1, minWidth: 340, maxWidth: 440 }}>
               <Card variant="outlined" sx={{ mb: 4, borderColor: '#16a34a', boxShadow: 4, borderRadius: 3 }}>
-                <CardHeader avatar={<Avatar sx={{ bgcolor: '#16a34a' }}><HomeWork /></Avatar>} title={<Typography variant="h6" sx={{ fontWeight: 700 }}>{projectData.projectName}</Typography>} sx={{ bgcolor: '#16a34a', color: '#fff' }} action={<Button size="small" startIcon={<Edit />} sx={{ color: '#fff' }} onClick={handleEditProject}>Edit</Button>}/>
+                <CardHeader avatar={<Avatar sx={{ bgcolor: '#16a34a' }}><HomeWork /></Avatar>} title={<Typography variant="h6" sx={{ fontWeight: 700 }}>{activeProject?.project_name}</Typography>} sx={{ bgcolor: '#16a34a', color: '#fff' }} action={<Button size="small" startIcon={<Edit />} sx={{ color: '#fff' }} onClick={() => { setProjectCreated(false); setActiveProject(null); setSubplots([]) }}>Edit</Button>}/>
                 <CardContent sx={{ background: '#f6fff8' }}>
                   <Stack spacing={1.5}>
-                    <Typography><b>Location:</b> {projectData.location}</Typography>
-                    <Typography><b>Type:</b> {projectData.projectType}</Typography>
-                    <Typography><b>Price:</b> ₹{projectData.price} / {projectData.unit}</Typography>
-                    <Typography><b>Description:</b> {projectData.description || 'N/A'}</Typography>
-                    {projectLayoutFile && <Typography variant="caption">Layout: {projectLayoutFile.name}</Typography>}
-                    {projectImageFile && <Typography variant="caption">Image: {projectImageFile.name}</Typography>}
-                    {projectVideoFile && <Typography variant="caption">Video: {projectVideoFile.name}</Typography>}
-                    {landDocumentFile && <Typography variant="caption">Document: {landDocumentFile.name}</Typography>}
+                    <Typography><b>Location:</b> {activeProject?.location}</Typography><Typography><b>Type:</b> {activeProject?.plot_type}</Typography>
+                    <Typography><b>Price:</b> ₹{activeProject?.price} / {activeProject?.unit}</Typography>
+                    <Typography><b>Description:</b> {activeProject?.description || 'N/A'}</Typography>
                   </Stack>
                 </CardContent>
               </Card>
             </Box>
             <Box sx={{ flex: 2, minWidth: 340 }}>
-              {plotData.length > 0 && (
+              {subplots.length > 0 && (
                 <Card variant="outlined" sx={{ mb: 4, borderColor: '#16a34a', boxShadow: 4 }}>
                   <CardHeader title="Plot Details" sx={{ bgcolor: '#16a34a', color: '#fff' }} />
-                  <CardContent sx={{ background: '#f6fff8' }}><Box sx={{ height: 340, width: '100%' }}><DataGrid rows={plotData.map((p, i) => ({ id: i, ...p }))} columns={plotColumns.concat([{ field: 'edit', headerName: 'Edit', flex: 0.7, renderCell: (params) => <Button size="small" startIcon={<Edit />} onClick={() => handleEditPlot(params.id as number)}>Edit</Button> }])} /></Box></CardContent>
+                  <CardContent sx={{ background: '#f6fff8' }}><Box sx={{ height: 'auto', width: '100%' }}><DataGrid rows={subplots} columns={plotColumns} getRowId={row => row.id} autoHeight/></Box></CardContent>
                 </Card>
               )}
-              {!savedPlots && (
-                 <Card variant="outlined" sx={{ mb: 4, bgcolor: '#f6fff8', borderColor: '#16a34a', boxShadow: 6 }}>
-                  <CardHeader title={editPlotIdx !== null ? `Edit Plot/Unit` : `Plot/Unit Listing Module`} sx={{ bgcolor: '#16a34a', color: '#fff' }} />
-                  <CardContent>
-                    <form onSubmit={handlePlotSubmit}>
-                      <Stack spacing={2}>
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                          <TextField fullWidth label="Plot Number" required value={newPlot.plotNumber} onChange={(e) => setNewPlot({ ...newPlot, plotNumber: e.target.value })}/>
-                          <TextField fullWidth label="Dimensions" value={newPlot.dimensions} onChange={e => { const dims = e.target.value.split('x').map(d => Number(d.trim())); const area = dims.length === 2 && !isNaN(dims[0]) && !isNaN(dims[1]) ? dims[0] * dims[1] : 0; setNewPlot({ ...newPlot, dimensions: e.target.value, areaSqft: area, totalPrice: area * (newPlot.sqftPrice || projectData.price) }); }}/>
-                          <TextField fullWidth label={`Area (${projectData.unit})`} value={newPlot.areaSqft} onChange={e => setNewPlot({ ...newPlot, areaSqft: Number(e.target.value) })}/>
-                        </Stack>
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                          <TextField fullWidth label={`Price/${projectData.unit}`} value={newPlot.sqftPrice || projectData.price} onChange={e => { const sqftPrice = Number(e.target.value); setNewPlot({ ...newPlot, sqftPrice, totalPrice: newPlot.areaSqft * sqftPrice }); }} helperText="Override allowed"/>
-                          <TextField fullWidth label="Total Price" value={newPlot.totalPrice} onChange={e => setNewPlot({ ...newPlot, totalPrice: Number(e.target.value) })}/>
-                          <FormControl fullWidth><InputLabel>Status</InputLabel><Select label="Status" value={newPlot.status} onChange={e => setNewPlot({ ...newPlot, status: e.target.value as any })}><MenuItem value="Available">Available</MenuItem><MenuItem value="Sold">Sold</MenuItem><MenuItem value="On Hold">On Hold</MenuItem></Select></FormControl>
-                          <FormControl fullWidth><InputLabel>Facing</InputLabel><Select label="Facing" value={newPlot.facing} onChange={e => setNewPlot({ ...newPlot, facing: e.target.value as any })}><MenuItem value="North">North</MenuItem><MenuItem value="South">South</MenuItem><MenuItem value="East">East</MenuItem><MenuItem value="West">West</MenuItem></Select></FormControl>
-                        </Stack>
-                        <TextField fullWidth label="Remarks" value={newPlot.remarks} onChange={e => setNewPlot({ ...newPlot, remarks: e.target.value })}/>
-                        <Box textAlign="right" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                          <Button variant="outlined" sx={{ borderColor: '#16a34a', color: '#16a34a' }} onClick={() => setSavedPlots(true)}>Save All Plots</Button>
-                          <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a' }}>{editPlotIdx !== null ? 'Update Plot' : 'Add Plot'}</Button>
-                        </Box>
-                      </Stack>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-              {savedPlots && (
-                <Box sx={{ textAlign: 'center', mt: 2 }}>
-                  <Button variant="contained" sx={{ bgcolor: '#16a34a', fontSize: 18, p: '10px 24px' }} onClick={handleAddProject} disabled={isSubmitting}>
-                    {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Submit Final Project'}
-                  </Button>
-                </Box>
-              )}
+              <Card variant="outlined" sx={{ mb: 4, bgcolor: '#f6fff8', borderColor: '#16a34a', boxShadow: 6 }}>
+                <CardHeader title={newPlot.id ? `Edit Plot/Unit` : `Plot/Unit Listing Module`} sx={{ bgcolor: '#16a34a', color: '#fff' }} />
+                <CardContent>
+                  <form onSubmit={handlePlotSubmit}>
+                    <Stack spacing={2}>
+                      <TextField fullWidth label="Plot Number" required value={newPlot.plotNumber} onChange={(e) => setNewPlot({ ...newPlot, plotNumber: e.target.value })}/>
+                      <TextField fullWidth label="Dimensions" value={newPlot.dimensions} onChange={e => { const dims = e.target.value.split('x').map(d => Number(d.trim())); const area = dims.length === 2 && !isNaN(dims[0]) && !isNaN(dims[1]) ? dims[0] * dims[1] : 0; setNewPlot({ ...newPlot, dimensions: e.target.value, areaSqft: area, totalPrice: area * (newPlot.sqftPrice || activeProject?.price || 0) }); }}/>
+                      <TextField fullWidth label={`Area (${activeProject?.unit})`} value={newPlot.areaSqft} onChange={e => setNewPlot({ ...newPlot, areaSqft: Number(e.target.value) })}/>
+                      <TextField fullWidth label={`Price/${activeProject?.unit}`} value={newPlot.sqftPrice || activeProject?.price || ''} onChange={e => { const sqftPrice = Number(e.target.value); setNewPlot({ ...newPlot, sqftPrice, totalPrice: newPlot.areaSqft * sqftPrice }); }} helperText="Override allowed"/>
+                      <TextField fullWidth label="Total Price" value={newPlot.totalPrice} onChange={e => setNewPlot({ ...newPlot, totalPrice: Number(e.target.value) })}/>
+                      <FormControl fullWidth><InputLabel>Status</InputLabel><Select label="Status" value={newPlot.status} onChange={e => setNewPlot({ ...newPlot, status: e.target.value as any })}><MenuItem value="Available">Available</MenuItem><MenuItem value="Sold">Sold</MenuItem><MenuItem value="On Hold">On Hold</MenuItem></Select></FormControl>
+                      <FormControl fullWidth><InputLabel>Facing</InputLabel><Select label="Facing" value={newPlot.facing} onChange={e => setNewPlot({ ...newPlot, facing: e.target.value as any })}><MenuItem value="North">North</MenuItem><MenuItem value="South">South</MenuItem><MenuItem value="East">East</MenuItem><MenuItem value="West">West</MenuItem></Select></FormControl>
+                      <TextField fullWidth label="Remarks" value={newPlot.remarks} onChange={e => setNewPlot({ ...newPlot, remarks: e.target.value })}/>
+                      <Box textAlign="right" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a' }}>{newPlot.id ? 'Update Plot' : 'Add Plot'}</Button>
+                      </Box>
+                    </Stack>
+                  </form>
+                </CardContent>
+              </Card>
+              <Box sx={{ textAlign: 'center', mt: 2 }}><Button variant="contained" sx={{ bgcolor: '#16a34a', fontSize: 18, p: '10px 24px' }} onClick={handleFinalSubmit}>Finish & Save Project</Button></Box>
             </Box>
-          </>
-        )}
-      </Box>
+        </Box>
+      )}
 
       <Box mt={8}>
-        <Typography variant="h5" gutterBottom sx={{ color: '#166534', fontWeight: 700 }}>
-          Existing Projects
-        </Typography>
-        <Card>
-            <Box sx={{ height: 'auto', width: '100%' }}>
-                <DataGrid
-                    rows={fetchedProjects}
-                    columns={projectTableColumns}
-                    getRowId={(row) => row.id}
-                    loading={isLoading}
-                    autoHeight
-                    initialState={{
-                        pagination: {
-                          paginationModel: {
-                            pageSize: 5,
-                          },
-                        },
-                    }}
-                    pageSizeOptions={[5, 10, 20]}
-                    sx={{
-                    background: '#fff',
-                    '& .MuiDataGrid-columnHeaders': {
-                        backgroundColor: '#f1f5f9',
-                        fontWeight: 'bold',
-                    },
-                    }}
-                />
-            </Box>
-        </Card>
+        <Typography variant="h5" gutterBottom sx={{ color: '#166534', fontWeight: 700 }}>Existing Projects</Typography>
+        <Card><Box sx={{ height: 'auto', width: '100%' }}><DataGrid rows={fetchedProjects} columns={projectTableColumns} getRowId={(row) => row.id} loading={isLoading} autoHeight initialState={{ pagination: { paginationModel: { pageSize: 5 } } }} pageSizeOptions={[5, 10, 20]} sx={{ background: '#fff', '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f1f5f9', fontWeight: 'bold' } }}/></Box></Card>
       </Box>
-
+      
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+        <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: { xs: '90%', md: 700 }, bgcolor: 'background.paper', p: 4, borderRadius: 2, maxHeight: '90vh', overflowY: 'auto' }}>
+            <Typography variant="h6" component="h2" mb={3}>Edit Project</Typography>
+            {editingProject && (
+                <Stack spacing={2}>
+                    <TextField label="Project Name" defaultValue={editingProject.project_name} onChange={e => setEditingProject({...editingProject, project_name: e.target.value})} />
+                    <TextField label="Location" defaultValue={editingProject.location} onChange={e => setEditingProject({...editingProject, location: e.target.value})} />
+                    <TextField label="Google Map Link" defaultValue={editingProject.google_map_link || ''} onChange={e => setEditingProject({...editingProject, google_map_link: e.target.value})} />
+                    <TextField label="Description" multiline rows={3} defaultValue={editingProject.description || ''} onChange={e => setEditingProject({...editingProject, description: e.target.value})} />
+                    <Stack direction="row" spacing={2}>
+                        <FormControl fullWidth><InputLabel>Project Type</InputLabel><Select label="Project Type" value={editingProject.plot_type} onChange={e => setEditingProject({...editingProject, plot_type: e.target.value as IProject['plot_type']})}><MenuItem value="Plot">Plot</MenuItem><MenuItem value="Villa">Villa</MenuItem><MenuItem value="Skyrise">Skyrise</MenuItem><MenuItem value="Residential">Residential</MenuItem><MenuItem value="Commercial">Commercial</MenuItem></Select></FormControl>
+                        <TextField fullWidth label="Price" type="number" defaultValue={editingProject.price} onChange={e => setEditingProject({...editingProject, price: Number(e.target.value)})} />
+                        <FormControl fullWidth><InputLabel>Unit</InputLabel><Select label="Unit" value={editingProject.unit} onChange={e => setEditingProject({...editingProject, unit: e.target.value as IProject['unit']})}><MenuItem value="sqft">Sqft</MenuItem><MenuItem value="sqyd">Sqyd</MenuItem></Select></FormControl>
+                    </Stack>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+                        <Button component="label" variant='outlined'>Update Layout<input type="file" hidden onChange={(e) => setEditingProjectFiles(f => ({ ...f, project_layout: e.target.files?.[0] || null }))} /></Button>
+                        <Button component="label" variant='outlined'>Update Image<input type="file" hidden onChange={(e) => setEditingProjectFiles(f => ({ ...f, project_image: e.target.files?.[0] || null }))} /></Button>
+                        <Button component="label" variant='outlined'>Update Video<input type="file" hidden onChange={(e) => setEditingProjectFiles(f => ({ ...f, project_video: e.target.files?.[0] || null }))} /></Button>
+                        <Button component="label" variant='outlined'>Update Document<input type="file" hidden onChange={(e) => setEditingProjectFiles(f => ({ ...f, land_document: e.target.files?.[0] || null }))} /></Button>
+                    </Stack>
+                    <Box sx={{display: 'flex', justifyContent: 'flex-end', gap: 2, pt: 2}}>
+                        <Button variant="outlined" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+                        <Button variant="contained" onClick={handleUpdateProject} disabled={isSubmitting}>{isSubmitting ? <CircularProgress size={24}/> : 'Save Changes'}</Button>
+                    </Box>
+                </Stack>
+            )}
+        </Box>
+      </Modal>
     </Box>
   );
 };
