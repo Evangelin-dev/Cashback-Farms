@@ -117,15 +117,21 @@ const ManageMysqft: React.FC = () => {
   const [fetchedProjects, setFetchedProjects] = useState<IProject[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // --- NEW: State to hold backend validation errors ---
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+
 
   // --- API Functions ---
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
       const response = await apiClient.get<{data: IProject[]}>('/sqlft-projects/');
-      setFetchedProjects(response.data || []);
+      // Making sure the response is an array before setting it
+      setFetchedProjects(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       message.error("Could not fetch existing projects.");
+      setFetchedProjects([]); // Set to empty array on error
     } finally {
       setIsLoading(false);
     }
@@ -136,6 +142,8 @@ const ManageMysqft: React.FC = () => {
   }, []);
 
   const handleAddProject = async () => {
+    // Clear previous errors before a new submission
+    setFormErrors({});
     setIsSubmitting(true);
     const loadingMessage = message.loading('Submitting project...', 0);
 
@@ -157,7 +165,11 @@ const ManageMysqft: React.FC = () => {
       const projectResponse = await apiClient.post<IProject>('/sqlft-projects/', projectPayload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const newProjectId = projectResponse.id;
+      // It's good practice to check if the response and ID exist
+      const newProjectId = projectResponse?.data?.id; 
+      if (!newProjectId) {
+          throw new Error("Project created but did not return an ID.");
+      }
       message.success('Project created successfully! Now submitting subplots...');
 
       const subplotPromises = plotData.map(plot => {
@@ -189,14 +201,33 @@ const ManageMysqft: React.FC = () => {
 
       fetchProjects();
 
-    } catch (error) {
-      console.error("Submission failed:", error);
-      message.error('An error occurred during submission. Please check the console.');
+    } catch (error: any) {
+      // --- MODIFIED CATCH BLOCK ---
+      if (error.response && error.response.data && typeof error.response.data === 'object') {
+        // This catches validation errors from the backend (e.g., DRF)
+        setFormErrors(error.response.data);
+        message.error('Please correct the errors shown in the form.');
+      } else {
+        // Generic error for network issues, etc.
+        console.error("Submission failed:", error);
+        message.error('An unexpected error occurred during submission.');
+      }
     } finally {
       setIsSubmitting(false);
       loadingMessage();
     }
   };
+  
+  const handleFormChange = (field: keyof ProjectData, value: any) => {
+      setProjectData(prev => ({...prev, [field]: value}));
+      // When user starts typing, clear the error for that specific field
+      if (formErrors[field]) {
+          const newErrors = {...formErrors};
+          delete newErrors[field];
+          setFormErrors(newErrors);
+      }
+  }
+
 
   // --- All original handlers are preserved ---
   const handleProjectSubmit = (e: React.FormEvent) => {
@@ -246,7 +277,6 @@ const ManageMysqft: React.FC = () => {
     { field: 'remarks', headerName: 'Remarks', flex: 1.5, minWidth: 150 }
   ];
 
-  // --- NEW: Column definitions for the project table ---
   const projectTableColumns: GridColDef[] = [
     { 
       field: 'project_image', 
@@ -288,7 +318,6 @@ const ManageMysqft: React.FC = () => {
        Admin - MySqft Property Management
       </Typography>
 
-      {/* --- UNCHANGED FORM FLOW --- */}
       {!projectCreated ? (
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Button variant="contained" sx={{ bgcolor: '#16a34a', color: '#fff', fontSize: 18, px: 4, py: 2 }} onClick={() => setProjectCreated(true)}>
@@ -301,16 +330,16 @@ const ManageMysqft: React.FC = () => {
             <form onSubmit={handleProjectSubmit}>
                 <Stack spacing={2}>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                        <TextField fullWidth label="Project Name" required value={projectData.projectName} onChange={e => setProjectData({ ...projectData, projectName: e.target.value })}/>
-                        <TextField fullWidth label="Location" required value={projectData.location} onChange={e => setProjectData({ ...projectData, location: e.target.value })}/>
+                        <TextField fullWidth label="Project Name" required value={projectData.projectName} onChange={e => handleFormChange('projectName', e.target.value)} error={!!formErrors.project_name} helperText={formErrors.project_name?.[0]}/>
+                        <TextField fullWidth label="Location" required value={projectData.location} onChange={e => handleFormChange('location', e.target.value)} error={!!formErrors.location} helperText={formErrors.location?.[0]}/>
                     </Stack>
-                    <TextField fullWidth label="Google Map Link" value={projectData.googleMapLink} onChange={e => setProjectData({ ...projectData, googleMapLink: e.target.value })}/>
+                    <TextField fullWidth label="Google Map Link" value={projectData.googleMapLink} onChange={e => handleFormChange('googleMapLink', e.target.value)} error={!!formErrors.google_map_link} helperText={formErrors.google_map_link?.[0]}/>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                        <FormControl fullWidth><InputLabel>Project Type</InputLabel><Select label="Project Type" value={projectData.projectType} onChange={e => setProjectData({ ...projectData, projectType: e.target.value as any })}><MenuItem value="Plot">Plot</MenuItem><MenuItem value="Villa">Villa</MenuItem><MenuItem value="Skyrise">Skyrise</MenuItem><MenuItem value="Residential">Residential</MenuItem><MenuItem value="Commercial">Commercial</MenuItem></Select></FormControl>
-                        <TextField fullWidth label={`Price per ${projectData.unit}`} type="number" value={projectData.price} onChange={e => setProjectData({ ...projectData, price: Number(e.target.value) })}/>
-                        <FormControl fullWidth><InputLabel>Unit</InputLabel><Select label="Unit" value={projectData.unit} onChange={e => setProjectData({ ...projectData, unit: e.target.value as any })}><MenuItem value="sqft">Sqft</MenuItem><MenuItem value="sqyd">Sqyd</MenuItem></Select></FormControl>
+                        <FormControl fullWidth><InputLabel>Project Type</InputLabel><Select label="Project Type" value={projectData.projectType} onChange={e => handleFormChange('projectType', e.target.value)}><MenuItem value="Plot">Plot</MenuItem><MenuItem value="Villa">Villa</MenuItem><MenuItem value="Skyrise">Skyrise</MenuItem><MenuItem value="Residential">Residential</MenuItem><MenuItem value="Commercial">Commercial</MenuItem></Select></FormControl>
+                        <TextField fullWidth label={`Price per ${projectData.unit}`} type="number" value={projectData.price} onChange={e => handleFormChange('price', Number(e.target.value))} error={!!formErrors.price} helperText={formErrors.price?.[0]}/>
+                        <FormControl fullWidth><InputLabel>Unit</InputLabel><Select label="Unit" value={projectData.unit} onChange={e => handleFormChange('unit', e.target.value)}><MenuItem value="sqft">Sqft</MenuItem><MenuItem value="sqyd">Sqyd</MenuItem></Select></FormControl>
                     </Stack>
-                    <TextField fullWidth label="Description" multiline rows={2} value={projectData.description} onChange={e => setProjectData({ ...projectData, description: e.target.value })}/>
+                    <TextField fullWidth label="Description" multiline rows={2} value={projectData.description} onChange={e => handleFormChange('description', e.target.value)} error={!!formErrors.description} helperText={formErrors.description?.[0]}/>
                     <Box sx={{ width: '100%' }}><Typography variant="subtitle1" sx={{ mb: 1 }}>Amenities</Typography><Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>{amenitiesList.map((a) => (<Chip key={a} label={a} color={projectData.amenities.includes(a) ? 'success' : 'default'} onClick={() => handleAmenityToggle(a)}/>))}</Box></Box>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
                         <Button component="label" variant='outlined'>Project Layout<input type="file" hidden onChange={(e) => setProjectLayoutFile(e.target.files?.[0] || null)} /></Button>
@@ -324,7 +353,6 @@ const ManageMysqft: React.FC = () => {
         </Box>
       )}
 
-      {/* --- UNCHANGED PLOT ADDITION FLOW --- */}
        <Box sx={{ display: { xs: 'block', md: 'flex' }, gap: 4, alignItems: 'flex-start' }}>
         {projectCreated && (
           <>
@@ -391,7 +419,6 @@ const ManageMysqft: React.FC = () => {
         )}
       </Box>
 
-      {/* --- MODIFIED SECTION: List of Existing Projects from API using a Table --- */}
       <Box mt={8}>
         <Typography variant="h5" gutterBottom sx={{ color: '#166534', fontWeight: 700 }}>
           Existing Projects
