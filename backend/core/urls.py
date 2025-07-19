@@ -23,6 +23,10 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .views import (
+    CreateOrderView, VerifyPaymentView, payment_history,
+    PublicServiceListView, PublicServiceDetailView
+)   
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -121,5 +125,8 @@ urlpatterns = [
     path('admin/commercial-properties/', CommercialPropertyListCreateView.as_view(), name='commercial-list-create'),
     path('admin/commercial-properties/<int:pk>/', CommercialPropertyDetailView.as_view(), name='commercial-detail'),
     path('admin/kyc-documents/', AllKYCListView.as_view(), name='admin-kyc-list'),
+    path('payments/create-order/', CreateOrderView.as_view(), name='create_order'),
+    path('verify-payment/', VerifyPaymentView.as_view()),
+    # path('payments/history/', views.payment_history, name='payment_history'),
 
 ]

@@ -640,3 +640,16 @@ class CommercialProperty(models.Model):
 
     def __str__(self):
         return f"{self.property_name} - {self.city}"
+    
+
+class Payment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    plot_id = models.IntegerField()
+    razorpay_order_id = models.CharField(max_length=100)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.FloatField()
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.user.username} - {self.status}"
