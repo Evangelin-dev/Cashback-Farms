@@ -161,6 +161,8 @@ const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
     amenities: [],
   });
 
+
+
   const [plotData, setPlotData] = useState<PlotData[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const plotImageInputRef = useRef<HTMLInputElement>(null);
@@ -450,11 +452,22 @@ const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
                   </FormControl>
                   <TextField
                     fullWidth
-                    label="Price per Sqft"
+                    label={`Price per ${unit}`}
                     type="number"
                     value={projectData.sqftPrice}
                     onChange={e => setProjectData({ ...projectData, sqftPrice: Number(e.target.value) })}
                   />
+                  <FormControl fullWidth>
+                    <InputLabel>Unit</InputLabel>
+                    <Select
+                      label="Unit"
+                      value={unit}
+                      onChange={e => setUnit(e.target.value as 'Sqft' | 'Sqyd')}
+                    >
+                      <MenuItem value="Sqft">Sqft</MenuItem>
+                      <MenuItem value="Sqyd">Sqyd</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Stack>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                   <TextField
@@ -581,7 +594,11 @@ const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
             // Add microplot to first project for demo (can be changed to selected project)
             if (allProjects.length > 0) {
               const updatedProjects = [...allProjects];
-              updatedProjects[0].plots.push(microplot);
+              updatedProjects[0].plots.push({
+                ...microplot,
+                status: microplot.status as 'Available' | 'Sold' | 'On Hold',
+                facing: microplot.facing as 'North' | 'South' | 'East' | 'West',
+              });
               setAllProjects(updatedProjects);
             }
             setMicroplot({
