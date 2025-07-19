@@ -32,6 +32,9 @@ from django.db.models import Sum, F
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
+from .models import SubPlotUnit
+from .serializers import SubPlotUnitSerializer
+
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
@@ -782,6 +785,48 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
             instance.delete()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+
+
+class SubPlotUnitViewSet(viewsets.ModelViewSet):
+    queryset = SubPlotUnit.objects.all()
+    serializer_class = SubPlotUnitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == "ADMIN":  # Adjust this according to your user model
+            return SubPlotUnit.objects.all()
+        return SubPlotUnit.objects.all()  # You can filter this if needed
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({"data": serializer.data})
+
+    def perform_create(self, serializer):
+        try:
+            serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_update(self, serializer):
+        try:
+            serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
 
 class BankDetailViewSet(viewsets.ModelViewSet):
     queryset = BankDetail.objects.all()
