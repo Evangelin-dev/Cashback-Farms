@@ -428,6 +428,20 @@ class SQLFTProject(models.Model):
     def __str__(self):
         return self.project_name
 
+class SubPlotUnit(models.Model):
+    project = models.ForeignKey(SQLFTProject, on_delete=models.CASCADE, related_name='sub_plots')
+    plot_number = models.CharField(max_length=100)
+    dimensions = models.CharField(max_length=50, blank=True)  # E.g. "30x40"
+    area = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    status = models.CharField(max_length=50, default="Available")
+    facing = models.CharField(max_length=50, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.plot_number} - {self.project.project_name}"
 
 class BankDetail(models.Model):
     STATUS_CHOICES = [
