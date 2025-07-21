@@ -37,6 +37,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 import json
+from django.contrib.auth import get_user_model
+from datetime import datetime, timedelta
+from django.db.models.functions import TruncMonth
 
 
 
@@ -2016,3 +2019,59 @@ def payment_history(request):
         } for p in payments
     ]
     return JsonResponse({'payments': data})
+
+class PlotStatsView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        total = PlotListing.objects.count()
+        booked = PlotListing.objects.filter(is_available_full=False).count()
+        available = total - booked
+        return Response({
+            "total": total,
+            "booked": booked,
+            "available": available
+        })
+
+class UserStatsView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        total_users = get_user_model().objects.count()
+        return Response({"total_users": total_users})
+
+class PaymentStatsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        total_revenue = Payment.objects.filter(status="paid").aggregate(total=Sum("amount"))['total'] or 0
+        return Response({"total_revenue": total_revenue})
+
+class MonthlyBookingStatsView(APIView):
+    permission_classes = [IsAdminUser]  # Or IsAdminUserType if custom
+
+    def get(self, request):
+        filter_range = request.query_params.get('range', 'all')  # '3months', '6months', or 'all'
+
+        now = datetime.now()
+        if filter_range == '3months':
+            start_date = now - timedelta(days=90)
+        elif filter_range == '6months':
+            start_date = now - timedelta(days=180)
+        else:
+            start_date = datetime(2000, 1, 1)
+
+        data = Booking.objects.filter(booking_date__gte=start_date)\
+            .annotate(month=TruncMonth('booking_date'))\
+            .values('month')\
+            .annotate(count=Count('id'))\
+            .order_by('month')
+
+        formatted = [
+            {
+                "monthYear": d["month"].strftime("%b %Y"),
+                "count": d["count"]
+            } for d in data
+        ]
+
+        return Response(formatted)
