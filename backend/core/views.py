@@ -51,7 +51,7 @@ from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
     SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,Payment,
-    VerifiedPlot, CommercialProperty,
+    VerifiedPlot, CommercialProperty, Payment
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -61,7 +61,7 @@ from .serializers import (
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
-    UserAdminSerializer, CommercialPropertySerializer,PaymentTransactionSerializer, ShortlistCartItemSerializer,
+    UserAdminSerializer, CommercialPropertySerializer,PaymentTransactionSerializer, ShortlistCartItemSerializer, PaymentSerializer
 )
 
 from django.contrib.auth.decorators import login_required
@@ -2075,3 +2075,10 @@ class MonthlyBookingStatsView(APIView):
         ]
 
         return Response(formatted)
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all().order_by('-created_at')
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAdminUserType]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['status', 'razorpay_order_id', 'razorpay_payment_id']

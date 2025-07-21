@@ -18,7 +18,7 @@ from .views import (
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
     InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin, AdminUserViewSet,
     ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView, AllKYCListView,SubPlotUnitViewSet,
-    PlotStatsView, UserStatsView, PaymentStatsView, MonthlyBookingStatsView
+    PlotStatsView, UserStatsView, PaymentStatsView, MonthlyBookingStatsView, PaymentViewSet
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -50,6 +50,7 @@ router.register(r'admin/verified-plots', VerifiedPlotViewSet, basename='verified
 router.register(r'admin/bookings', BookingViewSetAdmin, basename='admin-bookings')
 router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
 router.register(r'subplots', SubPlotUnitViewSet, basename='subplots')
+router.register(r'admin/payments', PaymentViewSet, basename='admin-payments')
 
 
 
