@@ -2091,3 +2091,36 @@ class SubPlotUnitsByProjectView(APIView):
         subplots = SubPlotUnit.objects.filter(project_id=project_id)
         serializer = SubPlotUnitSerializer(subplots, many=True)
         return Response({"data": serializer.data})
+    
+class OwnerShortlistView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        owner = request.user
+        plot_ct = ContentType.objects.get_for_model(PlotListing)
+
+        # Step 1: Get shortlist items of type PlotListing
+        all_items = ShortlistCartItem.objects.filter(content_type=plot_ct).select_related('cart__user')
+
+        # Step 2: Filter items where content_object.owner == current logged-in owner
+        owner_items = [
+            item for item in all_items
+            if hasattr(item.content_object, 'owner') and item.content_object.owner == owner
+        ]
+
+        # Step 3: Serialize the results
+        data = []
+        for item in owner_items:
+            plot = item.content_object
+            user = item.cart.user
+            data.append({
+                "plot_id": plot.id,
+                "plot_title": plot.title,
+                "plot_location": plot.location,
+                "buyer_name": user.get_full_name(),
+                "buyer_email": user.email,
+                "buyer_phone": user.mobile_number,
+                "shortlisted_at": item.added_at,
+            })
+
+        return Response(data)
