@@ -17,13 +17,14 @@ import {
   Typography,
   useTheme,
   CircularProgress,
-  IconButton
+  IconButton,
+  debounce
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { message } from 'antd';
 import apiClient from '@/src/utils/api/apiClient'; 
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 
 interface IProject {
@@ -104,7 +105,33 @@ const ManageMysqft: React.FC = () => {
   const [editingProject, setEditingProject] = useState<IProject | null>(null);
   const [editingProjectFiles, setEditingProjectFiles] = useState<Record<string, File | null>>({});
 
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   
+  const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
+
+   const fetchLocationSuggestions = useCallback(
+    debounce(async (text: string) => {
+      if (!GEOAPIFY_API_KEY) { console.error("Geoapify API key is missing."); return; }
+      if (!text || text.length < 3) { setLocationSuggestions([]); return; }
+      
+      setIsLocationLoading(true);
+      const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&apiKey=${GEOAPIFY_API_KEY}`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        setLocationSuggestions(data.features || []);
+      } catch (error) {
+        console.error("Error fetching Geoapify suggestions:", error);
+        setLocationSuggestions([]);
+      } finally {
+        setIsLocationLoading(false);
+      }
+    }, 400),
+    []
+  );
+
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
@@ -116,7 +143,7 @@ const ManageMysqft: React.FC = () => {
 
   const fetchSubplots = async (projectId: number) => {
     try {
-      const response = await apiClient.get<{ data: ISubplot[] }>(`/subplots/?project=${projectId}`);
+      const response = await apiClient.get<{ data: ISubplot[] }>(`/subplots/by-project/${projectId}`);
       const plotData = response.data || [];
       setSubplots(Array.isArray(plotData) ? plotData : []);
     } catch { 
@@ -281,19 +308,56 @@ const ManageMysqft: React.FC = () => {
     setEditModalOpen(true);
   };
   
-  const plotColumns: GridColDef[] = [
-    { field: 'plot_number', headerName: 'Plot Number', flex: 1 },
-    { field: 'dimensions', headerName: 'Dimensions', flex: 1 },
-    { field: 'area', headerName: `Area (${activeProject?.unit || ''})`, flex: 1, valueFormatter: ({ value }) => Number(value).toFixed(2) },
-    { field: 'total_price', headerName: 'Total Price', flex: 1, valueFormatter: ({ value }) => `₹${Number(value).toLocaleString()}` },
-    { field: 'status', headerName: 'Status', flex: 1, renderCell: (params) => (<Chip label={params.value} color={params.value === 'Available' ? 'success' : params.value === 'Sold' ? 'error' : 'warning'} size="small"/>) },
-    { field: 'actions', headerName: 'Actions', flex: 1.5, sortable: false, renderCell: (params) => (
-        <Stack direction="row" spacing={0}>
-            <IconButton size="small" onClick={() => handleEditPlot(params.row)}><Edit fontSize="small" /></IconButton>
-            <IconButton size="small" color="error" onClick={() => handleDeletePlot(params.row.id)}><Delete fontSize="small" /></IconButton>
-        </Stack>
-    )}
-  ];
+
+
+const plotColumns: GridColDef[] = [
+    { 
+        field: 'plot_number', 
+        headerName: 'Plot Number', 
+        flex: 1 
+    },
+    { 
+        field: 'dimensions', 
+        headerName: 'Dimensions', 
+        flex: 1 
+    },
+    {
+        field: 'area',
+        headerName: `Area (${activeProject?.unit || ''})`,
+        flex: 1,
+        renderCell: (params) => {
+            const areaValue = Number(params.row.area);
+            return isNaN(areaValue) ? 'N/A' : areaValue.toFixed(2);
+        }
+    },
+    {
+        field: 'total_price',
+        headerName: 'Total Price',
+        flex: 1,
+        renderCell: (params) => {
+            const priceValue = Number(params.row.total_price);
+            return isNaN(priceValue) ? 'N/A' : `₹${priceValue.toLocaleString()}`;
+        }
+    },
+    { 
+        field: 'status', 
+        headerName: 'Status', 
+        flex: 1, 
+        renderCell: (params) => (<Chip label={params.value} color={params.value === 'Available' ? 'success' : params.value === 'Sold' ? 'error' : 'warning'} size="small"/>) 
+    },
+    { 
+        field: 'actions', 
+        headerName: 'Actions', 
+        flex: 1.5, 
+        sortable: false, 
+        renderCell: (params) => (
+            <Stack direction="row" spacing={0}>
+                <IconButton size="small" onClick={() => handleEditPlot(params.row)}><Edit fontSize="small" /></IconButton>
+                <IconButton size="small" color="error" onClick={() => handleDeletePlot(params.row.id)}><Delete fontSize="small" /></IconButton>
+            </Stack>
+        )
+    }
+];
   
   const projectTableColumns: GridColDef[] = [
     { field: 'project_image', headerName: 'Image', width: 100, renderCell: (params) => params.value ? <img src={params.value as string} alt="Project" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}/> : "No Image" },
@@ -323,7 +387,38 @@ const ManageMysqft: React.FC = () => {
                 <Stack spacing={2}>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                         <TextField fullWidth label="Project Name" required value={projectData.projectName} onChange={e => handleFormChange('projectName', e.target.value)} error={!!formErrors.project_name} helperText={formErrors.project_name?.[0]}/>
-                        <TextField fullWidth label="Location" required value={projectData.location} onChange={e => handleFormChange('location', e.target.value)} error={!!formErrors.location} helperText={formErrors.location?.[0]}/>
+                        
+                        {/* --- ✨ LOCATION INPUT WITH AUTOCOMPLETE --- */}
+                        <Box sx={{ position: 'relative', width: '100%' }} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
+                            <TextField 
+                                fullWidth 
+                                label="Location" 
+                                required 
+                                value={projectData.location} 
+                                onChange={e => {
+                                    handleFormChange('location', e.target.value);
+                                    if (!showSuggestions) setShowSuggestions(true);
+                                    fetchLocationSuggestions(e.target.value);
+                                }}
+                                autoComplete="off"
+                                error={!!formErrors.location} 
+                                helperText={formErrors.location?.[0]}
+                            />
+                            {isLocationLoading && <CircularProgress size={20} sx={{ position: 'absolute', right: 12, top: 18 }} />}
+                            {showSuggestions && projectData.location.length >= 3 && locationSuggestions.length > 0 && (
+                                <ul className="suggestions-list">
+                                    {locationSuggestions.map((suggestion, index) => (
+                                        <li key={index} onMouseDown={() => {
+                                            const selectedAddress = suggestion.properties.formatted;
+                                            handleFormChange('location', selectedAddress);
+                                            setShowSuggestions(false);
+                                        }}>
+                                            {suggestion.properties.formatted}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </Box>
                     </Stack>
                     <TextField fullWidth label="Google Map Link" value={projectData.googleMapLink} onChange={e => handleFormChange('googleMapLink', e.target.value)} error={!!formErrors.google_map_link} helperText={formErrors.google_map_link?.[0]}/>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
@@ -400,7 +495,36 @@ const ManageMysqft: React.FC = () => {
             {editingProject && (
                 <Stack spacing={2}>
                     <TextField label="Project Name" defaultValue={editingProject.project_name} onChange={e => setEditingProject({...editingProject, project_name: e.target.value})} />
-                    <TextField label="Location" defaultValue={editingProject.location} onChange={e => setEditingProject({...editingProject, location: e.target.value})} />
+                    
+                    {/* --- ✨ LOCATION INPUT WITH AUTOCOMPLETE FOR MODAL --- */}
+                    <Box sx={{ position: 'relative' }} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
+                       <TextField 
+                           fullWidth
+                           label="Location"
+                           value={editingProject.location} // Use controlled component
+                           onChange={e => {
+                               setEditingProject({...editingProject, location: e.target.value});
+                               if (!showSuggestions) setShowSuggestions(true);
+                               fetchLocationSuggestions(e.target.value);
+                           }}
+                           autoComplete="off"
+                       />
+                       {isLocationLoading && <CircularProgress size={20} sx={{ position: 'absolute', right: 12, top: 18 }} />}
+                       {showSuggestions && editingProject.location.length >= 3 && locationSuggestions.length > 0 && (
+                           <ul className="suggestions-list">
+                               {locationSuggestions.map((suggestion, index) => (
+                                   <li key={index} onMouseDown={() => {
+                                       const selectedAddress = suggestion.properties.formatted;
+                                       setEditingProject({...editingProject, location: selectedAddress});
+                                       setShowSuggestions(false);
+                                   }}>
+                                       {suggestion.properties.formatted}
+                                   </li>
+                               ))}
+                           </ul>
+                       )}
+                    </Box>
+
                     <TextField label="Google Map Link" defaultValue={editingProject.google_map_link || ''} onChange={e => setEditingProject({...editingProject, google_map_link: e.target.value})} />
                     <TextField label="Description" multiline rows={3} defaultValue={editingProject.description || ''} onChange={e => setEditingProject({...editingProject, description: e.target.value})} />
                     <Stack direction="row" spacing={2}>
@@ -422,6 +546,8 @@ const ManageMysqft: React.FC = () => {
             )}
         </Box>
       </Modal>
+
+      <style>{`.suggestions-list { position: absolute; background: white; border: 1px solid #d9d9d9; border-radius: 6px; list-style: none; margin: 0; padding: 4px; z-index: 1301; /* Higher z-index for modal */ width: 100%; max-height: 200px; overflow-y: auto; box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08); } .suggestions-list li { padding: 8px 12px; cursor: pointer; } .suggestions-list li:hover { background-color: #f5f5f5; }`}</style>
     </Box>
   );
 };
