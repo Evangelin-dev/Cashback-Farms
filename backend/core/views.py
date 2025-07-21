@@ -404,6 +404,20 @@ class PlotListingViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
+    @action(detail=True, methods=['patch'], url_path='toggle-availability')
+    def toggle_availability(self, request, pk=None):
+        try:
+            plot = self.get_object()
+            plot.is_available_full = not plot.is_available_full
+            plot.save()
+            return Response({
+                'id': plot.id,
+                'is_available_full': plot.is_available_full,
+                'message': 'Availability toggled successfully.'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class JointOwnerViewSet(viewsets.ModelViewSet):
     queryset = JointOwner.objects.all()
     serializer_class = JointOwnerSerializer
