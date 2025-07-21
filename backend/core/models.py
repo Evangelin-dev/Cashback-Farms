@@ -412,6 +412,7 @@ class SQLFTProject(models.Model):
         ('sqft', 'Square Feet'),
         ('sqyd', 'Square Yards'),
     ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sqlft_projects', null=True)
     project_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     google_map_link = models.URLField(blank=True, null=True)

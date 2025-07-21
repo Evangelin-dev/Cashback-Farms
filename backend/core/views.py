@@ -772,9 +772,10 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == UserType.ADMIN:
+        if user.is_staff or user.user_type == UserType.ADMIN:
             return SQLFTProject.objects.all()
-        return SQLFTProject.objects.all()
+        return SQLFTProject.objects.filter(user=user)
+
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -788,7 +789,7 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         try:
-            serializer.save()
+            serializer.save(user=self.request.user)  # ✅ Assign logged-in user
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
