@@ -18,7 +18,7 @@ from .views import (
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
     InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin, AdminUserViewSet,
     ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView, AllKYCListView,SubPlotUnitViewSet,
-    PlotStatsView, UserStatsView, PaymentStatsView, MonthlyBookingStatsView, PaymentViewSet
+    PlotStatsView, UserStatsView, PaymentStatsView, MonthlyBookingStatsView, PaymentViewSet, SubPlotUnitsByProjectView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -134,5 +134,6 @@ urlpatterns = [
     path('admin/dashboard/user-stats/', UserStatsView.as_view()),
     path('admin/dashboard/payment-stats/', PaymentStatsView.as_view()),
     path('admin/dashboard/monthly-bookings/', MonthlyBookingStatsView.as_view()),
+    path('subplots/by-project/<int:project_id>/', SubPlotUnitsByProjectView.as_view(), name='subplots-by-project'),
 
 ]
