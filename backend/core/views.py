@@ -2138,3 +2138,18 @@ class OwnerShortlistView(APIView):
             })
 
         return Response(data)
+
+class OwnerPaymentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        owner = request.user
+        # Step 1: Get all plot IDs owned by this user
+        owner_plot_ids = PlotListing.objects.filter(owner=owner).values_list('id', flat=True)
+
+        # Step 2: Get all payments related to those plots
+        payments = Payment.objects.filter(plot_id__in=owner_plot_ids).order_by('-created_at')
+
+        # Step 3: Serialize and return the payments
+        serializer = PaymentSerializer(payments, many=True)
+        return Response(serializer.data)
