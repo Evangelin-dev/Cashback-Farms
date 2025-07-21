@@ -275,7 +275,7 @@ class SubPlotUnitSerializer(serializers.ModelSerializer):
         model = SubPlotUnit
         fields = [
             'id', 'project', 'plot_number', 'dimensions', 'area', 'total_price',
-            'status', 'facing', 'remarks', 'created_at'
+            'status', 'facing', 'remarks', 'created_at', 'project_id',
         ]
 
 class BankDetailSerializer(serializers.ModelSerializer):

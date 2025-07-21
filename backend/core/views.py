@@ -2083,3 +2083,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUserType]
     filter_backends = [filters.SearchFilter]
     search_fields = ['status', 'razorpay_order_id', 'razorpay_payment_id']
+
+class SubPlotUnitsByProjectView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        subplots = SubPlotUnit.objects.filter(project_id=project_id)
+        serializer = SubPlotUnitSerializer(subplots, many=True)
+        return Response({"data": serializer.data})
