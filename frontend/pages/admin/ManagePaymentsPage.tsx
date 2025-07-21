@@ -3,27 +3,26 @@ import Button from '../../components/Button';
 import Card from '../../components/Card';
 import Modal from '../../components/Modal';
 import { IconPencil } from '../../constants';
-import apiClient from '../../src/utils/api/apiClient'; // Make sure this path is correct
+import apiClient from '../../src/utils/api/apiClient';
 import { message } from 'antd';
 
 const PAGE_SIZE = 10;
 
 interface IPayment {
-    id: number;
-    plot_id: number;
-    razorpay_order_id: string;
-    razorpay_payment_id: string | null;
-    amount: number;
-    status: 'created' | 'paid' | 'failed'; // Assuming these are the possible statuses
-    created_at: string;
-    user: number;
+  id: number;
+  plot_id: number;
+  razorpay_order_id: string;
+  razorpay_payment_id: string | null;
+  amount: number;
+  status: 'created' | 'paid' | 'failed';
+  created_at: string;
+  user: number;
 }
 
-// Enum for status values to avoid magic strings
 enum PaymentStatus {
-    PAID = 'paid',
-    CREATED = 'created',
-    FAILED = 'failed',
+  PAID = 'paid',
+  CREATED = 'created',
+  FAILED = 'failed',
 }
 
 const ManagePaymentsPage: React.FC = () => {
@@ -31,16 +30,16 @@ const ManagePaymentsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<IPayment | null>(null);
-  
-  // Form state for the modal
+
+
   const [paymentFormData, setPaymentFormData] = useState<{ status: string; razorpay_payment_id: string }>({ status: PaymentStatus.CREATED, razorpay_payment_id: '' });
-  
-  // Filter states
+
+
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const [filterPlotId, setFilterPlotId] = useState<string>(''); // Changed from bookingId to plotId
+  const [filterPlotId, setFilterPlotId] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 2. Fetch data from the API based on filters
+
   useEffect(() => {
     const fetchPayments = async () => {
       setIsLoading(true);
@@ -48,7 +47,7 @@ const ManagePaymentsPage: React.FC = () => {
       if (filterStatus) {
         params.append('search', filterStatus);
       }
-      
+
       try {
         const response = await apiClient.get<IPayment[]>(`/admin/payments/?${params.toString()}`);
         setPayments(response || []);
@@ -62,25 +61,25 @@ const ManagePaymentsPage: React.FC = () => {
     };
 
     fetchPayments();
-  }, [filterStatus]); // Re-fetch only when the API-supported filter (status) changes
+  }, [filterStatus]);
 
-  // Client-side filtering for Plot ID (since API doesn't support it directly)
+
   const filteredPayments = useMemo(() => {
     return payments.filter(p => {
       return filterPlotId ? p.plot_id.toString().includes(filterPlotId) : true;
     });
-    // Sorting by date is handled by the API response, which seems to be latest first.
+
   }, [payments, filterPlotId]);
 
-  // Pagination logic (remains the same)
+
   const totalPages = Math.ceil(filteredPayments.length / PAGE_SIZE);
   const pagedPayments = filteredPayments.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const openEditModal = (payment: IPayment) => {
     setEditingPayment(payment);
-    setPaymentFormData({ 
-      status: payment.status, 
-      razorpay_payment_id: payment.razorpay_payment_id || '' 
+    setPaymentFormData({
+      status: payment.status,
+      razorpay_payment_id: payment.razorpay_payment_id || ''
     });
     setIsModalOpen(true);
   };
@@ -90,32 +89,32 @@ const ManagePaymentsPage: React.FC = () => {
     setPaymentFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 3. Implement the PATCH request to update a payment
+
   const handleSaveChanges = async () => {
     if (!editingPayment) return;
 
     const payload = {
-        status: paymentFormData.status,
-        razorpay_payment_id: paymentFormData.razorpay_payment_id || null
+      status: paymentFormData.status,
+      razorpay_payment_id: paymentFormData.razorpay_payment_id || null
     };
 
     try {
-        await apiClient.patch(`/admin/payments/${editingPayment.id}/`, payload);
-        message.success(`Payment ${editingPayment.id} updated successfully!`);
-        
-        // Refresh data after update
-        const response = await apiClient.get<IPayment[]>(`/admin/payments/`);
-        setPayments(response || []);
+      await apiClient.patch(`/admin/payments/${editingPayment.id}/`, payload);
+      message.success(`Payment ${editingPayment.id} updated successfully!`);
 
-        setIsModalOpen(false);
-        setEditingPayment(null);
+
+      const response = await apiClient.get<IPayment[]>(`/admin/payments/`);
+      setPayments(response || []);
+
+      setIsModalOpen(false);
+      setEditingPayment(null);
     } catch (error) {
-        console.error("Failed to update payment:", error);
-        message.error("Failed to update payment.");
+      console.error("Failed to update payment:", error);
+      message.error("Failed to update payment.");
     }
   };
-  
-  // 4. Update status colors to match new API statuses
+
+
   const getStatusClass = (status: IPayment['status']): string => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
@@ -124,19 +123,32 @@ const ManagePaymentsPage: React.FC = () => {
       default: return 'bg-neutral-100 text-neutral-800';
     }
   };
-  
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        {/* Header remains the same */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary shadow">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-3-3.87M9 21v-2a4 4 0 013-3.87" />
+              </svg>
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold text-primary mb-1">Manage Payments</h1>
+              <div className="text-sm text-neutral-500">Track, update, and manage all payment installments.</div>
+            </div>
+          </div>
+        </div>
       </div>
       <Card className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
           <div>
             <label htmlFor="filterStatus" className="block text-sm font-medium text-neutral-700">Filter by Status</label>
-            <select 
-              id="filterStatus" 
-              value={filterStatus} 
+            <select
+              id="filterStatus"
+              value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="mt-1 block w-full px-3 py-2 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             >
@@ -146,7 +158,7 @@ const ManagePaymentsPage: React.FC = () => {
           </div>
           <div>
             <label htmlFor="filterPlotId" className="block text-sm font-medium text-neutral-700">Filter by Plot ID</label>
-            <input 
+            <input
               type="text"
               id="filterPlotId"
               placeholder="Enter Plot ID"
@@ -185,7 +197,7 @@ const ManagePaymentsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Button size="sm" variant="outline" onClick={() => openEditModal(payment)} leftIcon={<IconPencil className="w-4 h-4"/>}>
+                      <Button size="sm" variant="outline" onClick={() => openEditModal(payment)} leftIcon={<IconPencil className="w-4 h-4" />}>
                         Update
                       </Button>
                     </td>
@@ -197,55 +209,71 @@ const ManagePaymentsPage: React.FC = () => {
             </tbody>
           </table>
           {totalPages > 1 && (
-             <div className="flex justify-center items-center gap-2 py-4">
-              {/* Pagination controls remain the same */}
+            <div className="flex justify-center items-center gap-2 py-4">
+              <button
+                className="px-3 py-1 rounded bg-green-100 text-green-700 font-semibold disabled:opacity-50"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Prev
+              </button>
+              <span className="text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                className="px-3 py-1 rounded bg-green-100 text-green-700 font-semibold disabled:opacity-50"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
             </div>
           )}
         </div>
       </Card>
       {editingPayment && (
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="">
-            <div className="max-w-md mx-auto bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-2xl shadow-2xl p-0">
-                <div className="flex items-center justify-between px-8 pt-8 pb-2">
-                    <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-                        <IconPencil className="w-5 h-5 text-primary" />
-                        Update Payment #{editingPayment.id}
-                    </h2>
-                </div>
-                <div className="space-y-4 px-8 pb-8 pt-2">
-                    <div>
-                        <label htmlFor="paymentStatus" className="block text-sm font-medium text-neutral-700">Payment Status</label>
-                        <select 
-                            id="paymentStatus" 
-                            name="status"
-                            value={paymentFormData.status} 
-                            onChange={handleFormInputChange}
-                            className="mt-1 block w-full px-3 py-2 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                        >
-                            {Object.values(PaymentStatus).map(status => (
-                                <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
-                            ))}
-                        </select>
-                    </div>
-                    {paymentFormData.status === PaymentStatus.PAID && (
-                        <div>
-                            <label htmlFor="razorpay_payment_id" className="block text-sm font-medium text-neutral-700">Transaction ID</label>
-                            <input 
-                                type="text" 
-                                name="razorpay_payment_id" 
-                                id="razorpay_payment_id" 
-                                value={paymentFormData.razorpay_payment_id} 
-                                onChange={handleFormInputChange} 
-                                className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" 
-                            />
-                        </div>
-                    )}
-                    <div className="flex justify-end space-x-3 pt-2">
-                        <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
-                    </div>
-                </div>
+          <div className="max-w-md mx-auto bg-gradient-to-br from-blue-50 via-white to-blue-100 rounded-2xl shadow-2xl p-0">
+            <div className="flex items-center justify-between px-8 pt-8 pb-2">
+              <h2 className="text-xl font-bold text-primary flex items-center gap-2">
+                <IconPencil className="w-5 h-5 text-primary" />
+                Update Payment #{editingPayment.id}
+              </h2>
             </div>
+            <div className="space-y-4 px-8 pb-8 pt-2">
+              <div>
+                <label htmlFor="paymentStatus" className="block text-sm font-medium text-neutral-700">Payment Status</label>
+                <select
+                  id="paymentStatus"
+                  name="status"
+                  value={paymentFormData.status}
+                  onChange={handleFormInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                >
+                  {Object.values(PaymentStatus).map(status => (
+                    <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+                  ))}
+                </select>
+              </div>
+              {paymentFormData.status === PaymentStatus.PAID && (
+                <div>
+                  <label htmlFor="razorpay_payment_id" className="block text-sm font-medium text-neutral-700">Transaction ID</label>
+                  <input
+                    type="text"
+                    name="razorpay_payment_id"
+                    id="razorpay_payment_id"
+                    value={paymentFormData.razorpay_payment_id}
+                    onChange={handleFormInputChange}
+                    className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                  />
+                </div>
+              )}
+              <div className="flex justify-end space-x-3 pt-2">
+                <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                <Button variant="primary" onClick={handleSaveChanges}>Save Changes</Button>
+              </div>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
