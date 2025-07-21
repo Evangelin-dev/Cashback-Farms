@@ -29,7 +29,6 @@ const RegistrationPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [phoneCountryCode, setPhoneCountryCode] = useState("+91");
-  const [companyCountryCode, setCompanyCountryCode] = useState("+91");
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -45,7 +44,6 @@ const RegistrationPage: React.FC = () => {
     const payload = {
         ...form,
         mobile_number: `${phoneCountryCode}${form.phone_number}`,
-        company_number: `${companyCountryCode}${form.company_number}`,
     };
 
     try {
@@ -120,15 +118,6 @@ const RegistrationPage: React.FC = () => {
                             {DEFAULT_COUNTRY_OPTIONS.map(c => <option key={`phone-${c.code}`} value={c.code}>{c.label}</option>)}
                         </select>
                         <input type="tel" name="phone_number" value={form.phone_number} onChange={handleChange} className="w-full px-4 py-2 rounded-r-xl border-r border-t border-b border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-green-700 font-semibold mb-1">Company Number</label>
-                    <div className="flex">
-                        <select value={companyCountryCode} onChange={(e) => setCompanyCountryCode(e.target.value)} className="px-2 rounded-l-xl border-l border-t border-b border-green-200 bg-white/70 focus:outline-none shadow">
-                            {DEFAULT_COUNTRY_OPTIONS.map(c => <option key={`company-${c.code}`} value={c.code}>{c.label}</option>)}
-                        </select>
-                        <input type="text" name="company_number" value={form.company_number} onChange={handleChange} className="w-full px-4 py-2 rounded-r-xl border-r border-t border-b border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
                     </div>
                   </div>
                   <div className="md:col-span-2">
