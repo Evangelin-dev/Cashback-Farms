@@ -5,7 +5,8 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty,SubPlotUnit
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty,SubPlotUnit,
+    Payment
 
 )
 
@@ -435,3 +436,8 @@ class CommercialPropertySerializer(serializers.ModelSerializer):
         model = CommercialProperty
         fields = '__all__'
         read_only_fields = ['id', 'user', 'added_date']
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = '__all__'
