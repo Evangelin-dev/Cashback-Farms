@@ -154,16 +154,6 @@ const RealMySqft: React.FC = () => {
 
   useEffect(() => { fetchProjects(); }, []);
 
-  const handleDeleteProject = async (projectId: number) => {
-    if (window.confirm("Are you sure? This will delete the project and ALL its subplots.")) {
-      try {
-        await apiClient.delete(`/sqlft-projects/${projectId}/`);
-        message.success("Project deleted.");
-        fetchProjects();
-      } catch { message.error("Failed to delete project."); }
-    }
-  };
-
   const handleUpdateProject = async () => {
     if (!editingProject) return;
     setIsSubmitting(true);
@@ -309,12 +299,6 @@ const RealMySqft: React.FC = () => {
     setProjectData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleOpenEditModal = (project: IProject) => {
-    setEditingProject({ ...project });
-    setEditingProjectFiles({});
-    setEditModalOpen(true);
-  };
-
   const plotColumns: GridColDef[] = [
     {
       field: 'plot_number',
@@ -370,14 +354,6 @@ const RealMySqft: React.FC = () => {
     { field: 'location', headerName: 'Location', flex: 2 },
     { field: 'price', headerName: 'Price/sqft', flex: 1, renderCell: (params) => `₹${Number(params.row.price).toLocaleString('en-IN')}` },
     { field: 'status', headerName: 'Status', flex: 1, renderCell: () => <Chip label="Verified" color="success" size="small" variant="outlined" /> },
-    {
-      field: 'actions', headerName: 'Actions', sortable: false, flex: 1.5, renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<Edit />} onClick={() => handleOpenEditModal(params.row)}>Edit</Button>
-          <Button variant="outlined" size="small" color="error" startIcon={<Delete />} onClick={() => handleDeleteProject(params.row.id)}>Delete</Button>
-        </Stack>
-      )
-    }
   ];
 
   return (
@@ -501,7 +477,6 @@ const RealMySqft: React.FC = () => {
             <Stack spacing={2}>
               <TextField label="Project Name" defaultValue={editingProject.project_name} onChange={e => setEditingProject({ ...editingProject, project_name: e.target.value })} />
 
-              {/* --- ✨ LOCATION INPUT WITH AUTOCOMPLETE FOR MODAL --- */}
               <Box sx={{ position: 'relative' }} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}>
                 <TextField
                   fullWidth
