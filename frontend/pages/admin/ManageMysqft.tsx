@@ -1,4 +1,4 @@
-import { Edit, HomeWork, LocationOn, Delete } from '@mui/icons-material';
+import { Edit, HomeWork, Delete } from '@mui/icons-material';
 import {
   Avatar,
   Box,
@@ -34,7 +34,7 @@ interface IProject {
   description?: string;
   plot_type: 'Residential' | 'Commercial' | 'Plot' | 'Villa' | 'Skyrise';
   unit: 'sqft' | 'sqyd';
-  price: number;
+  price: string;
   project_layout?: string;
   project_image?: string;
   project_video?: string;
@@ -45,14 +45,13 @@ interface ISubplot {
   id: number;
   plot_number: string;
   dimensions: string;
-  area: number;
-  total_price: number;
+  area: string;
+  total_price: string;
   status: 'Available' | 'Sold' | 'On Hold';
   facing: 'North' | 'South' | 'East' | 'West';
   remarks: string;
   project: number;
 }
-
 
 interface ProjectData {
   projectName: string;
@@ -61,7 +60,6 @@ interface ProjectData {
   projectType: 'Plot' | 'Villa' | 'Skyrise' | 'Residential' | 'Commercial';
   price: number;
   description: string;
-  amenities: string[];
   unit: 'sqft' | 'sqyd';
 }
 
@@ -77,14 +75,11 @@ interface PlotData {
     remarks: string;
 }
 
-const amenitiesList = ['Gated', 'Water Supply', 'Roads', 'Electricity', 'Park'];
-
 const ManageMysqft: React.FC = () => {
   const theme = useTheme();
   
-  
   const [projectData, setProjectData] = useState<ProjectData>({
-    projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', amenities: [], unit: 'sqft',
+    projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', unit: 'sqft',
   });
   const [activeProject, setActiveProject] = useState<IProject | null>(null);
   const [subplots, setSubplots] = useState<ISubplot[]>([]);
@@ -99,10 +94,10 @@ const ManageMysqft: React.FC = () => {
   
   const [projectCreated, setProjectCreated] = useState(false);
   
-  
   const [fetchedProjects, setFetchedProjects] = useState<IProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPlotSubmitting, setIsPlotSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
   
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -113,7 +108,7 @@ const ManageMysqft: React.FC = () => {
   const fetchProjects = async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.get<IProject[]>('/sqlft-projects/');
+      const response = await apiClient.get<{data: IProject[]}>('/sqlft-projects/');
       setFetchedProjects(Array.isArray(response.data) ? response.data.reverse() : []);
     } catch (error) { message.error("Could not fetch projects."); } 
     finally { setIsLoading(false); }
@@ -121,9 +116,13 @@ const ManageMysqft: React.FC = () => {
 
   const fetchSubplots = async (projectId: number) => {
     try {
-      const response = await apiClient.get<ISubplot[]>(`/sub-plots/?project=${projectId}`);
-      setSubplots(response.data || []);
-    } catch { message.error("Could not fetch subplots."); }
+      const response = await apiClient.get<{ data: ISubplot[] }>(`/subplots/?project=${projectId}`);
+      const plotData = response.data || [];
+      setSubplots(Array.isArray(plotData) ? plotData : []);
+    } catch { 
+      message.error("Could not fetch subplots.");
+      setSubplots([]);
+    }
   };
   
   useEffect(() => { fetchProjects(); }, []);
@@ -145,8 +144,9 @@ const ManageMysqft: React.FC = () => {
     const initialProject = fetchedProjects.find(p => p.id === editingProject.id);
 
     Object.entries(editingProject).forEach(([key, value]) => {
-      if (key !== 'id' && value !== initialProject?.[key as keyof IProject]) {
-        formData.append(key, value as string);
+      const initialValue = initialProject?.[key as keyof IProject];
+      if (key !== 'id' && String(value) !== String(initialValue)) {
+          formData.append(key, value as string);
       }
     });
 
@@ -154,35 +154,32 @@ const ManageMysqft: React.FC = () => {
       if (file) formData.append(key, file);
     });
 
-    if (Array.from(formData.keys()).length === 0) {
-      message.info("No changes were made.");
-      setEditModalOpen(false);
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       await apiClient.patch(`/sqlft-projects/${editingProject.id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       message.success("Project updated successfully.");
       setEditModalOpen(false);
       fetchProjects();
     } catch(err: any) { 
-        if(err.response?.data) { message.error(Object.values(err.response.data)[0] as string); }
-        else { message.error("Failed to update project."); }
+        const errorMsg = err.response?.data ? Object.values(err.response.data).flat().join(' ') : "Failed to update project.";
+        message.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  
   const handleProjectSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setFormErrors({});
     const payload = new FormData();
-    Object.entries(projectData).forEach(([key, value]) => {
-      payload.append(key === 'projectName' ? 'project_name' : key === 'googleMapLink' ? 'google_map_link' : key === 'projectType' ? 'plot_type' : key, Array.isArray(value) ? JSON.stringify(value) : String(value));
-    });
+    payload.append('project_name', projectData.projectName);
+    payload.append('location', projectData.location);
+    payload.append('google_map_link', projectData.googleMapLink);
+    payload.append('plot_type', projectData.projectType);
+    payload.append('price', String(projectData.price));
+    payload.append('description', projectData.description);
+    payload.append('unit', projectData.unit);
+    
     if (projectLayoutFile) payload.append('project_layout', projectLayoutFile);
     if (projectImageFile) payload.append('project_image', projectImageFile);
     if (projectVideoFile) payload.append('project_video', projectVideoFile);
@@ -190,7 +187,7 @@ const ManageMysqft: React.FC = () => {
 
     try {
       const response = await apiClient.post<IProject>('/sqlft-projects/', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setActiveProject(response.data);
+      setActiveProject(response);
       setProjectCreated(true);
       message.success("Project draft created. Now add its plots/units.");
     } catch (error: any) {
@@ -203,8 +200,12 @@ const ManageMysqft: React.FC = () => {
 
   const handlePlotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeProject) return;
+    if (!activeProject?.id) {
+        message.error("No active project selected. Cannot add plot.");
+        return;
+    }
     
+    setIsPlotSubmitting(true);
     const formData = new FormData();
     formData.append('project', String(activeProject.id));
     formData.append('plot_number', newPlot.plotNumber);
@@ -217,29 +218,42 @@ const ManageMysqft: React.FC = () => {
 
     try {
       if (newPlot.id) { 
-        await apiClient.put(`/sub-plots/${newPlot.id}/`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        message.success("Subplot updated.");
+        await apiClient.put(`/subplots/${newPlot.id}/`, formData);
+        message.success("Subplot updated successfully.");
       } else { 
-        await apiClient.post('/sub-plots/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-        message.success("Subplot added.");
+        await apiClient.post('/subplots/', formData);
+        message.success("Subplot added successfully.");
       }
-      setNewPlot({ plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
+      setNewPlot({ id: undefined, plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
       fetchSubplots(activeProject.id);
-    } catch { message.error(`Failed to save subplot.`); }
+    } catch (err: any) {
+        console.error("Failed to save subplot:", err.response || err);
+        message.error(`Failed to save subplot.`);
+    } finally {
+      setIsPlotSubmitting(false);
+    }
   };
 
   const handleEditPlot = (plot: ISubplot) => {
+    const area = Number(plot.area);
+    const totalPrice = Number(plot.total_price);
     setNewPlot({
-      id: plot.id, plotNumber: plot.plot_number, dimensions: plot.dimensions, areaSqft: plot.area,
-      sqftPrice: plot.area > 0 ? Math.round(plot.total_price / plot.area) : 0, totalPrice: plot.total_price,
-      status: plot.status, facing: plot.facing, remarks: plot.remarks
+      id: plot.id, 
+      plotNumber: plot.plot_number, 
+      dimensions: plot.dimensions, 
+      areaSqft: area,
+      sqftPrice: area > 0 ? Math.round(totalPrice / area) : 0, 
+      totalPrice: totalPrice,
+      status: plot.status, 
+      facing: plot.facing, 
+      remarks: plot.remarks
     });
   };
 
   const handleDeletePlot = async (plotId: number) => {
-    if (window.confirm("Delete this subplot?")) {
+    if (window.confirm("Are you sure you want to delete this subplot?")) {
       try {
-        await apiClient.delete(`/sub-plots/${plotId}/`);
+        await apiClient.delete(`/subplots/${plotId}/`);
         message.success("Subplot deleted.");
         if (activeProject) fetchSubplots(activeProject.id);
       } catch { message.error("Failed to delete subplot."); }
@@ -252,21 +266,13 @@ const ManageMysqft: React.FC = () => {
     setActiveProject(null);
     setSubplots([]);
     setNewPlot({ id: undefined, plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' });
-    setProjectData({ projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', amenities: [], unit: 'sqft' });
-    setProjectLayoutFile(null);
-    setProjectImageFile(null);
-    setProjectVideoFile(null);
-    setLandDocumentFile(null);
+    setProjectData({ projectName: '', location: '', googleMapLink: '', projectType: 'Plot', price: 0, description: '', unit: 'sqft' });
+    setProjectLayoutFile(null); setProjectImageFile(null); setProjectVideoFile(null); setLandDocumentFile(null);
     fetchProjects();
   };
   
-  const handleFormChange = (field: keyof typeof projectData, value: any) => {
+  const handleFormChange = (field: keyof ProjectData, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
-    if (formErrors[field as keyof typeof formErrors]) {
-      const newErrors = { ...formErrors };
-      delete newErrors[field as keyof typeof formErrors];
-      setFormErrors(newErrors);
-    }
   };
 
   const handleOpenEditModal = (project: IProject) => {
@@ -278,10 +284,10 @@ const ManageMysqft: React.FC = () => {
   const plotColumns: GridColDef[] = [
     { field: 'plot_number', headerName: 'Plot Number', flex: 1 },
     { field: 'dimensions', headerName: 'Dimensions', flex: 1 },
-    { field: 'area', headerName: `Area (${activeProject?.unit || ''})`, flex: 1 },
+    { field: 'area', headerName: `Area (${activeProject?.unit || ''})`, flex: 1, valueFormatter: ({ value }) => Number(value).toFixed(2) },
     { field: 'total_price', headerName: 'Total Price', flex: 1, valueFormatter: ({ value }) => `₹${Number(value).toLocaleString()}` },
     { field: 'status', headerName: 'Status', flex: 1, renderCell: (params) => (<Chip label={params.value} color={params.value === 'Available' ? 'success' : params.value === 'Sold' ? 'error' : 'warning'} size="small"/>) },
-    { field: 'actions', headerName: 'Actions', flex: 1.5, renderCell: (params) => (
+    { field: 'actions', headerName: 'Actions', flex: 1.5, sortable: false, renderCell: (params) => (
         <Stack direction="row" spacing={0}>
             <IconButton size="small" onClick={() => handleEditPlot(params.row)}><Edit fontSize="small" /></IconButton>
             <IconButton size="small" color="error" onClick={() => handleDeletePlot(params.row.id)}><Delete fontSize="small" /></IconButton>
@@ -293,7 +299,7 @@ const ManageMysqft: React.FC = () => {
     { field: 'project_image', headerName: 'Image', width: 100, renderCell: (params) => params.value ? <img src={params.value as string} alt="Project" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 4 }}/> : "No Image" },
     { field: 'project_name', headerName: 'Plot Title', flex: 1.5 },
     { field: 'location', headerName: 'Location', flex: 2 },
-    { field: 'price', headerName: 'Price/sqft', flex: 1, renderCell: (params) => `₹${params.row.price.toLocaleString('en-IN')}` },
+    { field: 'price', headerName: 'Price/sqft', flex: 1, renderCell: (params) => `₹${Number(params.row.price).toLocaleString('en-IN')}` },
     { field: 'status', headerName: 'Status', flex: 1, renderCell: () => <Chip label="Verified" color="success" size="small" variant="outlined" /> },
     { field: 'actions', headerName: 'Actions', sortable: false, flex: 1.5, renderCell: (params) => (
         <Stack direction="row" spacing={1}>
@@ -338,13 +344,13 @@ const ManageMysqft: React.FC = () => {
         </Box>
       ) : (
         <Box sx={{ display: { xs: 'block', md: 'flex' }, gap: 4, alignItems: 'flex-start' }}>
-            <Box sx={{ flex: 1, minWidth: 340, maxWidth: 440 }}>
+            <Box sx={{ flex: 1, minWidth: 340, maxWidth: 440, position: 'sticky', top: '20px' }}>
               <Card variant="outlined" sx={{ mb: 4, borderColor: '#16a34a', boxShadow: 4, borderRadius: 3 }}>
-                <CardHeader avatar={<Avatar sx={{ bgcolor: '#16a34a' }}><HomeWork /></Avatar>} title={<Typography variant="h6" sx={{ fontWeight: 700 }}>{activeProject?.project_name}</Typography>} sx={{ bgcolor: '#16a34a', color: '#fff' }} action={<Button size="small" startIcon={<Edit />} sx={{ color: '#fff' }} onClick={() => { setProjectCreated(false); setActiveProject(null); setSubplots([]) }}>Edit</Button>}/>
+                <CardHeader avatar={<Avatar sx={{ bgcolor: '#16a34a' }}><HomeWork /></Avatar>} title={<Typography variant="h6" sx={{ fontWeight: 700 }}>{activeProject?.project_name}</Typography>} sx={{ bgcolor: '#16a34a', color: '#fff' }} action={<Button size="small" startIcon={<Edit />} sx={{ color: '#fff' }} onClick={() => { setProjectCreated(false); setProjectData({...projectData, projectName: activeProject?.project_name ?? '', location: activeProject?.location ?? ''}); setActiveProject(null); setSubplots([]) }}>Edit</Button>}/>
                 <CardContent sx={{ background: '#f6fff8' }}>
                   <Stack spacing={1.5}>
                     <Typography><b>Location:</b> {activeProject?.location}</Typography><Typography><b>Type:</b> {activeProject?.plot_type}</Typography>
-                    <Typography><b>Price:</b> ₹{activeProject?.price} / {activeProject?.unit}</Typography>
+                    <Typography><b>Price:</b> ₹{Number(activeProject?.price).toLocaleString()} / {activeProject?.unit}</Typography>
                     <Typography><b>Description:</b> {activeProject?.description || 'N/A'}</Typography>
                   </Stack>
                 </CardContent>
@@ -354,24 +360,25 @@ const ManageMysqft: React.FC = () => {
               {subplots.length > 0 && (
                 <Card variant="outlined" sx={{ mb: 4, borderColor: '#16a34a', boxShadow: 4 }}>
                   <CardHeader title="Plot Details" sx={{ bgcolor: '#16a34a', color: '#fff' }} />
-                  <CardContent sx={{ background: '#f6fff8' }}><Box sx={{ height: 'auto', width: '100%' }}><DataGrid rows={subplots} columns={plotColumns} getRowId={row => row.id} autoHeight/></Box></CardContent>
+                  <CardContent sx={{ background: '#f6fff8' }}><Box sx={{ height: 'auto', width: '100%' }}><DataGrid rows={subplots} columns={plotColumns} getRowId={row => row.id} autoHeight hideFooter/></Box></CardContent>
                 </Card>
               )}
               <Card variant="outlined" sx={{ mb: 4, bgcolor: '#f6fff8', borderColor: '#16a34a', boxShadow: 6 }}>
-                <CardHeader title={newPlot.id ? `Edit Plot/Unit` : `Plot/Unit Listing Module`} sx={{ bgcolor: '#16a34a', color: '#fff' }} />
+                <CardHeader title={newPlot.id ? `Edit Plot/Unit #${newPlot.plotNumber}` : `Add New Plot/Unit`} sx={{ bgcolor: '#16a34a', color: '#fff' }} />
                 <CardContent>
                   <form onSubmit={handlePlotSubmit}>
                     <Stack spacing={2}>
                       <TextField fullWidth label="Plot Number" required value={newPlot.plotNumber} onChange={(e) => setNewPlot({ ...newPlot, plotNumber: e.target.value })}/>
-                      <TextField fullWidth label="Dimensions" value={newPlot.dimensions} onChange={e => { const dims = e.target.value.split('x').map(d => Number(d.trim())); const area = dims.length === 2 && !isNaN(dims[0]) && !isNaN(dims[1]) ? dims[0] * dims[1] : 0; setNewPlot({ ...newPlot, dimensions: e.target.value, areaSqft: area, totalPrice: area * (newPlot.sqftPrice || activeProject?.price || 0) }); }}/>
-                      <TextField fullWidth label={`Area (${activeProject?.unit})`} value={newPlot.areaSqft} onChange={e => setNewPlot({ ...newPlot, areaSqft: Number(e.target.value) })}/>
-                      <TextField fullWidth label={`Price/${activeProject?.unit}`} value={newPlot.sqftPrice || activeProject?.price || ''} onChange={e => { const sqftPrice = Number(e.target.value); setNewPlot({ ...newPlot, sqftPrice, totalPrice: newPlot.areaSqft * sqftPrice }); }} helperText="Override allowed"/>
-                      <TextField fullWidth label="Total Price" value={newPlot.totalPrice} onChange={e => setNewPlot({ ...newPlot, totalPrice: Number(e.target.value) })}/>
+                      <TextField fullWidth label="Dimensions (e.g., 30x40)" value={newPlot.dimensions} onChange={e => { const dims = e.target.value.split('x').map(d => Number(d.trim())); const area = dims.length === 2 && !isNaN(dims[0]) && !isNaN(dims[1]) ? dims[0] * dims[1] : 0; setNewPlot({ ...newPlot, dimensions: e.target.value, areaSqft: area, totalPrice: area * (newPlot.sqftPrice || Number(activeProject?.price) || 0) }); }}/>
+                      <TextField fullWidth type="number" label={`Area (${activeProject?.unit})`} value={newPlot.areaSqft} onChange={e => setNewPlot({ ...newPlot, areaSqft: Number(e.target.value), totalPrice: Number(e.target.value) * (newPlot.sqftPrice || Number(activeProject?.price) || 0) })}/>
+                      <TextField fullWidth type="number" label={`Price/${activeProject?.unit}`} value={newPlot.sqftPrice || Number(activeProject?.price) || ''} onChange={e => { const sqftPrice = Number(e.target.value); setNewPlot({ ...newPlot, sqftPrice, totalPrice: newPlot.areaSqft * sqftPrice }); }} helperText="Defaults to project price, can be overridden."/>
+                      <TextField fullWidth type="number" label="Total Price" value={newPlot.totalPrice} onChange={e => setNewPlot({ ...newPlot, totalPrice: Number(e.target.value) })}/>
                       <FormControl fullWidth><InputLabel>Status</InputLabel><Select label="Status" value={newPlot.status} onChange={e => setNewPlot({ ...newPlot, status: e.target.value as any })}><MenuItem value="Available">Available</MenuItem><MenuItem value="Sold">Sold</MenuItem><MenuItem value="On Hold">On Hold</MenuItem></Select></FormControl>
                       <FormControl fullWidth><InputLabel>Facing</InputLabel><Select label="Facing" value={newPlot.facing} onChange={e => setNewPlot({ ...newPlot, facing: e.target.value as any })}><MenuItem value="North">North</MenuItem><MenuItem value="South">South</MenuItem><MenuItem value="East">East</MenuItem><MenuItem value="West">West</MenuItem></Select></FormControl>
                       <TextField fullWidth label="Remarks" value={newPlot.remarks} onChange={e => setNewPlot({ ...newPlot, remarks: e.target.value })}/>
                       <Box textAlign="right" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a' }}>{newPlot.id ? 'Update Plot' : 'Add Plot'}</Button>
+                         {newPlot.id && <Button variant="outlined" onClick={() => setNewPlot({ id: undefined, plotNumber: '', dimensions: '', areaSqft: 0, sqftPrice: 0, totalPrice: 0, status: 'Available', facing: 'North', remarks: '' })}>Cancel Edit</Button>}
+                        <Button type="submit" variant="contained" sx={{ bgcolor: '#16a34a' }} disabled={isPlotSubmitting}>{isPlotSubmitting ? <CircularProgress size={24} color="inherit" /> : (newPlot.id ? 'Update Plot' : 'Add Plot')}</Button>
                       </Box>
                     </Stack>
                   </form>
@@ -398,7 +405,7 @@ const ManageMysqft: React.FC = () => {
                     <TextField label="Description" multiline rows={3} defaultValue={editingProject.description || ''} onChange={e => setEditingProject({...editingProject, description: e.target.value})} />
                     <Stack direction="row" spacing={2}>
                         <FormControl fullWidth><InputLabel>Project Type</InputLabel><Select label="Project Type" value={editingProject.plot_type} onChange={e => setEditingProject({...editingProject, plot_type: e.target.value as IProject['plot_type']})}><MenuItem value="Plot">Plot</MenuItem><MenuItem value="Villa">Villa</MenuItem><MenuItem value="Skyrise">Skyrise</MenuItem><MenuItem value="Residential">Residential</MenuItem><MenuItem value="Commercial">Commercial</MenuItem></Select></FormControl>
-                        <TextField fullWidth label="Price" type="number" defaultValue={editingProject.price} onChange={e => setEditingProject({...editingProject, price: Number(e.target.value)})} />
+                        <TextField fullWidth label="Price" type="number" defaultValue={Number(editingProject.price)} onChange={e => setEditingProject({...editingProject, price: e.target.value})} />
                         <FormControl fullWidth><InputLabel>Unit</InputLabel><Select label="Unit" value={editingProject.unit} onChange={e => setEditingProject({...editingProject, unit: e.target.value as IProject['unit']})}><MenuItem value="sqft">Sqft</MenuItem><MenuItem value="sqyd">Sqyd</MenuItem></Select></FormControl>
                     </Stack>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
