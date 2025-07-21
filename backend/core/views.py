@@ -404,6 +404,20 @@ class PlotListingViewSet(viewsets.ModelViewSet):
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
 
+    @action(detail=True, methods=['patch'], url_path='toggle-availability')
+    def toggle_availability(self, request, pk=None):
+        try:
+            plot = self.get_object()
+            plot.is_available_full = not plot.is_available_full
+            plot.save()
+            return Response({
+                'id': plot.id,
+                'is_available_full': plot.is_available_full,
+                'message': 'Availability toggled successfully.'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class JointOwnerViewSet(viewsets.ModelViewSet):
     queryset = JointOwner.objects.all()
     serializer_class = JointOwnerSerializer
@@ -2124,3 +2138,18 @@ class OwnerShortlistView(APIView):
             })
 
         return Response(data)
+
+class OwnerPaymentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        owner = request.user
+        # Step 1: Get all plot IDs owned by this user
+        owner_plot_ids = PlotListing.objects.filter(owner=owner).values_list('id', flat=True)
+
+        # Step 2: Get all payments related to those plots
+        payments = Payment.objects.filter(plot_id__in=owner_plot_ids).order_by('-created_at')
+
+        # Step 3: Serialize and return the payments
+        serializer = PaymentSerializer(payments, many=True)
+        return Response(serializer.data)
