@@ -438,6 +438,12 @@ class CommercialPropertySerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'added_date']
 
 class PaymentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+
     class Meta:
         model = Payment
-        fields = '__all__'
+        fields = [
+            'id', 'plot_id', 'razorpay_order_id', 'razorpay_payment_id',
+            'amount', 'status', 'created_at', 'user', 'user_name', 'user_email'
+        ]
