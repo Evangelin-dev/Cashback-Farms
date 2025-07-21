@@ -2042,14 +2042,14 @@ class UserStatsView(APIView):
         return Response({"total_users": total_users})
 
 class PaymentStatsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUserType]
 
     def get(self, request):
         total_revenue = Payment.objects.filter(status="paid").aggregate(total=Sum("amount"))['total'] or 0
         return Response({"total_revenue": total_revenue})
 
 class MonthlyBookingStatsView(APIView):
-    permission_classes = [IsAdminUser]  # Or IsAdminUserType if custom
+    permission_classes = [IsAdminUserType]  # Or IsAdminUserType if custom
 
     def get(self, request):
         filter_range = request.query_params.get('range', 'all')  # '3months', '6months', or 'all'
