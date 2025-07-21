@@ -17,7 +17,8 @@ from .views import (
     UpdateCartItemView, AddToCartView, CartView, RemoveCartItemView, ClearCartView, CheckoutCartView, UpdateOrderStatusView, WebOrderViewSet,
     CallRequestCreateView, ToggleCustomerStatusView, B2BCustomerListView, B2BVendorProfileView, VendorPaymentSummaryView, VendorPaymentHistoryView,
     InterestedUsersView, EmailTokenObtainPairView, UsernameTokenObtainPairView, VerifiedPlotViewSet, BookingViewSetAdmin, AdminUserViewSet,
-    ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView, AllKYCListView,SubPlotUnitViewSet
+    ToggleUserStatusView, CommercialPropertyDetailView, CommercialPropertyListCreateView, AllKYCListView,SubPlotUnitViewSet,
+    PlotStatsView, UserStatsView, PaymentStatsView, MonthlyBookingStatsView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -128,5 +129,9 @@ urlpatterns = [
     path('payments/create-order/', CreateOrderView.as_view(), name='create_order'),
     path('verify-payment/', VerifyPaymentView.as_view()),
     # path('payments/history/', views.payment_history, name='payment_history'),
+    path('admin/dashboard/plot-stats/', PlotStatsView.as_view()),
+    path('admin/dashboard/user-stats/', UserStatsView.as_view()),
+    path('admin/dashboard/payment-stats/', PaymentStatsView.as_view()),
+    path('admin/dashboard/monthly-bookings/', MonthlyBookingStatsView.as_view()),
 
 ]
