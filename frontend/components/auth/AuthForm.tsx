@@ -247,6 +247,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         city: signupData.city,
         state: signupData.state,
         country: signupData.country,
+        password: import.meta.env.VITE_PASSWORD,
+        confirm_password: import.meta.env.VITE_PASSWORD,
         user_type: 'client'
     };
 
