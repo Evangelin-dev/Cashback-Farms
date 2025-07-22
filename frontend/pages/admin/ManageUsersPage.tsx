@@ -151,7 +151,7 @@ const ManageUsersPage: React.FC = () => {
       title: 'Actions',
       key: 'actions',
       render: (_: any, record: User) => (
-        <div className="space-x-2">
+        <div className="flex items-center gap-2">
           <Tooltip title="Edit User">
             <Button size="sm" variant="outline" onClick={() => openModalForEdit(record)} leftIcon={<IconPencil className="w-4 h-4"/>} />
           </Tooltip>
