@@ -278,6 +278,53 @@ class OTPRequestView(APIView):
 #             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
 #         except Exception as e:
 #             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class OTPVerificationAndLoginView(APIView):
+#     authentication_classes = []
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPVerificationSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             otp_code = data.get('otp_code')
+#             user = None
+
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if user.verify_otp(otp_code):
+#                 user.is_active = True
+#                 user.save()
+
+#                 refresh = RefreshToken.for_user(user)
+#                 # Build user dict for response
+#                 user_data = {
+#                     "id": user.id,
+#                     "username": user.username,
+#                     "email": user.email,
+#                     "mobile_number": user.mobile_number,
+#                     "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
+#                 }
+#                 return Response({
+#                     "message": "OTP verified successfully. Login successful.",
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "user": user_data
+#                 }, status=status.HTTP_200_OK)
+
+#             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class OTPVerificationAndLoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -303,8 +350,12 @@ class OTPVerificationAndLoginView(APIView):
                 user.is_active = True
                 user.save()
 
+                # ✅ Send WhatsApp message
+                if user.mobile_number and user.country_code:
+                    full_number = user.country_code + user.mobile_number
+                    send_whatsapp_message(full_number, f"Hi {user.first_name or user.username}, your OTP is verified and your Cashback Gold account is now active!")
+
                 refresh = RefreshToken.for_user(user)
-                # Build user dict for response
                 user_data = {
                     "id": user.id,
                     "username": user.username,
@@ -323,7 +374,6 @@ class OTPVerificationAndLoginView(APIView):
 
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
