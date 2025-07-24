@@ -14,6 +14,7 @@ import {
   IconUsers
 } from '../../constants';
 import { useAuth } from '../../contexts/AuthContext';
+import { Home } from 'lucide-react';
 
 interface AdminNavItemProps {
   to: string;
@@ -43,43 +44,30 @@ const AdminSidebar: React.FC = () => {
   const { logout, currentUser } = useAuth();
   const navigate = useNavigate();
 
-  // --- NEW: State to control the logout confirmation modal ---
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  // Simulate admin profile data (replace with real data if available)
   const adminProfile = {
     name: currentUser?.username || "Admin",
     email: currentUser?.email || "",
     photo: "",
   };
-
-  // Dropdown state and logic
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-
-
-  // Dropdown toggle
   const toggleDropdown = () => setDropdownOpen((open) => !open);
-
-  // Helper for mobile: close sidebar after navigation
   const handleNavClick = () => {
     setSidebarOpen(false);
   };
-
-  // --- NEW: Function to handle the actual logout logic ---
   const handleConfirmLogout = () => {
     logout();
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     navigate('/');
-    setIsLogoutModalOpen(false); // Close the modal
-    setSidebarOpen(false); // Close the sidebar
+    setIsLogoutModalOpen(false);
+    setSidebarOpen(false);
   };
 
   return (
     <>
-      {/* Mobile menu button */}
       <button
         className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-green-500 to-green-700 text-white p-2 rounded-full shadow-lg"
         onClick={() => setSidebarOpen((open) => !open)}
@@ -91,7 +79,6 @@ const AdminSidebar: React.FC = () => {
         </svg>
       </button>
 
-      {/* Sidebar */}
       <div
         className={`
           fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200
@@ -110,7 +97,6 @@ const AdminSidebar: React.FC = () => {
           maxHeight: "100vh"
         }}
       >
-        {/* Admin profile dropdown */}
         <div className="relative w-full">
           <div
             className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-primary/10 transition"
@@ -136,21 +122,15 @@ const AdminSidebar: React.FC = () => {
               </svg>
             </span>
           </div>
-          {/* Dropdown Content */}
           <div
             className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
               }`}
             style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
           >
-            {/* ... (rest of the dropdown content remains the same) ... */}
             <div className="p-4 flex flex-col items-center">
               <div className="relative mb-2">
                 <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden agent-photo border-4 border-primary">
-                  {adminProfile.photo ? (
-                    <img src={adminProfile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    adminProfile.name[0]
-                  )}
+                  {adminProfile.photo ? (<img src={adminProfile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />) : (adminProfile.name[0])}
                 </div>
               </div>
               <div className="mt-1 text-lg font-semibold text-primary-light">{adminProfile.name}</div>
@@ -167,7 +147,6 @@ const AdminSidebar: React.FC = () => {
           )}
         </div>
 
-        {/* Navigation */}
         <div className="text-2xl font-bold text-black py-4 px-2 mb-4 border-b border-neutral-200">
           Admin<span className="text-primary-light">Panel</span>
         </div>
@@ -178,22 +157,20 @@ const AdminSidebar: React.FC = () => {
           <AdminNavItem to="/admin/verifiedplot" icon={<IconTableCells className="w-5 h-5" />} label="Greenheap Verified Plots" onClick={handleNavClick} />
           <AdminNavItem to="/admin/microplot" icon={<IconMapPin className="w-5 h-5" />} label="Micro Plots" onClick={handleNavClick} />
           <AdminNavItem to="/admin/commercial" icon={<IconBuildingOffice className="w-5 h-5" />} label="Commercial Properties" onClick={handleNavClick} />
-           <AdminNavItem to="/admin/kyc" icon={<IconCreditCard className="w-5 h-5" />} label="KYC Management" onClick={handleNavClick} />
+          <AdminNavItem to="/admin/kyc" icon={<IconCreditCard className="w-5 h-5" />} label="KYC Management" onClick={handleNavClick} />
           <AdminNavItem to="/admin/bookings" icon={<IconCollection className="w-5 h-5" />} label="Bookings" onClick={handleNavClick} />
-          <AdminNavItem to="/admin/payments" icon={<IconCreditCard className="w-5 h-5" />} label="Payments" onClick={handleNavClick} />
+          <AdminNavItem to="/admin/payments" icon={<IconCreditCard className="w-5 h--5" />} label="Payments" onClick={handleNavClick} />
 
           <div className="pt-4 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Site</div>
           <AdminNavItem to="/admin/users" icon={<IconUsers className="w-5 h-5" />} label="Users" onClick={handleNavClick} />
-          
           <AdminNavItem to="/admin/materials" icon={<IconCubeTransparent className="w-5 h-5" />} label="Construction Materials" onClick={handleNavClick} />
 
-         
+          {/* --- NEW: Link to the homepage --- */}
+          <AdminNavItem to="/" icon={<Home className="w-5 h-5" />} label="Go to Homepage" onClick={handleNavClick} />
         </nav>
 
-        {/* Exit Button */}
         <div className="mt-auto">
           <button
-            // --- CHANGED: This now opens the modal instead of logging out directly ---
             onClick={() => setIsLogoutModalOpen(true)}
             className="flex items-center w-full px-4 py-3 text-sm text-black hover:bg-red-700 hover:text-white transition-colors duration-150 rounded-md"
           >
@@ -203,30 +180,16 @@ const AdminSidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      {sidebarOpen && (<div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />)}
 
-      {/* --- NEW: Logout Confirmation Modal --- */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
             <h2 className="text-xl font-bold text-gray-800 mb-2">Confirm Logout</h2>
             <p className="text-gray-600 mb-6">Are you sure you want to exit the admin panel?</p>
             <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setIsLogoutModalOpen(false)}
-                className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmLogout}
-                className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold transition-colors"
-              >
-                Logout
-              </button>
+              <button onClick={() => setIsLogoutModalOpen(false)} className="px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 font-semibold transition-colors">Cancel</button>
+              <button onClick={handleConfirmLogout} className="px-4 py-2 rounded-md text-white bg-red-600 hover:bg-red-700 font-semibold transition-colors">Logout</button>
             </div>
           </div>
         </div>
