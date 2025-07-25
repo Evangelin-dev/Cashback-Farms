@@ -33,6 +33,7 @@ export interface Plot {
   area: number; // in sqft
   imageUrl: string;
   type: PlotType;
+  client: string;
   value: number;
   description: string;
   amenities?: string[];
