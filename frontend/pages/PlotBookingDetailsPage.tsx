@@ -73,6 +73,7 @@ const PlotDetailsPage: React.FC = () => {
           imageUrl: apiPlot.plot_file || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
           description: `A prime piece of land located in ${apiPlot.location}, owned by ${apiPlot.owner_name}.`,
           amenities: apiPlot.joint_owners.length > 0 ? ['Joint Ownership'] : [],
+          client: apiPlot.owner || 'Unknown Client',
         };
         setPlot(formattedPlot);
       } catch (err) {
@@ -109,9 +110,11 @@ const PlotDetailsPage: React.FC = () => {
 
       // Step 1: Create order on backend using apiClient
       const payload = {
-        amount: 5000, // ₹5000
-        plot_id: plot.id,
-      };
+      amount: 5000,
+      plot_id: plot.id,
+      client: plot.client,
+   
+    };
       const headers = { Authorization: `Bearer ${accessToken}` };
       const res = await apiClient.post("/payments/create-order/", payload, { headers });
       const data = res.data || res; // adjust if your apiClient returns .data
