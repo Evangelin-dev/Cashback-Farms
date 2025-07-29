@@ -247,6 +247,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
         city: signupData.city,
         state: signupData.state,
         country: signupData.country,
+        password: import.meta.env.VITE_PASSWORD,
+        confirm_password: import.meta.env.VITE_PASSWORD,
         user_type: 'client'
     };
 
@@ -338,7 +340,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess })
           <div className="absolute left-0 right-0 bottom-4 text-xs text-center text-gray-500 w-full animate-fade-in-fast">by continuing, you agree to our{' '}<button type="button" className="text-green-600 underline hover:text-green-700 font-semibold" onClick={() => setShowTerms(true)} style={{ background: "none", border: "none", padding: 0, margin: 0, cursor: "pointer" }}>Terms and Conditions</button></div>
         </div>
       </div>
-      {showTerms && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"><div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative animate-fade-in-fast"><button className="absolute top-2 right-4 text-gray-400 hover:text-red-600 text-2xl" onClick={() => setShowTerms(false)} aria-label="Close">×</button><iframe src="/terms" title="Terms and Conditions" className="w-full h-[60vh] rounded" style={{ border: "none" }} /></div></div>)}
+      {showTerms && (<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"><div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 relative animate-fade-in-fast"><button className="absolute top-2 right-4 text-gray-400 hover:text-red-600 text-2xl" onClick={() => setShowTerms(false)} aria-label="Close">×</button><iframe src="/Terms_&_Conditions" title="Terms and Conditions" className="w-full h-[60vh] rounded" style={{ border: "none" }} /></div></div>)}
       <style>{`.animate-fade-in-fast { animation: fadeInFast 0.5s; } @keyframes fadeInFast { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} } .animate-slide-up { animation: slideUp 0.5s cubic-bezier(.4,2,.6,1) both; } @keyframes slideUp { from { transform: translateY(80px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } } .animate-bounce-slow { animation: bounce-slow 1.5s infinite; } @keyframes bounce-slow { 0%, 100% { transform: translateY(0);} 50% { transform: translateY(-10px);} } .animate-shake { animation: shake 0.4s; } @keyframes shake { 0% { transform: translateX(0);} 20% { transform: translateX(-6px);} 40% { transform: translateX(6px);} 60% { transform: translateX(-4px);} 80% { transform: translateX(4px);} 100% { transform: translateX(0);} } .loader { border: 2px solid #e5e7eb; border-top: 2px solid #22c55e; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.7s linear infinite; display: inline-block; } @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
     </div>
   );

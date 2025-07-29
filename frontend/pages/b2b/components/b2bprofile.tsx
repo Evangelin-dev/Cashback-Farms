@@ -7,7 +7,6 @@ import { message } from 'antd';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
-// Interface for the KYC document structure from your API
 interface IKycDocument {
     id: number;
     document_type: string;
@@ -63,7 +62,14 @@ const B2BProfile: React.FC = () => {
                     apiClient.get('/user/kyc/status/')
                 ]);
                 if (profileResponse) setProfile(profileResponse);
-                if (kycStatusResponse?.documents) setKycDocuments(kycStatusResponse.documents);
+                
+                if (kycStatusResponse?.documents && Array.isArray(kycStatusResponse.documents)) {
+                    const sortedDocs = [...kycStatusResponse.documents].sort((a, b) => 
+                        new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
+                    );
+                    setKycDocuments(sortedDocs);
+                }
+
             } catch (error) {
                 console.error("Failed to fetch initial data:", error);
                 message.error("Could not load profile data.");
@@ -81,7 +87,14 @@ const B2BProfile: React.FC = () => {
         const intervalId = setInterval(async () => {
             try {
                 const kycStatusResponse = await apiClient.get('/user/kyc/status/');
-                if (kycStatusResponse?.documents) setKycDocuments(kycStatusResponse.documents);
+                
+                if (kycStatusResponse?.documents && Array.isArray(kycStatusResponse.documents)) {
+                    const sortedDocs = [...kycStatusResponse.documents].sort((a, b) => 
+                        new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
+                    );
+                    setKycDocuments(sortedDocs);
+                }
+
             } catch (error) { console.error("Polling KYC status failed:", error); }
         }, 30000);
         return () => clearInterval(intervalId);
@@ -103,7 +116,6 @@ const B2BProfile: React.FC = () => {
             await apiClient.put('/b2b/profile/', profile);
             message.success({ content: 'Profile saved successfully!', key: 'save_profile', duration: 2 });
             setShowPopup(true);
-            // FIX 1: Popup will hide itself, but no navigation will occur.
             setTimeout(() => {
                 setShowPopup(false);
             }, 2500);
@@ -128,26 +140,20 @@ const B2BProfile: React.FC = () => {
         formData.append('file', kycFile);
         
         try {
-            // We just need to know if the API call was successful.
             await apiClient.post('/user/kyc/submit/', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-            
             message.success({ content: 'KYC document submitted! Verification is in progress.', key: 'kyc_submit', duration: 4 });
             
-            // --- FIX 2: OPTIMISTIC UI UPDATE ---
-            // Create a fake document object that looks like your API response.
-            // This forces the UI to re-render immediately with the correct "pending" status.
             const optimisticNewDocument: IKycDocument = {
-              id: Date.now(), // Use a temporary unique ID for React's key prop
+              id: Date.now(),
               document_type: kycDocumentType,
-              status: 'submitted', // Set the status to 'submitted' manually
-              file: '', // Not needed for display
+              status: 'submitted',
+              file: '',
               upload_date: new Date().toISOString(),
             };
             
-            // Update the state with this new object. This is the crucial step.
             setKycDocuments(prevDocs => [optimisticNewDocument, ...prevDocs]);
             
-            setKycFile(null); // Clear the file input
+            setKycFile(null);
         } catch (error: any) {
             const errorMsg = error.response?.data?.detail || "An error occurred.";
             message.error({ content: `Submission failed: ${errorMsg}`, key: 'kyc_submit', duration: 3 });
@@ -158,7 +164,7 @@ const B2BProfile: React.FC = () => {
 
     const renderKycSection = () => {
         if (isKycLoading) return <div className="text-sm text-gray-500">Loading KYC status...</div>;
-
+        
         const latestDocument = kycDocuments.length > 0 ? kycDocuments[0] : null;
 
         if (latestDocument) {
@@ -178,7 +184,6 @@ const B2BProfile: React.FC = () => {
             </form>
         );
     };
-    
     if (isLoading) return <div className="text-center py-20 text-lg font-semibold text-gray-600">Loading Profile...</div>;
 
     return (

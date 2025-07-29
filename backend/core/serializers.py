@@ -5,7 +5,9 @@ from django.contrib.auth import authenticate
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission, SQLFTProject, BankDetail,
-    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty
+    KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCartItem, ShortlistCart, CallRequest, B2BVendorProfile, VerifiedPlot, CommercialProperty,SubPlotUnit,
+    Payment
+
 )
 
 # User and Authentication Serializers
@@ -268,6 +270,14 @@ class SQLFTProjectSerializer(serializers.ModelSerializer):
         ]
 
 
+class SubPlotUnitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubPlotUnit
+        fields = [
+            'id', 'project', 'plot_number', 'dimensions', 'area', 'total_price',
+            'status', 'facing', 'remarks', 'created_at', 'project_id',
+        ]
+
 class BankDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankDetail
@@ -426,3 +436,14 @@ class CommercialPropertySerializer(serializers.ModelSerializer):
         model = CommercialProperty
         fields = '__all__'
         read_only_fields = ['id', 'user', 'added_date']
+
+class PaymentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+
+    class Meta:
+        model = Payment
+        fields = [
+            'id', 'plot_id', 'razorpay_order_id', 'razorpay_payment_id',
+            'amount', 'status', 'created_at', 'user', 'user_name', 'user_email'
+        ]

@@ -14,30 +14,27 @@ import {
 } from "../../../constants.tsx";
 import { LayoutDashboard, UploadCloud, X } from "lucide-react";
 import { useAuth } from "../../../contexts/AuthContext";
-import apiClient from "@/src/utils/api/apiClient"; // Make sure this path is correct
+import apiClient from "@/src/utils/api/apiClient";
 import "../AgentProfileSection.css";
 
-// --- INTERFACE FOR THE KYC DOCUMENT RESPONSE ---
 interface IKycDocument {
-    id: number;
-    document_type: string;
-    file: string;
-    status: 'submitted' | 'pending' | 'approved' | 'rejected';
-    upload_date: string;
+  id: number;
+  document_type: string;
+  file: string;
+  status: 'submitted' | 'pending' | 'approved' | 'rejected';
+  upload_date: string;
 }
 
-// Menu items for real estate agent panel (Unchanged)
 const menuItems = [
-    { key: "/realestate/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard" },
-    { key: "/realestate/post-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Plots" },
-    { key: "/realestate/post-micro-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Micro Plots" },
-    { key: "/realestate/leads", icon: <IconUsers className="w-5 h-5" />, label: "Plot Inquiries & Leads" },
-    { key: "/realestate/commission", icon: <IconRupee className="w-5 h-5" />, label: "Commission Dashboard" },
-    { key: "/realestate/lead-management", icon: <IconCollection className="w-5 h-5" />, label: "Lead Management" },
-    { key: "/referrealestate", icon: <IconPlus className="w-5 h-5" />, label: "Refer and Earn" },
+  { key: "/realestate/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard" },
+  { key: "/realestate/post-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Plots" },
+  { key: "/realestate/post-micro-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Micro Plots" },
+  { key: "/realestate/leads", icon: <IconUsers className="w-5 h-5" />, label: "Plot Inquiries & Leads" },
+  { key: "/realestate/commission", icon: <IconRupee className="w-5 h-5" />, label: "Commission Dashboard" },
+  { key: "/realestate/lead-management", icon: <IconCollection className="w-5 h-5" />, label: "Lead Management" },
+  { key: "/referrealestate", icon: <IconPlus className="w-5 h-5" />, label: "Refer and Earn" },
 ];
 
-// --- KYC Submission Modal Component (Unchanged) ---
 const KycModal = ({
   onClose,
   onSubmit,
@@ -64,7 +61,6 @@ const KycModal = ({
     setIsSubmitting(true);
     try {
       await onSubmit(docType, file);
-      // The parent component handles closing on success.
     } catch (apiError: any) {
       setError(apiError.message || "An unknown error occurred.");
     } finally {
@@ -108,7 +104,6 @@ const KycModal = ({
   );
 };
 
-// --- ProfileSection with REFACTORED KYC Logic ---
 const ProfileSection: React.FC = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -117,19 +112,17 @@ const ProfileSection: React.FC = () => {
   const [showKycModal, setShowKycModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [kycDataLoaded, setKycDataLoaded] = useState(false);
-
-  // --- REFACTORED KYC STATE ---
   const [kycDocuments, setKycDocuments] = useState<IKycDocument[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setKycDataLoaded(false);
-      const accessToken = localStorage.getItem("access_token");      
+      const accessToken = localStorage.getItem("access_token");
       if (!accessToken) { setIsLoading(false); setKycDataLoaded(true); return; }
-      
+
       const headers = { Authorization: `Bearer ${accessToken}` };
-      
+
       try {
         const [profileRes, kycRes] = await Promise.all([
           apiClient.get("/user/profile/", { headers }),
@@ -139,8 +132,11 @@ const ProfileSection: React.FC = () => {
         if (profileRes) {
           setProfile({ name: profileRes.username || "User", email: profileRes.email || "", phone: profileRes.mobile_number || "", photo: "" });
         }
-        if (kycRes?.documents) {
-          setKycDocuments(kycRes.documents);
+        if (kycRes?.documents && Array.isArray(kycRes.documents)) {
+          const sortedDocuments = [...kycRes.documents].sort((a, b) =>
+            new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
+          );
+          setKycDocuments(sortedDocuments);
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
@@ -152,7 +148,6 @@ const ProfileSection: React.FC = () => {
     fetchData();
   }, [currentUser]); // Refetch when user logs in/out
 
-  // --- REFACTORED KYC SUBMISSION FOR INSTANT UI UPDATE ---
   const handleKycSubmit = async (docType: string, file: File) => {
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) throw new Error("Authentication token not found.");
@@ -162,24 +157,22 @@ const ProfileSection: React.FC = () => {
     formData.append("file", file);
 
     try {
-      // The API call just needs to succeed. We don't need its response for the optimistic update.
       await apiClient.post("/user/kyc/submit/", formData, {
         headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "multipart/form-data" },
       });
-      
+
       alert("KYC document submitted successfully! Status is now pending review.");
       setShowKycModal(false);
-      
-      // OPTIMISTIC UPDATE: Manually create a document object to update the UI instantly.
+
       const optimisticNewDocument: IKycDocument = {
-        id: Date.now(), // Temporary key for React
+        id: Date.now(),
         document_type: docType,
         status: 'submitted',
-        file: '', // File path is not needed for this UI
+        file: '',
         upload_date: new Date().toISOString(),
       };
       setKycDocuments(prevDocs => [optimisticNewDocument, ...prevDocs]);
-      
+
     } catch (error: any) {
       console.error("KYC submission failed:", error);
       const errorMessage = error.response?.data?.detail || "KYC submission failed. Please try again.";
@@ -187,7 +180,7 @@ const ProfileSection: React.FC = () => {
     }
   };
 
-  // Derive the current KYC status from the documents array
+  // This logic now works correctly because the array is sorted
   const latestDocument = kycDocuments.length > 0 ? kycDocuments[0] : null;
   const currentKycStatus = latestDocument?.status || "Not Verified";
 
@@ -230,7 +223,7 @@ const ProfileSection: React.FC = () => {
           <div className="w-full flex flex-col items-center mt-4 mb-2">
             <div className="flex flex-col items-center w-full px-2 py-2 bg-neutral-100 rounded-lg border border-neutral-200">
               <span className="text-xs text-gray-500 mb-1 tracking-wide">KYC Status</span>
-              {!kycDataLoaded ? ( <div className="text-sm text-gray-500 animate-pulse">Loading...</div> ) : (
+              {!kycDataLoaded ? (<div className="text-sm text-gray-500 animate-pulse">Loading...</div>) : (
                 <>
                   {getKycDisplay()}
                   {shouldShowVerifyButton && (
