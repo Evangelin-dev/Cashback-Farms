@@ -1,5 +1,6 @@
 import apiClient from "@/src/utils/api/apiClient";
 import { useFormik } from "formik";
+import { UploadCloud, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,7 +10,6 @@ import {
   IconEdit,
 } from "../../../constants.tsx";
 import "../AgentProfileSection.css";
-import { UploadCloud, X } from "lucide-react";
 
 // --- FIX: DEFINING 'initialProfile' AT THE TOP LEVEL ---
 // This ensures it's available to the component before it renders.
@@ -285,6 +285,14 @@ const RealProfile: React.FC = () => {
   const userCode = generateUserCode(`${formik.values.firstName} ${formik.values.lastName}`, new Date());
   const animatedEarnings = useCountUp(12500, 1200);
 
+  // For referral code copy feedback
+  const [copied, setCopied] = useState(false);
+  const handleCopyReferral = () => {
+    navigator.clipboard.writeText(userCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   const getKycDisplay = () => {
     switch (currentKycStatus) {
       case "approved": return <span className="text-green-600 font-semibold flex items-center gap-1 animate-bounce text-xs"><IconCheck className="w-4 h-4" /> Verified</span>;
@@ -414,39 +422,39 @@ const RealProfile: React.FC = () => {
               </div>
             </div>
           </div>
-          {/* --- Referral & Commission System Card --- */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 mb-4">
-            <h3 className="text-base font-bold text-primary-light mb-2 animate-fadein">
-              Referral & Commission System
+          {/* --- Referral Code Card (from Refer & Earn) --- */}
+          <div className="bg-white rounded-2xl shadow-xl p-4 mb-4 flex flex-col items-center">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/3820/3820331.png"
+              alt="Refer and Earn"
+              className="w-12 h-12 mb-2 drop-shadow"
+            />
+            <h3 className="text-base font-bold text-green-700 mb-1 text-center tracking-tight drop-shadow">
+              Your Referral Code
             </h3>
-            <div className="space-y-1 text-gray-700 text-xs">
-              <div>• Agents get a unique referral code.</div>
-              <div>• Multi-layer Referral Structure (Max 3 levels):</div>
-              <ul className="ml-3 list-disc">
-                <li>
-                  <span className="font-semibold text-green-700">Level 1:</span>{" "}
-                  <span className="font-bold text-green-700">1.5%</span>
-                </li>
-                <li>
-                  <span className="font-semibold text-green-700">Level 2:</span>{" "}
-                  <span className="font-bold text-green-700">0.25%</span>
-                </li>
-                <li>
-                  <span className="font-semibold text-green-700">Level 3:</span>{" "}
-                  <span className="font-bold text-green-500">0.25%</span>
-                </li>
-                <li>
-                  <span className="font-semibold text-gray-500">
-                    No commission beyond level 3.
-                  </span>
-                </li>
-              </ul>
+            <div className="bg-green-50 rounded-lg p-3 flex flex-col items-center w-full mb-3 shadow-inner">
+              <span className="text-green-700 font-semibold text-base mb-1">Share this code to earn rewards</span>
+              <div className="flex items-center gap-1">
+                <span className="bg-white border border-green-200 px-3 py-1 rounded text-base font-bold tracking-widest text-green-700 shadow">
+                  {userCode}
+                </span>
+                <button
+                  onClick={handleCopyReferral}
+                  className="bg-green-600 text-white px-2 py-1 rounded font-semibold hover:bg-green-700 transition text-sm"
+                >
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
             </div>
             <button
-              className="mt-4 px-4 py-1 bg-primary text-white rounded-lg font-semibold shadow hover:bg-green-700 transition text-xs"
-              onClick={() => navigate("/referrealestate")} // Replace with your actual route "referrealestate"}
+              className="w-full mt-2 py-2 bg-green-100 text-green-700 rounded-lg font-semibold shadow hover:bg-green-200 transition text-xs"
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/signup?ref=${userCode}`;
+                const message = `Join Cashback Farm and earn rewards! Use my referral code: ${userCode} ${shareUrl}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+              }}
             >
-              Go to Referral Page
+              Share on WhatsApp
             </button>
           </div>
         </div>

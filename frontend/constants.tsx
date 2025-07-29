@@ -608,7 +608,7 @@ export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
 export const NAV_LINKS = [
   { name: 'Home', path: '/' },
   { name: 'Plot Marketplace', path: '/plots' },
-  { name: 'Micro Plots', path: `mysqft-listing` },
+  { name: 'GIOO Plots', path: `mysqft-listing` },
   { name: 'Materials Store', path: '/materials' },
   { name: 'Professional Services', path: '/services' },
   // { name: 'Dash Board', path: '/dashboard' },
@@ -616,7 +616,7 @@ export const NAV_LINKS = [
 export const DNAV_LINKS = [
   { name: 'Home', path: '/D' },
   { name: 'Plot Marketplace', path: '/Dplots' },
-  { name: 'Micro Plots', path: `Dmysqft-listing` },
+  { name: 'GIOO Plots', path: `Dmysqft-listing` },
   { name: 'Materials Store', path: '/Dmaterials' },
   { name: 'Professional Services', path: '/Dservices' },
   // { name: 'Dash Board', path: '/dashboard' },

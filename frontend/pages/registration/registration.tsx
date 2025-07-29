@@ -104,7 +104,7 @@ const RegistrationPage: React.FC = () => {
               <form onSubmit={handleRegistrationSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-green-700 font-semibold mb-1">First Name</label>
+                    <label className="block text-green-700 font-semibold mb-1">Full Name</label>
                     <input type="text" name="first_name" value={form.first_name} onChange={handleChange} className="w-full px-4 py-2 rounded-xl border border-green-200 bg-white/70 focus:ring-2 focus:ring-green-300 focus:outline-none shadow" required />
                   </div>
                   <div>
