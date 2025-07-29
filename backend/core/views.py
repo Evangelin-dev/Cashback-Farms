@@ -30,14 +30,28 @@ from django.db.models import Count
 from rest_framework.generics import RetrieveUpdateAPIView
 from django.db.models import Sum, F
 from rest_framework_simplejwt.views import TokenObtainPairView
+import razorpay
+import hmac
+import hashlib
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+import json
+from django.contrib.auth import get_user_model
+from datetime import datetime, timedelta
+from django.db.models.functions import TruncMonth
 
+
+
+from .models import SubPlotUnit
+from .serializers import SubPlotUnitSerializer
 
 
 from .models import (
     CustomUser, PlotListing, JointOwner, Booking,
     EcommerceProduct, Order, OrderItem, RealEstateAgentProfile, UserType, PlotInquiry, ReferralCommission,
-    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,
-    VerifiedPlot, CommercialProperty
+    SQLFTProject, BankDetail, CustomUser, KYCDocument, FAQ, SupportTicket, Inquiry, ShortlistCart, ShortlistCartItem,CallRequest, B2BVendorProfile,Payment,
+    VerifiedPlot, CommercialProperty, Payment
 )
 from .serializers import (
     UserRegistrationSerializer, OTPRequestSerializer, OTPVerificationSerializer,
@@ -47,8 +61,15 @@ from .serializers import (
     ReferralCommissionSerializer, SQLFTProjectSerializer, BankDetailSerializer, KYCDocumentSerializer, FAQSerializer,
     SupportTicketSerializer, InquirySerializer, PaymentTransactionSerializer, ShortlistCartItemSerializer,WebOrderSerializer,
     CallRequestSerializer, B2BProfileSerializer, EmailTokenObtainPairSerializer, UsernameTokenObtainPairSerializer,VerifiedPlotSerializer,
-    UserAdminSerializer, CommercialPropertySerializer
+    UserAdminSerializer, CommercialPropertySerializer,PaymentTransactionSerializer, ShortlistCartItemSerializer, PaymentSerializer
 )
+
+from django.contrib.auth.decorators import login_required
+import json
+
+
+
+
 
 
 class IsAdminUserType(permissions.BasePermission):
@@ -257,6 +278,53 @@ class OTPRequestView(APIView):
 #             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
 #         except Exception as e:
 #             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class OTPVerificationAndLoginView(APIView):
+#     authentication_classes = []
+#     permission_classes = [AllowAny]
+
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             serializer = OTPVerificationSerializer(data=request.data)
+#             serializer.is_valid(raise_exception=True)
+#             data = serializer.validated_data
+#             email = data.get('email')
+#             mobile_number = data.get('mobile_number')
+#             otp_code = data.get('otp_code')
+#             user = None
+
+#             if email:
+#                 user = get_object_or_404(CustomUser, email=email)
+#             elif mobile_number:
+#                 user = get_object_or_404(CustomUser, mobile_number=mobile_number)
+#             else:
+#                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if user.verify_otp(otp_code):
+#                 user.is_active = True
+#                 user.save()
+
+#                 refresh = RefreshToken.for_user(user)
+#                 # Build user dict for response
+#                 user_data = {
+#                     "id": user.id,
+#                     "username": user.username,
+#                     "email": user.email,
+#                     "mobile_number": user.mobile_number,
+#                     "user_type": user.user_type.lower() if hasattr(user.user_type, "lower") else user.user_type,
+#                 }
+#                 return Response({
+#                     "message": "OTP verified successfully. Login successful.",
+#                     "refresh": str(refresh),
+#                     "access": str(refresh.access_token),
+#                     "user": user_data
+#                 }, status=status.HTTP_200_OK)
+
+#             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         except Exception as e:
+#             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class OTPVerificationAndLoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -282,8 +350,12 @@ class OTPVerificationAndLoginView(APIView):
                 user.is_active = True
                 user.save()
 
+                # ✅ Send WhatsApp message
+                if user.mobile_number and user.country_code:
+                    full_number = user.country_code + user.mobile_number
+                    send_whatsapp_message(full_number, f"Hi {user.first_name or user.username}, your OTP is verified and your Cashback Gold account is now active!")
+
                 refresh = RefreshToken.for_user(user)
-                # Build user dict for response
                 user_data = {
                     "id": user.id,
                     "username": user.username,
@@ -302,7 +374,6 @@ class OTPVerificationAndLoginView(APIView):
 
         except Exception as e:
             return Response({"detail": f"Internal server error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 class UserLoginView(APIView):
     permission_classes = (AllowAny,)
@@ -382,6 +453,20 @@ class PlotListingViewSet(viewsets.ModelViewSet):
             instance.delete()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    @action(detail=True, methods=['patch'], url_path='toggle-availability')
+    def toggle_availability(self, request, pk=None):
+        try:
+            plot = self.get_object()
+            plot.is_available_full = not plot.is_available_full
+            plot.save()
+            return Response({
+                'id': plot.id,
+                'is_available_full': plot.is_available_full,
+                'message': 'Availability toggled successfully.'
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class JointOwnerViewSet(viewsets.ModelViewSet):
     queryset = JointOwner.objects.all()
@@ -751,9 +836,51 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.user_type == UserType.ADMIN:
+        if user.is_staff or user.user_type == UserType.ADMIN:
             return SQLFTProject.objects.all()
-        return SQLFTProject.objects.all()
+        return SQLFTProject.objects.filter(user=user)
+
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({"data": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({"data": serializer.data})
+
+    def perform_create(self, serializer):
+        try:
+            serializer.save(user=self.request.user)  # ✅ Assign logged-in user
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_update(self, serializer):
+        try:
+            serializer.save()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except Exception as e:
+            raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
+
+
+class SubPlotUnitViewSet(viewsets.ModelViewSet):
+    queryset = SubPlotUnit.objects.all()
+    serializer_class = SubPlotUnitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.user_type == "ADMIN":  # Adjust this according to your user model
+            return SubPlotUnit.objects.all()
+        return SubPlotUnit.objects.all()  # You can filter this if needed
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -782,6 +909,7 @@ class SQLFTProjectViewSet(viewsets.ModelViewSet):
             instance.delete()
         except Exception as e:
             raise serializers.ValidationError({"detail": f"Internal server error: {e}"})
+
 
 class BankDetailViewSet(viewsets.ModelViewSet):
     queryset = BankDetail.objects.all()
@@ -1883,3 +2011,195 @@ class AllKYCListView(APIView):
             "count": documents.count(),
             "documents": serializer.data
         }, status=200)
+   
+class CreateOrderView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            data = request.data
+            amount = int(data.get('amount')) * 100  # in paise
+            plot_id = data.get('plot_id')
+        except Exception:
+            return Response({'error': 'Invalid payload'}, status=400)
+
+        if not amount or not plot_id:
+            return Response({'error': 'Amount and plot_id are required'}, status=400)
+
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        order = client.order.create({'amount': amount, 'currency': 'INR', 'payment_capture': '1'})
+        Payment.objects.create(
+            user=request.user,
+            plot_id=plot_id,
+            razorpay_order_id=order['id'],
+            amount=amount / 100,
+            status='created'
+        )
+        return Response({
+            'order_id': order['id'],
+            'amount': amount,
+            'key_id': settings.RAZORPAY_KEY_ID
+        })
+
+class VerifyPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        try:
+            razorpay_order_id = data.get("razorpay_order_id")
+            razorpay_payment_id = data.get("razorpay_payment_id")
+            razorpay_signature = data.get("razorpay_signature")
+
+            generated_signature = hmac.new(
+                settings.RAZORPAY_KEY_SECRET.encode(),
+                f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+                hashlib.sha256
+            ).hexdigest()
+
+            if hmac.compare_digest(generated_signature, razorpay_signature):
+                # Mark Payment as Paid
+                payment = Payment.objects.get(razorpay_order_id=razorpay_order_id)
+                payment.razorpay_payment_id = razorpay_payment_id
+                payment.razorpay_signature = razorpay_signature
+                payment.status = "paid"
+                payment.save()
+
+                return Response({"status": "success"})
+            else:
+                return Response({"error": "Signature mismatch"}, status=400)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+@login_required
+def payment_history(request):
+    payments = Payment.objects.filter(user=request.user).order_by('-created_at')
+    data = [
+        {
+            'plot_id': p.plot_id,
+            'amount': p.amount,
+            'status': p.status,
+            'created_at': p.created_at
+        } for p in payments
+    ]
+    return JsonResponse({'payments': data})
+
+class PlotStatsView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        total = PlotListing.objects.count()
+        booked = PlotListing.objects.filter(is_available_full=False).count()
+        available = total - booked
+        return Response({
+            "total": total,
+            "booked": booked,
+            "available": available
+        })
+
+class UserStatsView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        total_users = get_user_model().objects.count()
+        return Response({"total_users": total_users})
+
+class PaymentStatsView(APIView):
+    permission_classes = [IsAdminUserType]
+
+    def get(self, request):
+        total_revenue = Payment.objects.filter(status="paid").aggregate(total=Sum("amount"))['total'] or 0
+        return Response({"total_revenue": total_revenue})
+
+class MonthlyBookingStatsView(APIView):
+    permission_classes = [IsAdminUserType]  # Or IsAdminUserType if custom
+
+    def get(self, request):
+        filter_range = request.query_params.get('range', 'all')  # '3months', '6months', or 'all'
+
+        now = datetime.now()
+        if filter_range == '3months':
+            start_date = now - timedelta(days=90)
+        elif filter_range == '6months':
+            start_date = now - timedelta(days=180)
+        else:
+            start_date = datetime(2000, 1, 1)
+
+        data = Booking.objects.filter(booking_date__gte=start_date)\
+            .annotate(month=TruncMonth('booking_date'))\
+            .values('month')\
+            .annotate(count=Count('id'))\
+            .order_by('month')
+
+        formatted = [
+            {
+                "monthYear": d["month"].strftime("%b %Y"),
+                "count": d["count"]
+            } for d in data
+        ]
+
+        return Response(formatted)
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all().order_by('-created_at')
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAdminUserType]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['status', 'razorpay_order_id', 'razorpay_payment_id']
+
+class SubPlotUnitsByProjectView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        subplots = SubPlotUnit.objects.filter(project_id=project_id)
+        serializer = SubPlotUnitSerializer(subplots, many=True)
+        return Response({"data": serializer.data})
+    
+class OwnerShortlistView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        owner = request.user
+        plot_ct = ContentType.objects.get_for_model(PlotListing)
+
+        # Step 1: Get shortlist items of type PlotListing
+        all_items = ShortlistCartItem.objects.filter(content_type=plot_ct).select_related('cart__user')
+
+        # Step 2: Filter items where content_object.owner == current logged-in owner
+        owner_items = [
+            item for item in all_items
+            if hasattr(item.content_object, 'owner') and item.content_object.owner == owner
+        ]
+
+        # Step 3: Serialize the results
+        data = []
+        for item in owner_items:
+            plot = item.content_object
+            user = item.cart.user
+            data.append({
+                "plot_id": plot.id,
+                "plot_title": plot.title,
+                "plot_location": plot.location,
+                "buyer_name": user.get_full_name(),
+                "buyer_email": user.email,
+                "buyer_phone": user.mobile_number,
+                "shortlisted_at": item.added_at,
+            })
+
+        return Response(data)
+
+class OwnerPaymentListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        owner = request.user
+        # Step 1: Get all plot IDs owned by this user
+        owner_plot_ids = PlotListing.objects.filter(owner=owner).values_list('id', flat=True)
+
+        # Step 2: Get all payments related to those plots
+        payments = Payment.objects.filter(plot_id__in=owner_plot_ids).order_by('-created_at')
+
+        # Step 3: Serialize and return the payments
+        serializer = PaymentSerializer(payments, many=True)
+        return Response(serializer.data)

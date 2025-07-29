@@ -8,6 +8,7 @@ import Card from '../../../components/Card';
 import { Plot, PlotType } from '../../../types'; // Ensure Plot and PlotType are correctly defined
 import { FaSpinner } from 'react-icons/fa'; // Example for loading spinner
 import { useAuth } from '../../../contexts/AuthContext'; // 1. IMPORT a custom hook
+import { BsFillCheckCircleFill } from 'react-icons/bs'; // NEW: Import a checkmark icon
 
 // --- Helper Components (Full Code Included) ---
 
@@ -176,10 +177,18 @@ const DPlotBookingDetailsPage: React.FC = () => {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="relative flex flex-col md:flex-row items-center gap-4 bg-gradient-to-r from-green-100 via-white to-green-200 rounded-2xl shadow-xl p-4 border border-green-200">
             <div className="flex-1">
-              <h1 className="text-2xl font-extrabold text-green-800">{plot.title}</h1>
+              {/* --- MODIFIED SECTION: Add verified icon next to title --- */}
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-2xl font-extrabold text-green-800">{plot.title}</h1>
+                {plot.isVerified && (
+                  <div title="Verified Plot">
+                    <BsFillCheckCircleFill className="text-green-600 text-xl" />
+                  </div>
+                )}
+              </div>
+              {/* --- END OF MODIFIED SECTION --- */}
               <p className="text-base text-green-600 font-semibold mb-1">Plot ID: {plot.id}</p>
               <div className="flex items-center gap-2 mt-2">
-                {/* 4. USE THE NEW HANDLER ON ALL PROTECTED BUTTONS */}
                 <Button variant="primary" size='sm' onClick={handleProtectedAction}>Book Plot</Button>
                 <Button variant="outline" size='sm' onClick={handleProtectedAction}>Enquire Now</Button>
               </div>
@@ -207,7 +216,6 @@ const DPlotBookingDetailsPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="mt-4">
-                    {/* 4. PASS THE HANDLER TO THE CHILD COMPONENT */}
                     <PlotOverviewDocs plot={plot} onAuthAction={handleProtectedAction} />
                 </div>
             </Card>
@@ -221,14 +229,15 @@ const DPlotBookingDetailsPage: React.FC = () => {
                   <li>High potential for appreciation</li>
                 </ul>
             </Card>
-             {/* Land Document Verification Card */}
-                        <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm" style={{ backgroundColor: '#22c55e' }}>
-              <div className="flex flex-col gap-2">
-                <div className="font-semibold" >Verify the land document before you buy it</div>
-                <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
-                <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow text-white" style={{ backgroundColor: '#22c55e', border: 'none' }}>Pay ₹5000 for Verification</Button>
-              </div>
-            </Card>
+             {plot.isVerified && (
+              <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm" style={{ backgroundColor: '#22c55e' }}>
+                <div className="flex flex-col gap-2">
+                  <div className="font-semibold" >Verify the land document before you buy it</div>
+                  <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
+                  <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow text-white" style={{ backgroundColor: '#22c55e', border: 'none' }}>Pay ₹5000 for Verification</Button>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>

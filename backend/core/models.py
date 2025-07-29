@@ -412,6 +412,7 @@ class SQLFTProject(models.Model):
         ('sqft', 'Square Feet'),
         ('sqyd', 'Square Yards'),
     ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sqlft_projects', null=True)
     project_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     google_map_link = models.URLField(blank=True, null=True)
@@ -428,6 +429,20 @@ class SQLFTProject(models.Model):
     def __str__(self):
         return self.project_name
 
+class SubPlotUnit(models.Model):
+    project = models.ForeignKey(SQLFTProject, on_delete=models.CASCADE, related_name='sub_plots')
+    plot_number = models.CharField(max_length=100)
+    dimensions = models.CharField(max_length=50, blank=True)  # E.g. "30x40"
+    area = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    status = models.CharField(max_length=50, default="Available")
+    facing = models.CharField(max_length=50, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.plot_number} - {self.project.project_name}"
 
 class BankDetail(models.Model):
     STATUS_CHOICES = [
@@ -626,3 +641,16 @@ class CommercialProperty(models.Model):
 
     def __str__(self):
         return f"{self.property_name} - {self.city}"
+    
+
+class Payment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    plot_id = models.IntegerField()
+    razorpay_order_id = models.CharField(max_length=100)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.FloatField()
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.user.username} - {self.status}"
