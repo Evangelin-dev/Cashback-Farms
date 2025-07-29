@@ -89,8 +89,9 @@ const FilterSidebar: React.FC<{
     areaRange: { min: number; max: number }; setAreaRange: React.Dispatch<React.SetStateAction<{ min: number; max: number }>>;
     showWithPhotos: boolean; setShowWithPhotos: React.Dispatch<React.SetStateAction<boolean>>;
     showVerified: boolean; setShowVerified: React.Dispatch<React.SetStateAction<boolean>>;
+    showAgentPlot: boolean; setShowAgentPlot: React.Dispatch<React.SetStateAction<boolean>>;
     resetFilters: () => void;
-}> = ({ priceRange, setPriceRange, areaRange, setAreaRange, showWithPhotos, setShowWithPhotos, showVerified, setShowVerified, resetFilters }) => {
+}> = ({ priceRange, setPriceRange, areaRange, setAreaRange, showWithPhotos, setShowWithPhotos, showVerified, setShowVerified, showAgentPlot, setShowAgentPlot, resetFilters }) => {
     const formatPriceLabel = (price: number) => {
         if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)} Cr`;
         return `₹${(price / 100000).toFixed(1)} Lacs`;
@@ -105,6 +106,10 @@ const FilterSidebar: React.FC<{
                     <div className="flex items-center min-h-[56px] w-full bg-green-100 border border-green-300 rounded-lg px-3 py-2 shadow-sm flex-grow">
                         <input type="checkbox" id="verified-plots" checked={showVerified} onChange={(e) => setShowVerified(e.target.checked)} className="h-5 w-5 text-green-600 border-gray-300 rounded focus:ring-green-600"/>
                         <span className="ml-3 text-green-800 font-bold flex items-center"><GoVerified className="mr-2 text-2xl text-green-600" /> Green Heap Verified</span>
+                    </div>
+                    <div className="flex items-center min-h-[48px] w-full bg-blue-100 border border-blue-300 rounded-lg px-3 py-2 shadow-sm flex-grow">
+                        <input type="checkbox" id="agent-plots" checked={showAgentPlot} onChange={(e) => setShowAgentPlot(e.target.checked)} className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-600"/>
+                        <span className="ml-3 text-blue-800 font-bold flex items-center">Agent Plot (Not Verified)</span>
                     </div>
                 </div>
             </div>
@@ -131,6 +136,7 @@ const DPlotMarketplacePage: React.FC = () => {
     const [areaRange, setAreaRange] = useState(initialAreaRange);
     const [showWithPhotos, setShowWithPhotos] = useState(false);
     const [showVerified, setShowVerified] = useState(false);
+    const [showAgentPlot, setShowAgentPlot] = useState(false);
     const [locationFilter, setLocationFilter] = useState('All Locations');
     
     const [searchTerm, setSearchTerm] = useState('');
@@ -228,7 +234,7 @@ const DPlotMarketplacePage: React.FC = () => {
 
     const finalFilteredPlots = useMemo(() => {
         const shortlistedIds = new Set(shortlistedItems.map(item => item.item_id));
-        return plots
+        let filtered = plots
             .map(apiPlot => ({
                 id: apiPlot.id,
                 title: apiPlot.title,
@@ -242,24 +248,30 @@ const DPlotMarketplacePage: React.FC = () => {
                 imageUrl: apiPlot.plot_file || undefined,
                 hasPhotos: !!apiPlot.plot_file,
                 isShortlisted: shortlistedIds.has(apiPlot.id),
-            }))
-            .filter(plot => {
-                const totalPrice = plot.area * plot.pricePerSqFt;
-                const withinPrice = totalPrice >= priceRange.min && totalPrice <= priceRange.max;
-                const withinArea = plot.area >= areaRange.min && plot.area <= areaRange.max;
-                const hasPhotosMatch = !showWithPhotos || (showWithPhotos && plot.hasPhotos);
-                const verifiedMatch = !showVerified || (showVerified && plot.isVerified);
-                const matchesLocation = locationFilter === 'All Locations' || plot.location.toLowerCase().includes(locationFilter.toLowerCase());
-                const matchesSearch = !searchTerm || plot.location.toLowerCase().includes(searchTerm.toLowerCase());
-                return withinPrice && withinArea && hasPhotosMatch && verifiedMatch && matchesLocation && matchesSearch;
-            });
-    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified]);
+            }));
+        // Agent Plot filter: show only not verified plots
+        if (showAgentPlot) {
+            filtered = filtered.filter(plot => !plot.isVerified);
+        }
+        filtered = filtered.filter(plot => {
+            const totalPrice = plot.area * plot.pricePerSqFt;
+            const withinPrice = totalPrice >= priceRange.min && totalPrice <= priceRange.max;
+            const withinArea = plot.area >= areaRange.min && plot.area <= areaRange.max;
+            const hasPhotosMatch = !showWithPhotos || (showWithPhotos && plot.hasPhotos);
+            const verifiedMatch = !showVerified || (showVerified && plot.isVerified);
+            const matchesLocation = locationFilter === 'All Locations' || plot.location.toLowerCase().includes(locationFilter.toLowerCase());
+            const matchesSearch = !searchTerm || plot.location.toLowerCase().includes(searchTerm.toLowerCase());
+            return withinPrice && withinArea && hasPhotosMatch && verifiedMatch && matchesLocation && matchesSearch;
+        });
+        return filtered;
+    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified, showAgentPlot]);
 
     const resetFilters = () => {
         setPriceRange(initialPriceRange);
         setAreaRange(initialAreaRange);
         setShowWithPhotos(false);
-        setShowVerified(false); 
+        setShowVerified(false);
+        setShowAgentPlot(false);
         setSearchTerm('');
         setLocationSearchInput('');
         setLocationFilter('All Locations');
@@ -323,6 +335,7 @@ const DPlotMarketplacePage: React.FC = () => {
                         areaRange={areaRange} setAreaRange={setAreaRange}
                         showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos} 
                         showVerified={showVerified} setShowVerified={setShowVerified} 
+                        showAgentPlot={showAgentPlot} setShowAgentPlot={setShowAgentPlot}
                         resetFilters={resetFilters} 
                     />
                     <div className="flex-1">
