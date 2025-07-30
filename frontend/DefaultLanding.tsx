@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 // --- API Client and Types ---
@@ -226,6 +226,13 @@ const DefaultLanding: React.FC = () => {
             <button className={`px-4 py-2 font-medium border-t border-b border-green-600 ${searchType === 'sell' ? 'bg-green-600 text-white' : 'bg-white text-green-700 hover:bg-green-50'}`} onClick={() => { setSearchType('sell'); setSearchInput(''); }}>Sell</button>
             <button className={`px-4 py-2 rounded-r font-medium border border-green-600 ${searchType === 'commercial' ? 'bg-green-600 text-white' : 'bg-white text-green-700 hover:bg-green-50'}`} onClick={() => { setSearchType('commercial'); setSearchInput(''); }}>Commercial</button>
           </div>
+          {/* Buttons for plot types below searchbox image */}
+          {/* <div className="flex justify-center gap-4 mb-4">
+            <Button variant="outline" onClick={() => window.location.href='/Dplots?type=residential'}>Residential Plots</Button>
+            <Button variant="outline" onClick={() => window.location.href='/Dplots?type=farms'}>Farms</Button>
+            <Button variant="outline" onClick={() => window.location.href='/Dplots?type=commercial'}>Commercial</Button>
+            <Button variant="outline" onClick={() => window.location.href='/Dplots?type=rental'}>Rental Yield Plots</Button>
+          </div> */}
           <div className="flex items-center justify-center mb-3 text-sm text-gray-600">
             <span className="mr-2">📍</span><span>Current Location: <span className="font-semibold text-green-700">{currentLocation}</span></span>
           </div>
@@ -240,7 +247,49 @@ const DefaultLanding: React.FC = () => {
           {renderHomeServices()}
         </div>
       </section>
-
+{/* --- Plot Type Cards Section --- */}
+      <section className="py-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 justify-center">
+            {/* Residential Plots Card */}
+            <div className="bg-white rounded-lg shadow p-0 flex flex-col items-center border border-green-100 hover:shadow-lg transition overflow-hidden relative">
+              <div className="relative w-full h-32">
+                <img src="/images/Residentialplots.jpg" alt="Residential Plots" className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-white via-white/80 to-transparent" />
+              </div>
+              <div className="font-semibold text-green-700 mb-1 mt-2">Residential Plots</div>
+              <Button size="sm" variant="outline" onClick={() => window.location.href='/Dplots?type=residential'}>Explore</Button>
+            </div>
+            {/* Farms Card */}
+            <div className="bg-white rounded-lg shadow p-0 flex flex-col items-center border border-green-100 hover:shadow-lg transition overflow-hidden relative">
+              <div className="relative w-full h-32">
+                <img src="/images/farmplot.jpg" alt="Farms" className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-white via-white/80 to-transparent" />
+              </div>
+              <div className="font-semibold text-green-700 mb-1 mt-2">Farms</div>
+              <Button size="sm" variant="outline" onClick={() => window.location.href='/Dplots?type=farms'}>Explore</Button>
+            </div>
+            {/* Commercial Card */}
+            <div className="bg-white rounded-lg shadow p-0 flex flex-col items-center border border-green-100 hover:shadow-lg transition overflow-hidden relative">
+              <div className="relative w-full h-32">
+                <img src="/images/commercialplot.jpeg" alt="Commercial" className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-white via-white/80 to-transparent" />
+              </div>
+              <div className="font-semibold text-green-700 mb-1 mt-2">Commercial</div>
+              <Button size="sm" variant="outline" onClick={() => window.location.href='/Dplots?type=commercial'}>Explore</Button>
+            </div>
+            {/* Rental Yield Plots Card */}
+            <div className="bg-white rounded-lg shadow p-0 flex flex-col items-center border border-green-100 hover:shadow-lg transition overflow-hidden relative">
+              <div className="relative w-full h-32">
+                <img src="/images/rentalplot.jpeg" alt="Rental Yield Plots" className="w-full h-full object-cover" />
+                <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-white via-white/80 to-transparent" />
+              </div>
+              <div className="font-semibold text-green-700 mb-1 mt-2">Rental Yield Plots</div>
+              <Button size="sm" variant="outline" onClick={() => window.location.href='/Dplots?type=rental'}>Explore</Button>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* --- Featured Plots Section --- */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -261,11 +310,12 @@ const DefaultLanding: React.FC = () => {
       {/* --- Other Sections --- */}
       <section className="bg-green-50 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-semibold text-green-700 mb-4">Introducing Book My SqFt!</h2>
+            <h2 className="text-3xl font-semibold text-green-700 mb-4">Introducing GIOO Plots!</h2>
             <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">Don't want to buy a whole plot? Now you can book the exact square footage you need. Flexible, affordable, and transparent.</p>
-            <Link to="/Dmysqft-listing"><Button size="lg" variant="primary">Explore Book My SqFt</Button></Link>
+            <Link to="/Dmysqft-listing"><Button size="lg" variant="primary">Explore Book My GIOO Plots</Button></Link>
         </div>
       </section>
+      
       <section className="py-12 bg-white"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><DAssistedPlans /></div></section>
 
       {/* --- Featured Professionals Section --- */}

@@ -90,8 +90,9 @@ const FilterSidebar: React.FC<{
     showWithPhotos: boolean; setShowWithPhotos: React.Dispatch<React.SetStateAction<boolean>>;
     showVerified: boolean; setShowVerified: React.Dispatch<React.SetStateAction<boolean>>;
     showAgentPlot: boolean; setShowAgentPlot: React.Dispatch<React.SetStateAction<boolean>>;
+    plotType: string; setPlotType: React.Dispatch<React.SetStateAction<string>>;
     resetFilters: () => void;
-}> = ({ priceRange, setPriceRange, areaRange, setAreaRange, showWithPhotos, setShowWithPhotos, showVerified, setShowVerified, showAgentPlot, setShowAgentPlot, resetFilters }) => {
+}> = ({ priceRange, setPriceRange, areaRange, setAreaRange, showWithPhotos, setShowWithPhotos, showVerified, setShowVerified, showAgentPlot, setShowAgentPlot, plotType, setPlotType, resetFilters }) => {
     const formatPriceLabel = (price: number) => {
         if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)} Cr`;
         return `₹${(price / 100000).toFixed(1)} Lacs`;
@@ -100,6 +101,21 @@ const FilterSidebar: React.FC<{
     return (
         <div className="w-full lg:w-1/4 lg:sticky lg:top-24 bg-white p-4 border rounded-lg shadow-sm h-fit">
             <div className="flex justify-between items-center mb-4 pb-3 border-b"><h3 className="font-bold text-xl">Filters</h3><button onClick={resetFilters} className="text-sm font-semibold text-red-500">Reset</button></div>
+            {/* Plot Type Dropdown */}
+            <div className="mb-6">
+                <label className="font-semibold text-gray-700">Plot Type</label>
+                <select
+                    className="mt-2 w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-green-600 focus:border-green-600"
+                    value={plotType}
+                    onChange={e => setPlotType(e.target.value)}
+                >
+                    <option value="">All Types</option>
+                    <option value="residential">Residential Plots</option>
+                    <option value="farms">Farms</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="rental">Rental Yield Plots</option>
+                </select>
+            </div>
             <div className="mb-6">
                 <label className="font-semibold text-gray-700">Show Only</label>
                 <div className="mt-2 grid grid-cols-1 gap-3">
@@ -138,6 +154,7 @@ const DPlotMarketplacePage: React.FC = () => {
     const [showVerified, setShowVerified] = useState(false);
     const [showAgentPlot, setShowAgentPlot] = useState(false);
     const [locationFilter, setLocationFilter] = useState('All Locations');
+    const [plotType, setPlotType] = useState("");
     
     const [searchTerm, setSearchTerm] = useState('');
     const [locationSearchInput, setLocationSearchInput] = useState('');
@@ -230,7 +247,7 @@ const DPlotMarketplacePage: React.FC = () => {
         }
     };
     
-    const handleViewDetails = (id: number) => { navigate(`/Dbook-my-sqft/${id}`); };
+    const handleViewDetails = (id: number) => { navigate(`/book-my-sqft/${id}`); };
 
     const finalFilteredPlots = useMemo(() => {
         const shortlistedIds = new Set(shortlistedItems.map(item => item.item_id));
@@ -253,6 +270,18 @@ const DPlotMarketplacePage: React.FC = () => {
         if (showAgentPlot) {
             filtered = filtered.filter(plot => !plot.isVerified);
         }
+        // Plot type filter
+        if (plotType) {
+            filtered = filtered.filter(plot => {
+                // You may want to adjust this logic based on your data
+                const type = plot.title.toLowerCase() + ' ' + plot.location.toLowerCase();
+                if (plotType === 'residential') return type.includes('residential');
+                if (plotType === 'farms') return type.includes('farm');
+                if (plotType === 'commercial') return type.includes('commercial');
+                if (plotType === 'rental') return type.includes('rental');
+                return true;
+            });
+        }
         filtered = filtered.filter(plot => {
             const totalPrice = plot.area * plot.pricePerSqFt;
             const withinPrice = totalPrice >= priceRange.min && totalPrice <= priceRange.max;
@@ -264,7 +293,7 @@ const DPlotMarketplacePage: React.FC = () => {
             return withinPrice && withinArea && hasPhotosMatch && verifiedMatch && matchesLocation && matchesSearch;
         });
         return filtered;
-    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified, showAgentPlot]);
+    }, [plots, shortlistedItems, priceRange, areaRange, showWithPhotos, locationFilter, searchTerm, showVerified, showAgentPlot, plotType]);
 
     const resetFilters = () => {
         setPriceRange(initialPriceRange);
@@ -336,6 +365,7 @@ const DPlotMarketplacePage: React.FC = () => {
                         showWithPhotos={showWithPhotos} setShowWithPhotos={setShowWithPhotos} 
                         showVerified={showVerified} setShowVerified={setShowVerified} 
                         showAgentPlot={showAgentPlot} setShowAgentPlot={setShowAgentPlot}
+                        plotType={plotType} setPlotType={setPlotType}
                         resetFilters={resetFilters} 
                     />
                     <div className="flex-1">

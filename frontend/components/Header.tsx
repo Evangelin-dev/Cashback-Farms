@@ -32,10 +32,13 @@ const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
   const navigate = useNavigate();
   const [currentLocation, setCurrentLocation] = useState<string | null>(null);
 
-  // Fetch current location for agent only
+  // Fetch current location for agent and b2b_vendor only (no b2b_agent in system)
   useEffect(() => {
-    // Show location for agent (real_estate_agent) and b2b (b2b_vendor)
-    const isAgent = currentUser?.role === UserRole.ADMIN && (currentUser?.user_type === 'real_estate_agent' || currentUser?.user_type === 'b2b_vendor');
+    // Show location for agent (real_estate_agent) and b2b_vendor
+    const isAgent = currentUser?.role === UserRole.ADMIN && (
+      currentUser?.user_type === 'real_estate_agent' ||
+      currentUser?.user_type === 'b2b_vendor'
+    );
     if (isAgent) {
       setCurrentLocation('Detecting...');
       if (navigator.geolocation) {
@@ -69,8 +72,11 @@ const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
     <header className="bg-white shadow-sm p-4 flex justify-between items-center">
       <h1 className="text-xl md:text-2xl font-semibold text-neutral-800">{pageTitle}</h1>
       <div className="flex items-center gap-4">
-        {/* Show current location for agent (real_estate_agent) and b2b (b2b_agent) */}
-        {currentUser?.role === UserRole.ADMIN && (currentUser?.user_type === 'real_estate_agent' || currentUser?.user_type === 'b2b_vendor') && (
+        {/* Show current location for agent (real_estate_agent) and b2b_vendor only (no b2b_agent in system) */}
+        {currentUser?.role === UserRole.ADMIN && (
+          currentUser?.user_type === 'real_estate_agent' ||
+          currentUser?.user_type === 'b2b_vendor'
+        ) && (
           <div className="flex items-center text-sm text-gray-600">
             <span className="mr-1">📍</span>
             <span>Current Location: <span className="font-semibold text-green-700">{currentLocation}</span></span>
