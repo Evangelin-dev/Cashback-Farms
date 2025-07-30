@@ -243,7 +243,7 @@ const DMySqftListing: React.FC = () => {
 
 	return (
 		<div className="bg-gray-50 min-h-screen">
-            <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3"><h1 className="text-2xl font-bold text-green-700">Book My SqFt</h1></div></header>
+            <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3"><h1 className="text-2xl font-bold text-green-700">Book My GIOO Plots</h1></div></header>
             <main className="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row gap-6">
                 {/* --- PASSING NEW GEOAPIFY PROPS TO SIDEBAR --- */}
                 <FilterSidebar

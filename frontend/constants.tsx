@@ -595,7 +595,7 @@ export const RupeeIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 export const MOCK_BMS_PLOT_INFO: BookMySqftPlotInfo = {
   id: 'bms-plot-alpha',
-  name: 'Alpha Square - Book My SqFt',
+  name: 'Alpha Square - Book My GIOO Plot',
   location: 'Central Business District, Gurgaon',
   totalUnits: 100, // 10x10 grid
   unitsWide: 10,
