@@ -153,9 +153,9 @@ const AdminSidebar: React.FC = () => {
         <nav className="flex-grow space-y-1">
           <AdminNavItem to="/admin/dashboard" icon={<IconDashboard className="w-5 h-5" />} label="Dashboard" />
           <div className="pt-2 pb-1 px-2 text-xs text-neutral-800 uppercase tracking-wider">Manage Content</div>
-          <AdminNavItem to="/admin/plots" icon={<IconTableCells className="w-5 h-5" />} label="Plots (Residential)" onClick={handleNavClick} />
+          <AdminNavItem to="/admin/plots" icon={<IconTableCells className="w-5 h-5" />} label="Post Your Plots" onClick={handleNavClick} />
           <AdminNavItem to="/admin/verifiedplot" icon={<IconTableCells className="w-5 h-5" />} label="Greenheap Verified Plots" onClick={handleNavClick} />
-          <AdminNavItem to="/admin/microplot" icon={<IconMapPin className="w-5 h-5" />} label="Micro Plots" onClick={handleNavClick} />
+          <AdminNavItem to="/admin/microplot" icon={<IconMapPin className="w-5 h-5" />} label="Post GIOO Plots" onClick={handleNavClick} />
           <AdminNavItem to="/admin/commercial" icon={<IconBuildingOffice className="w-5 h-5" />} label="Commercial Properties" onClick={handleNavClick} />
           <AdminNavItem to="/admin/kyc" icon={<IconCreditCard className="w-5 h-5" />} label="KYC Management" onClick={handleNavClick} />
           <AdminNavItem to="/admin/bookings" icon={<IconCollection className="w-5 h-5" />} label="Bookings" onClick={handleNavClick} />

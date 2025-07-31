@@ -318,7 +318,7 @@ const RealProfile: React.FC = () => {
               </label>
             </div>
             <h2 className="mt-2 text-lg font-bold text-primary-light tracking-wide animate-fadein">Edit RealEstate Profile</h2>
-            <div className="mt-1 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">User Code:{" "}<span className="text-primary font-semibold">{userCode}</span></div>
+            <div className="mt-1 text-l text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">User Code:{" "}<span className="text-primary font-semibold">{userCode}</span></div>
           </div>
           
           <form className="space-y-3 animate-slidein" onSubmit={formik.handleSubmit}>
