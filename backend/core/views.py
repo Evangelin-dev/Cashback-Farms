@@ -83,13 +83,21 @@ class OTPRequestView(APIView):
             # Send OTP via email if email is provided
             if email:
                 try:
+                    message = f"""Dear user,
+                    Your CashbackFarms verification code is: {otp}
+                    This OTP is valid for 10 minutes.
+                    Do not share it with anyone.
+
+                    Team CashbackFarms"""
+
+                    # Send mail
                     send_mail(
-                        subject="Your OTP Code",
-                        message=f"Your OTP code is: {otp}",
-                        from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+                        subject='CashbackFarms OTP Verification',
+                        message=message,
+                        from_email='support@cashbackfarms.com',
                         recipient_list=[email],
                         fail_silently=False,
-                    )
+                    )   
                 except Exception as e:
                     return Response({"detail": f"Failed to send OTP email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             print(f"DEBUG: OTP for {user.username}: {otp}") # For development purposes
