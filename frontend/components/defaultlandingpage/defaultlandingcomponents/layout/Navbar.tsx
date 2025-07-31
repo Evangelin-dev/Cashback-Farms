@@ -152,9 +152,9 @@ const Navbar: React.FC = () => {
                   <button onClick={() => navigate('/registration')} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 shadow hover:bg-green-700 transition">
                     Agents / B2B Vendor
                   </button>
-                  {/* <button onClick={() => navigate('/admin')} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-blue-600 shadow hover:bg-blue-700 transition">
+                  <button onClick={() => navigate('/admin/login')} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-blue-600 shadow hover:bg-blue-700 transition">
                     Admin
-                  </button> */}
+                  </button>
                 </div>
               )}
             </div>

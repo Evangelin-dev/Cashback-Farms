@@ -215,7 +215,7 @@ const MyProfile: React.FC = () => {
               </label>
             </div>
             <h2 className="mt-4 text-2xl font-bold text-primary-light tracking-wide animate-fadein">Edit User Profile</h2>
-            <div className="mt-2 text-sm text-gray-600 font-mono bg-gray-100 px-4 py-1 rounded shadow-sm">User Code: <span className="text-primary font-semibold">{userCode}</span></div>
+            <div className="mt-2 text-l text-gray-600 font-mono bg-gray-100 px-4 py-1 rounded shadow-sm">User Code: <span className="text-primary font-semibold">{userCode}</span></div>
           </div>
           <form className="space-y-5 animate-slidein" onSubmit={e => { e.preventDefault(); handleSave(); }}>
             <div className="grid grid-cols-2 gap-4">

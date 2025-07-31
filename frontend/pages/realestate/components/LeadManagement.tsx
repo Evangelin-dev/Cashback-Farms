@@ -1,6 +1,6 @@
+import apiClient from "@/src/utils/api/apiClient"; // Adjust the import path if needed
 import { Card, Select, Table, message } from "antd";
 import React, { useEffect, useState } from "react";
-import apiClient from "@/src/utils/api/apiClient"; // Adjust the import path if needed
 
 const statusOptions = ["New", "Contacted", "Interested","Converted", "Lost"];
 
@@ -23,6 +23,7 @@ const statusBgColors: Record<string, string> = {
 const LeadManagement: React.FC = () => {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [locationFilter, setLocationFilter] = useState('');
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -173,6 +174,11 @@ const LeadManagement: React.FC = () => {
     },
   ];
 
+  // Filter leads by location (case-insensitive, partial match)
+  const filteredLeads = locationFilter.trim()
+    ? leads.filter(l => (l.plot || '').toLowerCase().includes(locationFilter.trim().toLowerCase()))
+    : leads;
+
   return (
     <Card
       title={
@@ -184,7 +190,7 @@ const LeadManagement: React.FC = () => {
         marginBottom: 32,
         borderRadius: 18,
         boxShadow: "0 6px 32px #e0e7ef",
-        background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)",
+        background: "linear-gradient(90deg, #18191aff 0%, #fff 100%)",
         border: "none",
       }}
       bodyStyle={{
@@ -193,8 +199,36 @@ const LeadManagement: React.FC = () => {
         padding: 36,
       }}
     >
+      {/* Location Filter - top right */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <input
+            type="text"
+            placeholder="Search by location or plot name..."
+            value={locationFilter}
+            onChange={e => setLocationFilter(e.target.value)}
+            style={{
+              border: '1px solid #d1d5db',
+              borderRadius: 8,
+              padding: '8px 14px',
+              fontSize: 15,
+              width: 320,
+              outline: 'none',
+              boxShadow: '0 1px 4px #e0e7ef33',
+            }}
+          />
+          {locationFilter && (
+            <button
+              onClick={() => setLocationFilter('')}
+              style={{ background: 'none', border: 'none', color: '#ef4444', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
       <Table
-        dataSource={leads}
+        dataSource={filteredLeads}
         columns={columns}
         pagination={false}
         style={{ borderRadius: 14, overflow: "hidden" }}
