@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework', # Django REST Framework
     'core', # Our custom core app
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -172,19 +173,42 @@ INSTALLED_APPS += [
 ]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = 'smtp.office365.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "amruthakumarchennai@gmail.com"         # Replace with your Gmail address
-EMAIL_HOST_PASSWORD = "tsvzwvrnahbmtvtd"        # Replace with your Gmail App Password
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_HOST_USER = 'support@cashbackfarms.com'
+EMAIL_HOST_PASSWORD = 'mrwsngrnlckjrwgf'
+DEFAULT_FROM_EMAIL = 'support@cashbackfarms.com'
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite default
     "http://localhost:3000",  # React default
     # Add any other frontend URLs you use
+    "https://cashbackfarms.com",
+    "https://www.cashbackfarms.com",
 ]
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
 
+# Only set custom domain if bucket name is provided
+if AWS_STORAGE_BUCKET_NAME:
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+
+AWS_DEFAULT_ACL = None
+AWS_S3_FILE_OVERWRITE = False
+AWS_QUERYSTRING_AUTH = False
+
+# Use S3 for file storage only if AWS credentials are provided
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+else:
+    # Fallback to local storage for development
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # ⬅ change this to increase timeout
@@ -193,3 +217,19 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+
+ALLOWED_HOSTS = [
+    'cashbackfarms.com',
+    'www.cashbackfarms.com',
+    '127.0.0.1',
+    'localhost',
+    '34.238.241.206',  # <-- Add this line
+]
+CORS_ALLOWED_ORIGINS = [
+"http://localhost:3000",
+"http://localhost:5173",  # <-- too little indentation
+"http://127.0.0.1:8000",
+]
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
