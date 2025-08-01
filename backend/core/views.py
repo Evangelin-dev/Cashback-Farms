@@ -106,25 +106,20 @@ class UserRegistrationView(APIView):
 
             # Send OTP via email
             email = validated_data.get('email')
-            html_body = f"""
-                Dear {user.first_name},
+            message = f"""Dear user,
+            Your CashbackFarms verification code is: {otp}
+            This OTP is valid for 10 minutes.
+            Do not share it with anyone.
 
-                Your OTP code is: {otp}
-
-                This OTP is valid for 10 minutes. Please do not share it with anyone.
-
-                Thanks,
-                Team Greenheap Gold
-                """
+            Team CashbackFarms"""
             if email:
-                smtp_user = settings.EMAIL_HOST_USER
-                email_msg = EmailMessage(
-                    subject="Your OTP Code",
-                    body=html_body,
-                    from_email=smtp_user,
-                    to=[email],
+                send_mail(
+                subject='CashbackFarms OTP Verification',
+                message=message,
+                from_email='support@cashbackfarms.com',
+                recipient_list=[email],
+                fail_silently=False,
                 )
-                email_msg.send(fail_silently=False)
 
             return Response(
                 {
@@ -212,27 +207,23 @@ class OTPRequestView(APIView):
             otp = user.generate_otp()
 
             # Send OTP via email if email is provided
-            html_body = f"""
-                Dear {user.first_name},
+            message = f"""Dear user,
+            Your CashbackFarms verification code is: {otp}
+            This OTP is valid for 10 minutes.
+            Do not share it with anyone.
 
-                Your OTP code is: {otp}
-
-                This OTP is valid for 10 minutes. Please do not share it with anyone.
-
-                Thanks,
-                Team Greenheap Gold
-                """
+            Team CashbackFarms"""
             if email:
                 try:
 
-                    smtp_user = settings.EMAIL_HOST_USER
-                    email_msg = EmailMessage(
-                        subject="Your OTP Code",
-                        body=html_body,
-                        from_email=smtp_user,
-                        to=[email],
+                    send_mail(
+                    subject='CashbackFarms OTP Verification',
+                    message=message,
+                    from_email='support@cashbackfarms.com',
+                    recipient_list=[email],
+                    fail_silently=False,
                     )
-                    email_msg.send(fail_silently=False)
+                    
                 except Exception as e:
                     return Response({"detail": f"Failed to send OTP email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             # Send OTP via SMS if mobile_number is provided
