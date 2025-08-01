@@ -1,5 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { SqftUnit as BaseSqftUnit } from '../../../../types';
+
+// Assuming these types exist in your project
+interface BaseSqftUnit {
+  id: string;
+  row: number;
+  col: number;
+  isAvailable: boolean;
+  isSelected: boolean;
+  isBooked: boolean;
+}
 
 interface ExtendedSqftUnit extends BaseSqftUnit {
   imageUrl?: string;
@@ -8,16 +17,9 @@ interface ExtendedSqftUnit extends BaseSqftUnit {
 interface SqftGridProps {
   gridData: ExtendedSqftUnit[][];
   onUnitSelect: (row: number, col: number) => void;
-  // Add prop for uploaded project layout image
-  projectLayoutImage?: string; // URL or base64 string
+  projectLayoutImage?: string;
   unitSize?: number;
 }
-
-// Example GRID_LABELS and additional subplot data for demonstration
-const GRID_LABELS = {
-  rows: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
-  cols: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
-};
 
 // Example subplot details (in real use, this should come from props or context)
 const SUBPLOT_DETAILS: Record<string, {
@@ -26,23 +28,18 @@ const SUBPLOT_DETAILS: Record<string, {
   facing: string;
   sqft: number;
 }> = {};
-for (let r = 0; r < GRID_LABELS.rows.length; r++) {
-  for (let c = 0; c < GRID_LABELS.cols.length; c++) {
-    const key = `${GRID_LABELS.rows[r]}${GRID_LABELS.cols[c]}`;
-    SUBPLOT_DETAILS[key] = {
-      imageUrl: `https://picsum.photos/seed/${key}/100/80`,
-      dimension: `${30 + r} x ${40 + c} ft`,
-      facing: ['East', 'West', 'North', 'South'][(r + c) % 4],
-      sqft: (30 + r) * (40 + c),
-    };
-  }
+for (let i = 1; i <= 100; i++) {
+  SUBPLOT_DETAILS[i] = {
+    imageUrl: `https://picsum.photos/seed/${i}/100/80`,
+    dimension: `${30 + ((i - 1) % 10)} x ${40 + Math.floor((i - 1) / 10)} ft`,
+    facing: ['East', 'West', 'North', 'South'][(i - 1) % 4],
+    sqft: (30 + ((i - 1) % 10)) * (40 + Math.floor((i - 1) / 10)),
+  };
 }
 
-// Helper to get label for a cell
-function getGridLabel(row: number, col: number) {
-  const rowLabel = GRID_LABELS.rows[row] ?? `R${row + 1}`;
-  const colLabel = GRID_LABELS.cols[col] ?? `C${col + 1}`;
-  return `${rowLabel}${colLabel}`;
+// Helper to get label for a cell (1 to N)
+function getGridLabel(row: number, col: number, page = 1, pageSize = 100) {
+  return ((page - 1) * pageSize + (row * 10 + col) + 1).toString();
 }
 
 interface SqftUnit {
@@ -58,12 +55,16 @@ interface SqftUnit {
   sqft?: number;
 }
 
+const PAGE_SIZE = 100;
+
 const DSqftGrid: React.FC<SqftGridProps> = ({
   gridData,
   onUnitSelect,
-  projectLayoutImage, // new prop
+  projectLayoutImage,
   unitSize = 44,
 }) => {
+  // Pagination state
+  const [page, setPage] = useState(1);
   const [hoveredUnit, setHoveredUnit] = useState<SqftUnit | null>(null);
   const gridScrollRef = useRef<HTMLDivElement>(null);
   const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,7 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
     y: number;
   } | null>(null);
   const [selectedUnits, setSelectedUnits] = useState<SqftUnit[]>([]);
+  
   // State for zoom and pan
   const [zoom, setZoom] = useState(1);
   const [imgOffset, setImgOffset] = useState({ x: 0, y: 0 });
@@ -88,10 +90,9 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
     )
   );
 
-  // Update localGrid if gridData changes (optional, if gridData is dynamic)
-  // React.useEffect(() => {
-  //   setLocalGrid(gridData.map(row => row.map(unit => ({ ...unit }))));
-  // }, [gridData]);
+  // Calculate total units and pages
+  const totalUnits = localGrid.flat().length;
+  const totalPages = Math.ceil(totalUnits / PAGE_SIZE);
 
   // Handle unit selection
   const handleUnitClick = (unit: SqftUnit) => {
@@ -153,6 +154,7 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
     const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     setDragStart({ x: clientX - imgOffset.x, y: clientY - imgOffset.y });
   };
+
   const handleImgMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!dragging || !dragStart) return;
     const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
@@ -162,6 +164,7 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
       y: clientY - dragStart.y,
     });
   };
+
   const handleImgMouseUp = () => {
     setDragging(false);
     setDragStart(null);
@@ -210,31 +213,34 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
   const availablePlots = localGrid.flat().filter(u => u.isAvailable && !u.isBooked).length;
 
   return (
-    <div className="flex flex-col items-center w-full gap-8">
-      {/* Plot summary */}
-      <div className="flex flex-row items-center gap-6 mb-2 mt-2">
+    <div className="flex flex-col items-center w-full min-h-screen px-4 py-6 gap-4 sm:gap-6 lg:gap-8">
+      {/* Plot summary - Enhanced responsive layout */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 mb-2 mt-2 w-full max-w-4xl">
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-green-200 border border-green-400 inline-block" />
-          <span className="text-xs text-green-700 font-semibold">Available Plots: {availablePlots}</span>
+          <span className="text-xs sm:text-sm text-green-700 font-semibold">Available Plots: {availablePlots}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-gray-300 border border-gray-400 inline-block" />
-          <span className="text-xs text-gray-600 font-semibold">Booked Plots: {bookedPlots}</span>
+          <span className="text-xs sm:text-sm text-gray-600 font-semibold">Booked Plots: {bookedPlots}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="w-3 h-3 rounded bg-indigo-100 border border-indigo-300 inline-block" />
-          <span className="text-xs text-indigo-700 font-semibold">Total Plots: {totalPlots}</span>
+          <span className="text-xs sm:text-sm text-indigo-700 font-semibold">Total Plots: {totalPlots}</span>
         </div>
       </div>
-      {/* Top: Plot layout image with controls below */}
-      <div className="flex flex-col items-center justify-center w-[480px] mb-6 pt-6">
+
+      {/* Plot layout image with controls - Enhanced responsive sizing */}
+      <div className="flex flex-col items-center justify-center w-full max-w-lg mb-4 sm:mb-6 pt-4 sm:pt-6">
         <div
           ref={imgFrameRef}
           className="flex-shrink-0 flex items-center justify-center bg-white rounded-xl shadow border border-green-100 overflow-hidden"
           style={{
-            width: 480,
-            height: 320,
-            paddingTop: 24,
+            width: 'min(480px, 90vw)',
+            height: 'min(320px, 60vw)',
+            maxWidth: 480,
+            maxHeight: 320,
+            paddingTop: 16,
             position: 'relative',
             userSelect: 'none',
             touchAction: 'none',
@@ -268,10 +274,11 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
             Zoom: {(zoom * 100).toFixed(0)}%
           </div>
         </div>
-        {/* Controls below the image */}
-        <div className="flex flex-row gap-3 mt-4">
+        
+        {/* Controls below the image - Enhanced responsive layout */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-3 sm:mt-4 w-full max-w-xs">
           <button
-            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center gap-1"
+            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center justify-center gap-1 min-h-[36px]"
             onClick={handleReset}
             type="button"
             tabIndex={0}
@@ -282,7 +289,7 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
             Reset
           </button>
           <button
-            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center gap-1"
+            className="bg-green-100 hover:bg-green-200 text-green-700 font-semibold rounded-lg px-3 py-2 shadow border border-green-200 transition text-xs flex items-center justify-center gap-1 min-h-[36px]"
             onClick={handleDownload}
             type="button"
             tabIndex={0}
@@ -294,15 +301,18 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
           </button>
         </div>
       </div>
-      {/* Main content: Grid left, Details right */}
-      <div className="flex flex-row w-full justify-center gap-10">
-        {/* Left: Redesigned Grid */}
+
+      {/* Main content: Grid and Selected plot details - Enhanced responsive layout */}
+      <div className="flex flex-col xl:flex-row w-full max-w-7xl justify-center gap-6 lg:gap-8 xl:gap-10">
+        {/* Grid section - Enhanced responsive sizing */}
         <div
           ref={gridContainerRef}
-          className="relative flex flex-col items-center justify-center rounded-3xl shadow-2xl border-0 bg-white/60 backdrop-blur-lg p-6"
+          className="relative flex flex-col items-center justify-center rounded-3xl shadow-2xl border-0 bg-white/60 backdrop-blur-lg p-4 sm:p-6 order-1"
           style={{
-            width: 560,
-            height: 560,
+            width: '100%',
+            maxWidth: 'min(560px, 95vw)',
+            height: 'min(560px, 70vh)',
+            minHeight: 400,
             boxShadow: '0 8px 32px 0 rgba(34,197,94,0.15), 0 1.5px 6px 0 rgba(0,0,0,0.04)',
             border: '1.5px solid #bbf7d0',
           }}
@@ -310,47 +320,34 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
           {/* Grid header (sticky) */}
           <div
             className="sticky top-0 z-20 flex flex-row gap-2 bg-white/80 backdrop-blur-md rounded-t-2xl px-2 py-1"
-            style={{ marginLeft: unitSize + 16 }}
+            style={{ marginLeft: 0 }}
           >
-            {GRID_LABELS.cols.map(col => (
-              <div
-                key={col}
-                className="w-11 text-center text-green-700 font-bold text-xs tracking-wide"
-                style={{ width: unitSize }}
-              >
-                {col}
-              </div>
-            ))}
           </div>
+          
           <div
             ref={gridScrollRef}
-            className="flex flex-row w-full h-full overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent"
-            style={{ maxHeight: 500, marginTop: 8, borderRadius: 18, position: 'relative' }}
+            className="flex flex-col w-full h-full overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent"
+            style={{ maxHeight: 'calc(100% - 80px)', marginTop: 8, borderRadius: 18, position: 'relative' }}
           >
-            {/* Row labels (sticky) */}
-            <div className="flex flex-col gap-2 sticky left-0 z-10 bg-white/70 backdrop-blur-md rounded-l-2xl px-1 py-1">
-              {GRID_LABELS.rows.map(row => (
-                <div
-                  key={row}
-                  className="h-11 flex items-center justify-center text-green-700 font-bold text-xs tracking-wide"
-                  style={{ height: unitSize }}
-                >
-                  {row}
-                </div>
-              ))}
-            </div>
             {/* Grid */}
             <div
-              className="grid gap-3"
+              className="grid gap-2 sm:gap-3 mx-auto"
               style={{
-                gridTemplateColumns: `repeat(${localGrid[0]?.length || 1}, ${unitSize}px)`,
-                marginLeft: 8,
+                gridTemplateColumns: `repeat(${localGrid[0]?.length || 1}, ${Math.min(unitSize, 40)}px)`,
+                justifyContent: 'center',
+                padding: '8px',
               }}
             >
               {localGrid.map((row, rowIdx) =>
                 row.map((unit, colIdx) => {
-                  const label = getGridLabel(unit.row, unit.col);
+                  const label = getGridLabel(unit.row, unit.col, page, PAGE_SIZE);
                   const subplot = SUBPLOT_DETAILS[label];
+                  // Only render units for the current page
+                  const flatIndex = rowIdx * localGrid[0].length + colIdx;
+                  if (flatIndex < (page - 1) * PAGE_SIZE || flatIndex >= page * PAGE_SIZE) return null;
+                  
+                  const responsiveUnitSize = Math.min(unitSize, 40);
+                  
                   return (
                     <div
                       key={unit.id}
@@ -361,11 +358,10 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                           : unit.isSelected
                           ? 'bg-gradient-to-br from-green-300 to-green-500 border-green-700 scale-105 ring-2 ring-green-300'
                           : 'bg-white/80 border-green-200 hover:bg-green-50 hover:border-green-400'}
-                        w-11 h-11
                       `}
                       style={{
-                        width: unitSize,
-                        height: unitSize,
+                        width: responsiveUnitSize,
+                        height: responsiveUnitSize,
                         boxShadow: unit.isSelected ? '0 0 0 4px #bbf7d0' : undefined,
                         cursor: unit.isBooked ? 'not-allowed' : 'pointer',
                         position: 'relative',
@@ -373,29 +369,29 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                         transition: 'box-shadow 0.2s, transform 0.2s',
                       }}
                       onClick={() => handleUnitClick(unit)}
-                      onMouseEnter={e => handleMouseEnter(e, unit, SUBPLOT_DETAILS[getGridLabel(unit.row, unit.col)])}
+                      onMouseEnter={e => handleMouseEnter(e, unit, SUBPLOT_DETAILS[label])}
                       onMouseLeave={handleMouseLeave}
                     >
                       <span className={`text-xs font-bold ${unit.isBooked ? 'text-gray-400' : 'text-green-800'}`}>
-                        {getGridLabel(unit.row, unit.col)}
+                        {label}
                       </span>
                       {/* Dot indicator for selected */}
                       {unit.isSelected && (
                         <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-700 border-2 border-white shadow"></span>
                       )}
-                      {/* No hover detail here */}
                     </div>
                   );
                 })
               )}
             </div>
+            
             {/* Hover detail rendered inside grid container, absolutely positioned */}
             {hoveredDetail && (
               <div
                 className="z-[9999] absolute animate-fade-in bg-white/95 border border-green-200 rounded-2xl shadow-2xl p-3"
                 style={{
-                  width: 220,
-                  left: hoveredDetail.x,
+                  width: 'min(220px, 90vw)',
+                  left: Math.max(10, Math.min(hoveredDetail.x, window.innerWidth - 230)),
                   top: hoveredDetail.y + 8,
                   transform: 'translate(-50%, 0)',
                   pointerEvents: 'none'
@@ -404,7 +400,7 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                 <img
                   src={hoveredDetail.unit.imageUrl}
                   alt="Subplot"
-                  className="w-full h-20 object-cover rounded mb-2 border border-green-100"
+                  className="w-full h-16 sm:h-20 object-cover rounded mb-2 border border-green-100"
                 />
                 <div className="text-xs text-green-700 font-semibold mb-1">
                   {getGridLabel(hoveredDetail.unit.row, hoveredDetail.unit.col)}
@@ -417,12 +413,34 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
               </div>
             )}
           </div>
+          
+          {/* Pagination controls - Enhanced responsive layout */}
+          {totalPages > 1 && (
+            <div className="flex flex-row gap-2 justify-center items-center mt-4 sticky bottom-0 bg-white/90 backdrop-blur-md rounded-b-2xl p-2">
+              <button
+                className="px-2 sm:px-3 py-1 rounded bg-green-100 text-green-700 font-semibold border border-green-200 disabled:opacity-50 text-xs sm:text-sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </button>
+              <span className="text-green-700 font-bold text-xs sm:text-sm">Page {page} of {totalPages}</span>
+              <button
+                className="px-2 sm:px-3 py-1 rounded bg-green-100 text-green-700 font-semibold border border-green-200 disabled:opacity-50 text-xs sm:text-sm"
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
-        {/* Right: Selected plot details (scrollable, card style) */}
-        <div className="w-80 max-h-[560px]">
+
+        {/* Selected plot details - Enhanced responsive layout */}
+        <div className="w-full xl:w-80 order-2 xl:order-2">
           {selectedUnits.length > 0 && (
-            <div className="bg-white/80 rounded-3xl shadow-2xl border border-green-100 h-full max-h-[560px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent p-4 flex flex-col gap-4">
-              <h3 className="text-xl font-extrabold text-green-700 mb-2 sticky top-0 bg-white/90 z-10 pb-2 rounded-t-2xl">
+            <div className="bg-white/80 rounded-3xl shadow-2xl border border-green-100 h-full max-h-[560px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-200 scrollbar-track-transparent p-4 flex flex-col gap-3 sm:gap-4">
+              <h3 className="text-lg sm:text-xl font-extrabold text-green-700 mb-2 sticky top-0 bg-white/90 backdrop-blur-md z-10 pb-2 rounded-t-2xl">
                 Selected Plot Details
               </h3>
               {selectedUnits.map(unit => {
@@ -431,21 +449,21 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
                 return (
                   <div
                     key={unit.id}
-                    className="relative flex items-center gap-4 bg-gradient-to-r from-green-50 via-white to-green-100 rounded-2xl border border-green-100 shadow p-3 transition-all duration-150 hover:shadow-lg"
+                    className="relative flex items-center gap-3 sm:gap-4 bg-gradient-to-r from-green-50 via-white to-green-100 rounded-2xl border border-green-100 shadow p-3 transition-all duration-150 hover:shadow-lg"
                   >
                     <img
                       src={subplot.imageUrl}
                       alt="Subplot"
-                      className="w-16 h-16 object-cover rounded-xl border border-green-200 shadow"
+                      className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-xl border border-green-200 shadow flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <div className="font-bold text-green-700 text-base">{label}</div>
-                      <div className="text-xs text-gray-500">Dimension: {subplot.dimension}</div>
-                      <div className="text-xs text-gray-500">Facing: {subplot.facing}</div>
-                      <div className="text-xs text-gray-500">Sqft: {subplot.sqft}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-green-700 text-sm sm:text-base truncate">{label}</div>
+                      <div className="text-xs text-gray-500 truncate">Dimension: {subplot.dimension}</div>
+                      <div className="text-xs text-gray-500 truncate">Facing: {subplot.facing}</div>
+                      <div className="text-xs text-gray-500 truncate">Sqft: {subplot.sqft}</div>
                     </div>
                     <button
-                      className="absolute top-2 right-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-full p-1 shadow transition"
+                      className="absolute top-2 right-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-full p-1 shadow transition flex-shrink-0"
                       title="Remove"
                       onClick={() => handleRemoveSelected(unit.id)}
                     >
@@ -460,12 +478,8 @@ const DSqftGrid: React.FC<SqftGridProps> = ({
           )}
         </div>
       </div>
-      
     </div>
   );
 };
 
 export default DSqftGrid;
-
-
-

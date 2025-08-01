@@ -1,27 +1,88 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plot, PlotType } from '../../../../types';
-// FIX: Icons are functional components and should be used as JSX tags.
-import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../../../constants.tsx';
+import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../../../constants';
+import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
+import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
 import Button from '../../../common/Button';
 import CardShell from '../../../common/CardShell';
+import { useAuth } from '../../../../contexts/AuthContext';
+import apiClient from '@/src/utils/api/apiClient';
+
+interface ShortlistItem {
+  id: number;
+  item_id: number;
+}
 
 interface PlotCardProps {
   plot: Plot;
-  showViewDetailButton?: boolean; // Add this prop for conditional rendering
+  showViewDetailButton?: boolean;
+  shortlistedItems: ShortlistItem[];
+  onShortlistChange: () => void;
 }
 
-const PlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
+const PlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton, shortlistedItems = [], onShortlistChange }) => {
+  const { currentUser } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isAlreadyShortlisted = useMemo(() => {
+    return shortlistedItems.some(item => item.item_id === plot.id);
+  }, [shortlistedItems, plot.id]);
+
+  const handleAddToWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isAlreadyShortlisted) return;
+
+    setIsSubmitting(true);
+    const accessToken = localStorage.getItem("access_token");
+    if (!currentUser || !accessToken) {
+      alert("You must be logged in to add items.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const payload = {
+      item_type: "plot",
+      item_id: plot.id,
+      quantity: 1,
+    };
+
+    try {
+      await apiClient.post('/cart/add/', payload, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      onShortlistChange();
+    } catch (error) {
+      console.error("Failed to add item to wishlist:", error);
+      alert("There was an error adding this item.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
-    <CardShell className="flex flex-col">
-      <img src={plot.imageUrl} alt={plot.title} className="w-full h-48 object-cover"/>
+    <CardShell className="flex flex-col relative">
+      {currentUser && (
+        <button
+          onClick={handleAddToWishlist}
+          disabled={isSubmitting || isAlreadyShortlisted}
+          className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/70 backdrop-blur-sm transition-colors disabled:cursor-not-allowed"
+          aria-label="Add to wishlist"
+        >
+          {isAlreadyShortlisted ? (
+            <SolidHeartIcon className="w-6 h-6 text-red-500" />
+          ) : (
+            <OutlineHeartIcon className="w-6 h-6 text-gray-700 hover:text-red-500" />
+          )}
+        </button>
+      )}
+
+      <img src={plot.imageUrl || 'https://picsum.photos/seed/plot/400/300'} alt={plot.title} className="w-full h-48 object-cover"/>
       <div className="p-4 flex flex-col flex-grow">
         <h3 className="text-lg font-semibold text-gray-800 mb-1 truncate">{plot.title}</h3>
         {plot.type === PlotType.VERIFIED && (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-2 self-start">
-            {/* FIX: Invoke CheckBadgeIcon as a JSX component */}
             <CheckBadgeIcon /> <span className="ml-1">Greenheap Verified</span>
-            {plot.isFlagship && <span className="ml-1 font-bold">(Flagship)</span>}
           </span>
         )}
         {plot.type === PlotType.PUBLIC && (
@@ -30,13 +91,10 @@ const PlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
           </span>
         )}
         <p className="text-sm text-gray-600 mb-2 flex items-center">
-          {/* FIX: Invoke LocationMarkerIcon as a JSX component */}
           <LocationMarkerIcon /> {plot.location}
         </p>
         <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-            {/* FIX: Invoke RupeeIcon as a JSX component */}
             <p className="text-gray-700 flex items-center"><RupeeIcon /> <span className="font-semibold">{plot.price > 0 ? plot.price.toLocaleString('en-IN') : 'Price on selection'}</span></p>
-            {/* FIX: Invoke AreaIcon as a JSX component */}
             <p className="text-gray-700 flex items-center"><AreaIcon /> {plot.area.toLocaleString('en-IN')} sqft</p>
         </div>
          {plot.sqftPrice && (
@@ -47,17 +105,17 @@ const PlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
         <p className="text-xs text-gray-500 mb-3 flex-grow h-12 overflow-hidden">
             {plot.description.substring(0,100)}{plot.description.length > 100 ? '...' : ''}
         </p>
-        <div className="mt-auto">
+        <div className="mt-auto pt-3">
           {showViewDetailButton ? (
-            <Link to={`/book-my-sqft/${plot.id}`}>
+            <Link to={`/plot-details/${plot.id}`}>
               <Button variant="outline" className="w-full">View Details</Button>
             </Link>
-          ) : plot.id === 'plot4-bms' || (plot.sqftPrice && plot.title.toLowerCase().includes("book my sqft")) ? (
-             <Link to={`/book-my-sqft/bms-plot-alpha`}>
+          ) : plot.sqftPrice ? (
+             <Link to={`/book-my-sqft/${plot.id}`}>
                <Button variant="primary" className="w-full">Book My SqFt</Button>
              </Link>
           ) : (
-             <Link to={`/book-my-sqft/${plot.id}`}>
+             <Link to={`/plot-details/${plot.id}`}>
                <Button variant="outline" className="w-full">View Details</Button>
              </Link>
           )}

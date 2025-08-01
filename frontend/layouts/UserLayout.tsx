@@ -2,12 +2,12 @@ import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
-import { getExtendedBookingDetailsById } from '../constants'; // For dynamic titles
+import { getExtendedBookingDetailsById } from '../constants'; 
 import Footer from '@/components/defaultlandingpage/defaultlandingcomponents/layout/Footer';
 
 const UserLayout: React.FC = () => {
   const location = useLocation();
-  let pageTitle = "Find Your Property"; // Default title for new HomePage
+  let pageTitle = "Find Your Property"; 
 
   if (location.pathname.startsWith('/book-my-sqft/')) {
     const bookingId = location.pathname.split('/').pop();
@@ -20,7 +20,7 @@ const UserLayout: React.FC = () => {
       }
     }
   } else if (location.pathname === '/') {
-      pageTitle = "Property Search"; // Title for the new HomePage
+      pageTitle = "Property Search"; 
   } else if (location.pathname === '/profile') {
       pageTitle = "My Profile";
   } else if (location.pathname === '/my-bookings') {
@@ -37,14 +37,15 @@ const UserLayout: React.FC = () => {
       pageTitle = "Knowledge Base";
   } else if (location.pathname === '/help-support') {
       pageTitle = "Help & Support";
+  } else if (location.pathname === '/user-dashboard') {
+      pageTitle = "My Dashboard";
   }
-  // Could add more dynamic titles for other user pages if needed
+  
 
   return (
     <div className="flex h-screen bg-neutral-100 font-sans">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Instead of passing className, wrap Header in a div with responsive padding */}
         <div className="pl-5 md:pl-0">
           <Header pageTitle={pageTitle} />
         </div>
@@ -53,7 +54,6 @@ const UserLayout: React.FC = () => {
           <Footer/>
         </main>
       </div>
-      {/* Remove style block for .page-title-mobile-pad */}
     </div>
   );
 };
