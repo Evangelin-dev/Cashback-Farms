@@ -224,6 +224,7 @@ class OTPRequestView(APIView):
                 """
             if email:
                 try:
+
                     smtp_user = settings.EMAIL_HOST_USER
                     email_msg = EmailMessage(
                         subject="Your OTP Code",
