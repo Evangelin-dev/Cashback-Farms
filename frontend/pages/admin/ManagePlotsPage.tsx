@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, Form, Input, InputNumber, Modal, Table, Tag, message, Upload } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
-import Button from '../../components/common/Button';
+import Button from '../../components/Button';
 import apiClient from '@/src/utils/api/apiClient';
 import { IconPencil, IconPlus, IconTrash } from '../../constants';
 import { PlusOneOutlined } from '@mui/icons-material';
@@ -148,17 +148,21 @@ const ManagePlotsPage: React.FC = () => {
     formData.append('total_area_sqft', String(values.total_area_sqft));
     formData.append('price_per_sqft', String(values.price_per_sqft));
 
-    // const fileList = values.plot_file as UploadFile[] | undefined;
-    // if (fileList && fileList.length > 0 && fileList[0].originFileObj) {
-    //   formData.append('plot_file', fileList[0].originFileObj);
-    // } else if (!fileList || fileList.length === 0) {
-    //     if(editingPlot) { // Only send empty if it's an edit, to clear the image
-    //         formData.append('plot_file', '');
-    //     }
-    // }
+    // Handle file uploads
+    const fileList = values.plot_file as UploadFile[] | undefined;
+    if (fileList && fileList.length > 0 && fileList[0].originFileObj) {
+      formData.append('plot_file', fileList[0].originFileObj);
+    } else if (!fileList || fileList.length === 0) {
+      if(editingPlot) { // Only send empty if it's an edit, to clear the image
+        formData.append('plot_file', '');
+      }
+    }
 
     const config = {
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: { 
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'multipart/form-data'
+      },
     };
 
     try {

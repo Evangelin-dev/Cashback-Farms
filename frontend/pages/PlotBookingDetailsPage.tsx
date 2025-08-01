@@ -155,6 +155,8 @@ const PlotDetailsPage: React.FC = () => {
       amount: 5000,
       plot_id: plot.id,
       client: plot.client,
+      booking_type:"full_plot"
+
    
     };
       const headers = { Authorization: `Bearer ${accessToken}` };
