@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -68,10 +69,6 @@ from django.contrib.auth.decorators import login_required
 import json
 
 
-
-
-
-
 class IsAdminUserType(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
@@ -109,11 +106,21 @@ class UserRegistrationView(APIView):
 
             # Send OTP via email
             email = validated_data.get('email')
+            html_body = f"""
+                Dear {user.first_name},
+
+                Your OTP code is: {otp}
+
+                This OTP is valid for 10 minutes. Please do not share it with anyone.
+
+                Thanks,
+                Team Greenheap Gold
+                """
             if email:
                 smtp_user = settings.EMAIL_HOST_USER
                 email_msg = EmailMessage(
                     subject="Your OTP Code",
-                    body=f"Dear {user.username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                    body=html_body,
                     from_email=smtp_user,
                     to=[email],
                 )
@@ -205,12 +212,22 @@ class OTPRequestView(APIView):
             otp = user.generate_otp()
 
             # Send OTP via email if email is provided
+            html_body = f"""
+                Dear {user.first_name},
+
+                Your OTP code is: {otp}
+
+                This OTP is valid for 10 minutes. Please do not share it with anyone.
+
+                Thanks,
+                Team Greenheap Gold
+                """
             if email:
                 try:
                     smtp_user = settings.EMAIL_HOST_USER
                     email_msg = EmailMessage(
                         subject="Your OTP Code",
-                        body=f"Your OTP code is: {otp}",
+                        body=html_body,
                         from_email=smtp_user,
                         to=[email],
                     )
@@ -753,13 +770,22 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             otp = user.generate_otp()
 
             # Step 3: Send OTP via Email
+            html_body = f"""
+                Dear {username},
+
+                Your OTP code is: {otp}
+
+                This OTP is valid for 10 minutes. Please do not share it with anyone.
+
+                Thanks,
+                Team Greenheap Gold
+                """
             if email:
                 try:
                     smtp_user = settings.EMAIL_HOST_USER
-                    smtp_pass = settings.EMAIL_HOST_PASSWORD
                     email_msg = EmailMessage(
                         subject="Your OTP Code",
-                        body=f"Dear {username},\n\nYour OTP code is: {otp}\n\nThanks,\nTeam",
+                        body=html_body,
                         from_email=smtp_user,
                         to=[email],
                     )
@@ -2020,11 +2046,21 @@ class CreateOrderView(APIView):
             data = request.data
             amount = int(data.get('amount')) * 100  # in paise
             plot_id = data.get('plot_id')
+            booking_type = data.get('booking_type', 'full_plot')
+            booked_area_sqft = data.get('booked_area_sqft')  # optional, for sqft booking
+  # default to full_plot
+
         except Exception:
             return Response({'error': 'Invalid payload'}, status=400)
 
         if not amount or not plot_id:
             return Response({'error': 'Amount and plot_id are required'}, status=400)
+
+        # Get plot details
+        try:
+            plot = PlotListing.objects.get(id=plot_id)
+        except PlotListing.DoesNotExist:
+            return Response({'error': 'Plot not found'}, status=404)
 
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
         order = client.order.create({'amount': amount, 'currency': 'INR', 'payment_capture': '1'})
@@ -2035,11 +2071,160 @@ class CreateOrderView(APIView):
             amount=amount / 100,
             status='created'
         )
+
+        total_price = float(plot.total_area_sqft) * float(plot.price_per_sqft)
+
+        # Create booking
+        booking = Booking.objects.create(
+            plot_listing=plot_id,
+            client=request.user,
+            booking_type=booking_type,
+            booked_area_sqft=booked_area_sqft if booking_type == 'square_feet' else None,
+            total_price=total_price,
+            status='pending'
+        )        
         return Response({
             'order_id': order['id'],
             'amount': amount,
             'key_id': settings.RAZORPAY_KEY_ID
         })
+
+def send_payment_receipt_email(payment, user, plot=None):
+    """
+    Send payment receipt email to user
+    """
+    try:
+        # Generate receipt number
+        receipt_number = f"GAFPL/{user.first_name[:3].upper()}{user.city[:3].upper() if user.city else 'LOC'}/{datetime.now().year}/{payment.id:03d}"
+        
+        # Calculate taxes
+        base_amount = payment.amount
+        service_tax = base_amount * 0.06  # 6% service tax
+        sgst = base_amount * 0.025  # 2.5% SGST
+        cgst = base_amount * 0.025  # 2.5% CGST
+        total_amount = base_amount + service_tax + sgst + cgst
+        
+        # Prepare email context
+        context = {
+            'receipt_number': receipt_number,
+            'date': payment.created_at.strftime('%B %d, %Y'),
+            'client_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+            'payment_mode': 'UPI',  # You can make this dynamic based on payment method
+            'base_amount': f"₹{base_amount:,.2f}",
+            'service_tax': f"₹{service_tax:,.2f}",
+            'sgst': f"₹{sgst:,.2f}",
+            'cgst': f"₹{cgst:,.2f}",
+            'total_amount': f"₹{total_amount:,.2f}",
+            'plot_title': plot.title if plot else 'Plot Purchase',
+            'razorpay_order_id': payment.razorpay_order_id,
+            'razorpay_payment_id': payment.razorpay_payment_id,
+        }
+        
+        # Create email HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Payment Receipt</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 0; padding: 20px; }}
+                .receipt {{ max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; }}
+                .header {{ text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }}
+                .company-name {{ font-size: 24px; font-weight: bold; color: #333; }}
+                .company-details {{ font-size: 12px; color: #666; margin-top: 10px; }}
+                .receipt-title {{ font-size: 20px; font-weight: bold; text-align: center; margin: 20px 0; }}
+                .receipt-info {{ margin: 20px 0; }}
+                .receipt-row {{ display: flex; justify-content: space-between; margin: 10px 0; }}
+                .amount-section {{ margin: 20px 0; border-top: 1px solid #ddd; padding-top: 20px; }}
+                .total {{ font-weight: bold; font-size: 18px; border-top: 2px solid #333; padding-top: 10px; }}
+                .footer {{ text-align: center; margin-top: 30px; font-size: 12px; color: #666; }}
+            </style>
+        </head>
+        <body>
+            <div class="receipt">
+                <div class="header">
+                    <div class="company-name">Greenheap Agro Farms Private Limited</div>
+                    <div class="company-details">
+                        Sri,Anant,GF NO: 1B, 11th Sector, 66th Street,<br>
+                        Kalaignar Karunanidhi Nagar, Chennai 600 078<br>
+                        Email: support@cashbackfarms.com | Website: www.cashbackfarms.com | Phone: +91 8190019991<br>
+                        GSTIN: 33AAJCG6869K2ZZ (Tamil Nadu)
+                    </div>
+                </div>
+                
+                <div class="receipt-title">PAYMENT RECEIPT</div>
+                
+                <div class="receipt-info">
+                    <div class="receipt-row">
+                        <strong>Receipt Number:</strong> {context['receipt_number']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Date:</strong> {context['date']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Received From:</strong> Mr./Ms. {context['client_name']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Payment Mode:</strong> {context['payment_mode']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Order ID:</strong> {context['razorpay_order_id']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Payment ID:</strong> {context['razorpay_payment_id']}
+                    </div>
+                    <div class="receipt-row">
+                        <strong>Description:</strong> {context['plot_title']}
+                    </div>
+                </div>
+                
+                <div class="amount-section">
+                    <div class="receipt-row">
+                        <span>Amount Received (Base):</span>
+                        <span>{context['base_amount']}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>Service Tax @ 6%:</span>
+                        <span>{context['service_tax']}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>SGST @ 2.5%:</span>
+                        <span>{context['sgst']}</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span>CGST @ 2.5%:</span>
+                        <span>{context['cgst']}</span>
+                    </div>
+                    <div class="receipt-row total">
+                        <span>Total Amount (Inclusive of Taxes):</span>
+                        <span>{context['total_amount']}</span>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Thank you for your payment.</p>
+                    <p>For any clarification, please contact our accounts team.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Send email
+        email = EmailMessage(
+            subject=f'Payment Receipt - {receipt_number}',
+            body=html_content,
+            from_email=settings.EMAIL_HOST_USER,
+            to=[user.email],
+        )
+        email.content_subtype = "html"
+        email.send()
+        
+        return True
+    except Exception as e:
+        print(f"Error sending payment receipt email: {e}")
+        return False
 
 class VerifyPaymentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -2065,7 +2250,21 @@ class VerifyPaymentView(APIView):
                 payment.status = "paid"
                 payment.save()
 
-                return Response({"status": "success"})
+                # Get plot details for receipt
+                plot = None
+                try:
+                    plot = PlotListing.objects.get(id=payment.plot_id)
+                except PlotListing.DoesNotExist:
+                    pass
+
+                # Send payment receipt email
+                email_sent = send_payment_receipt_email(payment, payment.user, plot)
+                
+                return Response({
+                    "status": "success",
+                    "message": "Payment is success",
+                    "receipt_sent": email_sent
+                })
             else:
                 return Response({"error": "Signature mismatch"}, status=400)
 
