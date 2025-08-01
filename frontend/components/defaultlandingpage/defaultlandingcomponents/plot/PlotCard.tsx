@@ -45,8 +45,14 @@ const DPlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
             </p>
         )}
         <p className="text-xs text-gray-500 mb-3 flex-grow h-12 overflow-hidden">
-            {plot.description.substring(0,100)}{plot.description.length > 100 ? '...' : ''}
+            {plot.description 
+                // If plot.description exists, shorten it and add '...' if needed
+                ? `${plot.description.substring(0, 100)}${plot.description.length > 100 ? '...' : ''}`
+                // If it doesn't exist, show a fallback message
+                : 'No description available for this plot.'
+            }
         </p>
+
         <div className="mt-auto">
           {showViewDetailButton ? (
             <Link to={`/Dbook-my-sqft/${plot.id}`}>

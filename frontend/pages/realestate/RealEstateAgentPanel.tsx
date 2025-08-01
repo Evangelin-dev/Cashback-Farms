@@ -43,10 +43,11 @@ function generateOTP() {
 
 const ProfileSection: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+   const { currentUser } = useAuth();
   const [profile, setProfile] = useState({
-    name: "Priya Sharma",
-    email: "priya.sharma@email.com",
-    phone: "+91-9123456789",
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    phone: currentUser?.phone || "",
     photo: "",
     kycStatus: "Not Verified",
   });

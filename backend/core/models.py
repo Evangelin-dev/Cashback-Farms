@@ -6,6 +6,11 @@ import random
 import string
 import datetime
 from django.utils import timezone
+from django.core.mail import EmailMessage
+from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
+import uuid
 
 
 # User Roles
@@ -21,23 +26,80 @@ def generate_referral_code():
     return 'CBF' + ''.join(random.choices(string.digits, k=5))
 
 
+# class CustomUser(AbstractUser):
+#     # Using username as a primary login field if email/mobile is not provided,
+#     # or it can be removed if login is strictly by mobile/email.
+#     # We will make email and mobile_number unique and allow login by either.
+#     email = models.EmailField(unique=True, null=True, blank=True)
+#     mobile_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+#     user_type = models.CharField(
+#         max_length=20,
+#         choices=UserType.choices,
+#         default=UserType.CLIENT,
+#         help_text="Defines the user's role and panel access."
+#     )
+#     user_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+#     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
+#     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
+
+#     is_active = models.BooleanField(default=False)
+
+#     # Add related_name to avoid clashes with auth.User.groups and auth.User.user_permissions
+#     groups = models.ManyToManyField(
+#         'auth.Group',
+#         verbose_name='groups',
+#         blank=True,
+#         help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+#         related_name="customuser_set",
+#         related_query_name="customuser",
+#     )
+#     user_permissions = models.ManyToManyField(
+#         'auth.Permission',
+#         verbose_name='user permissions',
+#         blank=True,
+#         help_text='Specific permissions for this user.',
+#         related_name="customuser_set",
+#         related_query_name="customuser",
+#     )
+
 class CustomUser(AbstractUser):
-    # Using username as a primary login field if email/mobile is not provided,
-    # or it can be removed if login is strictly by mobile/email.
-    # We will make email and mobile_number unique and allow login by either.
     email = models.EmailField(unique=True, null=True, blank=True)
     mobile_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    country_code = models.CharField(max_length=5, null=True, blank=True)  # e.g. +91, +1
+
+    # Basic Profile
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+
+    # Address
+    town = models.CharField(max_length=100, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)
+    state = models.CharField(max_length=100, null=True, blank=True)
+    country = models.CharField(max_length=100, null=True, blank=True)
+
+    # KYC
+    aadhaar_card = models.CharField(max_length=20, null=True, blank=True)
+    pan_card = models.CharField(max_length=20, null=True, blank=True)
+    kyc_status = models.CharField(max_length=20, default='pending')
+
+    # Role & Referral
     user_type = models.CharField(
         max_length=20,
         choices=UserType.choices,
         default=UserType.CLIENT,
         help_text="Defines the user's role and panel access."
     )
-    user_code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    user_code = models.CharField(max_length=10, unique=True, null=True, blank=True)
     referral_code = models.CharField(max_length=10, unique=True, default=generate_referral_code)
     referred_by = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='referrals')
+    gst_number = models.CharField(max_length=15, blank=True, null=True)
+    company_name = models.CharField(max_length=255, null=True, blank=True)
 
-    # Add related_name to avoid clashes with auth.User.groups and auth.User.user_permissions
+    is_active = models.BooleanField(default=False)
+
+    # Group & Permission fix
     groups = models.ManyToManyField(
         'auth.Group',
         verbose_name='groups',
@@ -78,6 +140,24 @@ class CustomUser(AbstractUser):
             # Log or handle the error as needed
             print(f"Error generating OTP: {e}")
             return None
+
+    def send_otp_email(self, otp):
+        try:
+            if self.email:
+                # smtp_user = "azeema224143@gmail.com"
+                # smtp_pass = "buwqswksuljoxjvm"
+                smtp_user = settings.EMAIL_HOST_USER
+                smtp_pass = settings.EMAIL_HOST_PASSWORD
+
+                email_msg = EmailMessage(
+                    subject="Your OTP Code",
+                    body=f"Your OTP code is: {otp}",
+                    from_email=smtp_user,
+                    to=[self.email],
+                )
+                email_msg.send(fail_silently=False)
+        except Exception as e:
+            print(f"Error sending OTP email: {e}")
 
     def verify_otp(self, otp_code):
         try:
@@ -204,13 +284,18 @@ class Booking(models.Model):
 
 
 class EcommerceProduct(models.Model):
-    vendor = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='products_sold',
-                               limit_choices_to={'user_type': UserType.B2B_VENDOR})
+    vendor = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name='products_sold',
+        limit_choices_to={'user_type': UserType.B2B_VENDOR}
+    )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock_quantity = models.IntegerField(default=0)
-    category = models.CharField(max_length=100, blank=True, null=True) # e.g., 'material', 'tool', 'service', 'architect'
+    category = models.CharField(max_length=100, blank=True, null=True)
+    moq = models.IntegerField(default=1, verbose_name="Minimum Order Quantity")  # Added field
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -222,17 +307,33 @@ class EcommerceProduct(models.Model):
             return f"EcommerceProduct (error: {e})"
 
 
+def generate_order_id():
+    return str(uuid.uuid4()).replace('-', '').upper()[:12]  # Optional formatting
+
 class Order(models.Model):
     client = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='my_orders')
+    order_id = models.CharField(max_length=100, unique=True, blank=True)  # Removed default here
+    product_name = models.CharField(max_length=255, null=True, blank=True)
+    category = models.CharField(max_length=100, null=True, blank=True)
+    qty = models.PositiveIntegerField(null=True, blank=True)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    customer_type = models.CharField(max_length=10, choices=[('B2B', 'B2B'), ('B2C', 'B2C')], null=True, blank=True)
+    buyer_name = models.CharField(max_length=255, null=True, blank=True)
+    buyer_phone_number = models.CharField(max_length=15, null=True, blank=True)
+    gst_number = models.CharField(max_length=20, blank=True, null=True)
+    shipping_address = models.TextField(null=True, blank=True)
+    expected_delivery_date = models.DateField(null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2)
-    status = models.CharField(max_length=50, default='pending') # e.g., pending, processing, shipped, delivered, cancelled
+    status = models.CharField(max_length=50, default='pending')
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = generate_order_id()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        try:
-            return f"Order #{self.id} by {self.client.username}"
-        except Exception as e:
-            return f"Order (error: {e})"
+        return f"Order #{self.order_id} by {self.client.username}"
 
 
 class OrderItem(models.Model):
@@ -311,6 +412,7 @@ class SQLFTProject(models.Model):
         ('sqft', 'Square Feet'),
         ('sqyd', 'Square Yards'),
     ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='sqlft_projects', null=True)
     project_name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     google_map_link = models.URLField(blank=True, null=True)
@@ -327,6 +429,20 @@ class SQLFTProject(models.Model):
     def __str__(self):
         return self.project_name
 
+class SubPlotUnit(models.Model):
+    project = models.ForeignKey(SQLFTProject, on_delete=models.CASCADE, related_name='sub_plots')
+    plot_number = models.CharField(max_length=100)
+    dimensions = models.CharField(max_length=50, blank=True)  # E.g. "30x40"
+    area = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
+    status = models.CharField(max_length=50, default="Available")
+    facing = models.CharField(max_length=50, blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.plot_number} - {self.project.project_name}"
 
 class BankDetail(models.Model):
     STATUS_CHOICES = [
@@ -346,3 +462,195 @@ class BankDetail(models.Model):
     def __str__(self):
         return f"{self.account_holder_name} - {self.bank_name}"
 
+class KYCDocument(models.Model):
+    DOCUMENT_TYPES = [
+        ('national_id', 'National ID'),
+        ('address_proof', 'Address Proof'),
+        ('passport', 'Passport'),
+        ('aadhaar_card', 'Aadhaar'),
+        ('pan_card','Pan Card'),
+        # add more if needed
+    ]
+
+    STATUS_CHOICES = [
+        ('submitted', 'Submitted'),
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='kyc_documents')
+    document_type = models.CharField(max_length=50, choices=DOCUMENT_TYPES)
+    file = models.FileField(upload_to='kyc_documents/')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
+    upload_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.document_type}"
+
+class FAQ(models.Model):
+    question = models.TextField()
+    answer = models.TextField()
+
+    def __str__(self):
+        return self.question[:50]
+
+User = get_user_model()
+
+class SupportTicket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='support_tickets')
+    subject = models.CharField(max_length=255)
+    message = models.TextField()
+    reply_message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ticket #{self.id} - {self.subject}"
+
+class Inquiry(models.Model):
+    INQUIRY_TYPES = [
+        ('plot', 'Plot'),
+        ('micro_plot', 'Micro Plot'),
+        ('material', 'Material'),
+        ('service', 'Service'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    type = models.CharField(max_length=20, choices=INQUIRY_TYPES)
+    plot = models.ForeignKey(PlotListing, on_delete=models.CASCADE, null=True, blank=True)
+    product = models.ForeignKey(EcommerceProduct, on_delete=models.CASCADE, null=True, blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ShortlistCart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shortlist_cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ShortlistCartItem(models.Model):
+    cart = models.ForeignKey(ShortlistCart, on_delete=models.CASCADE, related_name='items')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    quantity = models.PositiveIntegerField(null=True, blank=True)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+class CallRequest(models.Model):
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="call_requests")
+    material = models.ForeignKey(EcommerceProduct, on_delete=models.CASCADE, related_name="call_requests", null=True, blank=True)
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    city = models.CharField(max_length=100)
+    message = models.TextField(blank=True, null=True)
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} - {self.phone}"
+    
+class B2BVendorProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="b2b_profile")
+    company_name = models.CharField(max_length=255)
+    gst_number = models.CharField(max_length=20, blank=True, null=True)
+    pan_number = models.CharField(max_length=20, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    contact_person = models.CharField(max_length=255, blank=True, null=True)
+    website = models.URLField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.company_name} ({self.user.username})"
+
+class VerifiedPlot(models.Model):
+    title = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    area = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=15, decimal_places=2)
+    sqft_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    image_url = models.URLField(blank=True, null=True)
+    description = models.TextField(blank=True)
+    is_flagship = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class CommercialProperty(models.Model):
+    COMMERCIAL_TYPE_CHOICES = [
+        ('Office Space', 'Office Space'),
+        ('Shop', 'Shop'),
+        ('Warehouse', 'Warehouse'),
+        ('Showroom', 'Showroom'),
+        ('Co-working', 'Co-working'),
+        # Add more types as needed
+    ]
+
+    AVAILABILITY_CHOICES = [
+        ('Available', 'Available'),
+        ('Leased', 'Leased'),
+        ('Sold', 'Sold'),
+        ('Under Offer', 'Under Offer'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='commercial_properties')
+    property_name = models.CharField(max_length=255)
+    commercial_type = models.CharField(max_length=50, choices=COMMERCIAL_TYPE_CHOICES)
+    
+    address_line1 = models.CharField(max_length=255, blank=True)
+    locality = models.CharField(max_length=100)
+    city = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=20, blank=True)
+
+    area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
+    is_for_sale = models.BooleanField(default=False)
+    sale_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+
+    is_for_rent = models.BooleanField(default=False)
+    rent_per_month = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+
+    availability_status = models.CharField(max_length=50, choices=AVAILABILITY_CHOICES, default='Available')
+    description = models.TextField(blank=True)
+    
+    amenities = models.JSONField(default=list, blank=True)
+    images_urls = models.JSONField(default=list, blank=True)
+
+    floor = models.CharField(max_length=50, blank=True)
+    total_floors = models.PositiveIntegerField(null=True, blank=True)
+    parking_spaces = models.PositiveIntegerField(null=True, blank=True)
+    year_built = models.PositiveIntegerField(null=True, blank=True)
+
+    contact_person = models.CharField(max_length=100)
+    contact_number = models.CharField(max_length=20)
+
+    added_date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.property_name} - {self.city}"
+    
+
+class Payment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    plot_id = models.IntegerField()
+    razorpay_order_id = models.CharField(max_length=100)
+    razorpay_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    amount = models.FloatField()
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.user.username} - {self.status}"

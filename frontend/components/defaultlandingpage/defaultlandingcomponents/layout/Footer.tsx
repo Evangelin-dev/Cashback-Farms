@@ -9,11 +9,7 @@ const Footer: React.FC = () => (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
         <div>
           <h3 className="text-2xl font-extrabold text-green-600 flex items-center gap-2">
-            <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-green-400 via-green-200 to-green-600 shadow flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9 2v8m4-8v8m-4 0h4" />
-              </svg>
-            </span>
+            <img src="/images/logobg.png" className='w-20 h-20' alt="" />
             Cashback Farms
           </h3>
           <p className="mt-3 text-base text-gray-600 font-medium">
@@ -23,7 +19,7 @@ const Footer: React.FC = () => (
         <div>
           <h4 className="text-sm font-bold text-green-700 tracking-wider uppercase mb-2">Quick Links</h4>
           <ul className="mt-3 space-y-2">
-            {NAV_LINKS.slice(0,4).map((link) => (
+            {NAV_LINKS.slice(0, 4).map((link) => (
               <li key={link.name}>
                 <Link
                   to={link.path}
@@ -39,17 +35,17 @@ const Footer: React.FC = () => (
           <h4 className="text-sm font-bold text-green-700 tracking-wider uppercase mb-2">Legal</h4>
           <ul className="mt-3 space-y-2">
             <li>
-              <Link to="/privacy" className="text-base text-black hover:text-green-600 transition-colors font-medium">
+              <Link to="/Privacy_Policy" className="text-base text-black hover:text-green-600 transition-colors font-medium">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="text-base text-black hover:text-green-600 transition-colors font-medium">
+              <Link to="/Terms_&_Conditions" className="text-base text-black hover:text-green-600 transition-colors font-medium">
                 Terms and Conditions
               </Link>
             </li>
             <li>
-              <a href="#" className="text-base text-black hover:text-green-600 transition-colors font-medium">Refund Policy</a>
+              <Link to="/cancellation-refunds" className="text-base text-black hover:text-green-600 transition-colors font-medium">Refund Policy</Link>
             </li>
           </ul>
         </div>
@@ -73,12 +69,12 @@ const Footer: React.FC = () => (
               +91 123 456 7890
             </li>
             <li className="flex items-center gap-2">
-              <span className="inline-block w-5 h-5 text-green-600">
+              <span className="inline-block w-24 h-24 text-green-600">
                 <svg fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-4-4h-1M7 20H2v-2a4 4 0 014-4h1m6 0V4a4 4 0 00-8 0v10" />
                 </svg>
               </span>
-              123 Green Avenue, Bangalore, India
+              Sri,Anant,GF NO: 1B, 11th Sector, 66th Street,Kalaignar Karunanidhi Nagar,Chennai 600 078
             </li>
           </ul>
         </div>
@@ -116,8 +112,8 @@ export const DefaultFooter: React.FC = () => (
           ))}
         </div>
         <div className="flex gap-4 mt-4 md:mt-0">
-          <Link to="/Dprivacy" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Privacy Policy</Link>
-          <Link to="/Dterms" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Terms & Conditions</Link>
+          <Link to="/Privacy_Policy" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Privacy Policy</Link>
+          <Link to="/Terms_&_Conditions" className="text-gray-700 hover:text-green-600 text-sm underline transition-colors">Terms & Conditions</Link>
         </div>
         <div className="text-sm text-gray-600">&copy; {new Date().getFullYear()} Cashback Farms</div>
       </div>

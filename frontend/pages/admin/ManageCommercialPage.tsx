@@ -1,327 +1,236 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Card, Form, Input, InputNumber, Modal, Select, Table, Tag, message, Checkbox, Tooltip, Row, Col, Space } from 'antd';
 import Button from '../../components/Button';
-import Card from '../../components/Card';
-import Modal from '../../components/Modal';
-import { IconPencil, IconPlus, IconTrash, MOCK_COMMERCIAL_PROPERTIES } from '../../constants';
-import { CommercialPropertyInfo, CommercialPropertyType, PropertyLocation } from '../../types';
+import apiClient from '../../src/utils/api/apiClient';
+import { IconPencil, IconPlus, IconTrash } from '../../constants';
 
-const initialCommercialPropertyFormState: Omit<CommercialPropertyInfo, 'id' | 'addedDate'> = {
-  propertyName: '',
-  commercialType: CommercialPropertyType.OFFICE_SPACE,
-  location: { locality: '', city: '', pincode: '', addressLine1: '' },
-  areaSqFt: 0,
-  isForSale: false,
-  salePrice: 0,
-  isForRent: false,
-  rentPerMonth: 0,
-  availabilityStatus: 'Available',
-  description: '',
-  amenities: [],
-  imagesUrls: [],
-  floor: '',
-  totalFloors: 0,
-  parkingSpaces: 0,
-  yearBuilt: new Date().getFullYear(),
-  contactPerson: '',
-  contactNumber: '',
+const useWindowSize = () => {
+    const [size, setSize] = useState({ width: window.innerWidth });
+    useEffect(() => {
+        const handleResize = () => setSize({ width: window.innerWidth });
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+    return size;
 };
 
-const ManageCommercialPage: React.FC = () => {
-  const [commercialProperties, setCommercialProperties] = useState<CommercialPropertyInfo[]>(MOCK_COMMERCIAL_PROPERTIES);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingProperty, setEditingProperty] = useState<CommercialPropertyInfo | null>(null);
-  const [formData, setFormData] = useState<Omit<CommercialPropertyInfo, 'id' | 'addedDate'>>(initialCommercialPropertyFormState);
-  const [amenitiesInput, setAmenitiesInput] = useState<string>('');
-  const [imagesInput, setImagesInput] = useState<string>('');
+interface CommercialProperty {
+  id: number;
+  key: number;
+  property_name: string;
+  commercial_type: string;
+  address_line1: string;
+  locality: string;
+  city: string;
+  pincode: string;
+  area_sqft: string;
+  is_for_sale: boolean;
+  sale_price: string | null;
+  is_for_rent: boolean;
+  rent_per_month: string | null;
+  availability_status: string;
+  description: string;
+  amenities: string[];
+  images_urls: string[];
+  floor: string;
+  total_floors: number;
+  parking_spaces: number;
+  year_built: number;
+  contact_person: string;
+  contact_number: string;
+}
 
+const COMMERCIAL_TYPE_CHOICES = ['Office Space', 'Shop', 'Warehouse', 'Showroom', 'Co-working'];
+const AVAILABILITY_CHOICES = ['Available', 'Leased', 'Sold', 'Under Offer'];
+
+const ManageCommercialPage: React.FC = () => {
+  const [properties, setProperties] = useState<CommercialProperty[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProperty, setEditingProperty] = useState<CommercialProperty | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form] = Form.useForm();
+  const { width } = useWindowSize();
+  const isDesktop = width >= 768;
+
+
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState<CommercialProperty | null>(null);
+
+
+  const fetchProperties = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      const response = await apiClient.get('/admin/commercial-properties/', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setProperties((response || []).map((p: any) => ({ ...p, key: p.id })).sort((a: CommercialProperty, b: CommercialProperty) => b.id - a.id));
+    } catch (error) {
+      message.error("Failed to load commercial properties.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (editingProperty) {
-      const { id, addedDate, ...dataForForm } = editingProperty;
-      setFormData(dataForForm);
-      setAmenitiesInput(dataForForm.amenities.join(', '));
-      setImagesInput(dataForForm.imagesUrls.join(', '));
-    } else {
-      setFormData(initialCommercialPropertyFormState);
-      setAmenitiesInput('');
-      setImagesInput('');
-    }
-  }, [editingProperty]);
+    fetchProperties();
+  }, [fetchProperties]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    if (name.startsWith("location.")) {
-        const locField = name.split(".")[1] as keyof PropertyLocation;
-        setFormData(prev => ({
-            ...prev,
-            location: {
-                ...prev.location,
-                [locField]: value
-            }
-        }));
-        return;
-    }
-
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-                type === 'number' ? parseFloat(value) || 0 : value;
-    setFormData(prev => ({ ...prev, [name]: val }));
-  };
-  
-  const handleAmenitiesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmenitiesInput(e.target.value);
-  };
-
-  const handleImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImagesInput(e.target.value);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const finalFormData = {
-        ...formData,
-        amenities: amenitiesInput.split(',').map(a => a.trim()).filter(a => a),
-        imagesUrls: imagesInput.split(',').map(img => img.trim()).filter(img => img)
+  const handleFormSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    const accessToken = localStorage.getItem("access_token");
+    const payload = {
+        ...values,
+        amenities: values.amenities ? values.amenities.split(',').map((a: string) => a.trim()).filter(Boolean) : [],
+        images_urls: values.images_urls ? values.images_urls.split(',').map((img: string) => img.trim()).filter(Boolean) : [],
     };
 
-    if (editingProperty) {
-      const updatedProperty: CommercialPropertyInfo = { ...editingProperty, ...finalFormData };
-      setCommercialProperties(commercialProperties.map(p => p.id === editingProperty.id ? updatedProperty : p));
-      // Update mock global array
-      const mockIndex = MOCK_COMMERCIAL_PROPERTIES.findIndex(p => p.id === editingProperty.id);
-      if (mockIndex !== -1) MOCK_COMMERCIAL_PROPERTIES[mockIndex] = updatedProperty;
-
-    } else {
-      const newProperty: CommercialPropertyInfo = {
-        ...finalFormData,
-        id: `comm-${Date.now().toString()}`,
-        addedDate: new Date().toISOString().split('T')[0],
-      };
-      setCommercialProperties([...commercialProperties, newProperty]);
-      MOCK_COMMERCIAL_PROPERTIES.push(newProperty); // Add to mock global array
+    try {
+      if (editingProperty) {
+        await apiClient.put(`/admin/commercial-properties/${editingProperty.id}/`, payload, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        message.success("Property updated successfully!");
+      } else {
+        await apiClient.post('/admin/commercial-properties/', payload, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        message.success("Property added successfully!");
+      }
+      closeModal();
+      fetchProperties();
+    } catch (error: any) {
+        const errorData = error.response?.data;
+        const errorMessage = typeof errorData === 'object' && errorData !== null
+          ? Object.entries(errorData).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`).join('; ')
+          : "An error occurred. Please try again.";
+        message.error(errorMessage, 5);
+    } finally {
+      setIsSubmitting(false);
     }
-    closeModal();
   };
 
-  const openModalForEdit = (property: CommercialPropertyInfo) => {
-    setEditingProperty(property);
-    setIsModalOpen(true);
+  const handleConfirmDelete = async () => {
+    if (!propertyToDelete) return;
+    setIsSubmitting(true);
+    try {
+        const accessToken = localStorage.getItem("access_token");
+        await apiClient.delete(`/admin/commercial-properties/${propertyToDelete.id}/`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        message.success("Property deleted successfully.");
+        fetchProperties();
+    } catch (error) {
+        message.error("Failed to delete property.");
+    } finally {
+        setIsDeleteModalVisible(false);
+        setPropertyToDelete(null);
+        setIsSubmitting(false);
+    }
   };
-
+  
   const openModalForNew = () => {
     setEditingProperty(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+  
+  const openModalForEdit = (property: CommercialProperty) => {
+    setEditingProperty(property);
+    form.setFieldsValue({
+        ...property,
+        amenities: property.amenities.join(', '),
+        images_urls: property.images_urls.join(', '),
+    });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingProperty(null);
-    // Resetting form data is handled by useEffect when editingProperty becomes null
+    form.resetFields();
   };
 
-  const handleDeleteProperty = (propertyId: string) => {
-    if (window.confirm('Are you sure you want to delete this commercial property?')) {
-      setCommercialProperties(commercialProperties.filter(p => p.id !== propertyId));
-      // Remove from mock global array
-      const mockIndex = MOCK_COMMERCIAL_PROPERTIES.findIndex(p => p.id === propertyId);
-      if (mockIndex !== -1) MOCK_COMMERCIAL_PROPERTIES.splice(mockIndex, 1);
-    }
+  const showDeleteModal = (property: CommercialProperty) => {
+    setPropertyToDelete(property);
+    setIsDeleteModalVisible(true);
   };
   
-  const renderInputField = (label: string, name: string, type: string = 'text', required: boolean = true, isTextarea: boolean = false) => {
-      let value: any;
-      if (name.startsWith("location.")) {
-          const locField = name.split(".")[1] as keyof PropertyLocation;
-          value = formData.location[locField];
-      } else {
-          value = (formData as any)[name];
-      }
-
-      if (type === 'number' && (value === undefined || value === null)) value = 0;
-      if (type !== 'number' && (value === undefined || value === null)) value = '';
-
-
-      return (
-        <div>
-            <label htmlFor={name} className="block text-sm font-medium text-neutral-700">{label}</label>
-            {isTextarea ? (
-            <textarea
-                name={name}
-                id={name}
-                value={value}
-                onChange={handleInputChange}
-                required={required}
-                rows={3}
-                className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-            />
-            ) : (
-            <input
-                type={type}
-                name={name}
-                id={name}
-                value={value}
-                onChange={handleInputChange}
-                required={required}
-                className="mt-1 block w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                min={type === 'number' ? 0 : undefined}
-            />
-            )}
-        </div>
-    );
- };
-
+  const columns = [
+    { title: 'Name', dataIndex: 'property_name', key: 'property_name', fixed: isDesktop ? 'left' : undefined, width: 150 },
+    { title: 'Type', dataIndex: 'commercial_type', key: 'commercial_type' },
+    { title: 'Location', key: 'location', render: (_: any, record: CommercialProperty) => `${record.locality}, ${record.city}` },
+    { title: 'Area (SqFt)', dataIndex: 'area_sqft', key: 'area_sqft' },
+    { title: 'Sale Price', dataIndex: 'sale_price', key: 'sale_price', render: (price: string) => price ? `₹${parseFloat(price).toLocaleString('en-IN')}` : 'N/A' },
+    { title: 'Rent/Month', dataIndex: 'rent_per_month', key: 'rent_per_month', render: (price: string) => price ? `₹${parseFloat(price).toLocaleString('en-IN')}` : 'N/A' },
+    { title: 'Status', dataIndex: 'availability_status', key: 'availability_status', render: (status: string) => <Tag color="blue">{status}</Tag> },
+    { title: 'Actions', key: 'actions', fixed: isDesktop ? 'right' : undefined, width: 100, render: (_: any, record: CommercialProperty) => (
+        <Space direction="vertical" align="center">
+          <Tooltip title="Edit Property">
+            <Button size="sm" variant="outline" onClick={() => openModalForEdit(record)} leftIcon={<IconPencil className="w-4 h-4"/>} />
+          </Tooltip>
+          <Tooltip title="Delete Property">
+            <Button size="sm" variant="danger" onClick={() => showDeleteModal(record)} leftIcon={<IconTrash className="w-4 h-4"/>} />
+          </Tooltip>
+        </Space>
+    )},
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 py-8 px-2">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary shadow-xl">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4M4 21h16" />
-            </svg>
-          </span>
-          <div>
-            <h1 className="text-xl font-bold text-primary mb-1 tracking-tight drop-shadow">Manage Commercial Properties</h1>
-            <div className="text-xs text-neutral-500">Add, edit, and manage all commercial properties for your projects.</div>
-          </div>
-        </div>
-        <Button
-          onClick={openModalForNew}
-          leftIcon={<IconPlus className="w-5 h-5" />}
-          className="shadow-xl px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-green-400 to-green-600 text-white hover:from-green-500 hover:to-green-700 transition"
-        >
-          Add New Property
-        </Button>
-      </div>
-      <Card bodyClassName="p-0 shadow-2xl rounded-2xl border border-green-100">
+    <div>
+      <Card title="Manage Commercial Properties" extra={<Button onClick={openModalForNew} leftIcon={<IconPlus/>}>Add Property</Button>} style={{ marginBottom: 20 }}>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-green-100">
-            <thead className="bg-gradient-to-r from-primary/10 via-white to-primary/10">
-              <tr>
-                {['Name', 'Type', 'Location', 'Area (SqFt)', 'Sale Price', 'Rent/Month', 'Status', 'Actions'].map(header => (
-                  <th key={header} scope="col" className="px-4 py-2 text-left text-xs font-bold text-primary uppercase tracking-wider">{header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-green-50">
-              {commercialProperties.map((prop) => (
-                <tr key={prop.id} className="hover:bg-green-50 transition">
-                  <td className="px-4 py-2 whitespace-nowrap text-xs font-semibold text-neutral-900">{prop.propertyName}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs text-primary font-semibold">{prop.commercialType}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs text-neutral-500">{prop.location.locality}, {prop.location.city}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs text-neutral-500">{prop.areaSqFt.toLocaleString()}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs text-green-700 font-bold">{prop.isForSale ? `₹${(prop.salePrice || 0).toLocaleString()}` : 'N/A'}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs text-green-700 font-bold">{prop.isForRent ? `₹${(prop.rentPerMonth || 0).toLocaleString()}` : 'N/A'}</td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs">
-                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full shadow ${prop.availabilityStatus === 'Available' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {prop.availabilityStatus}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-xs font-medium space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => openModalForEdit(prop)} leftIcon={<IconPencil className="w-4 h-4"/>} className="text-xs px-3 py-1">Edit</Button>
-                    <Button size="sm" variant="danger" onClick={() => handleDeleteProperty(prop.id)} leftIcon={<IconTrash className="w-4 h-4"/>} className="text-xs px-3 py-1 bg-gradient-to-r from-red-400 to-red-600 text-white hover:from-red-500 hover:to-red-700">Delete</Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {commercialProperties.length === 0 && (
-            <div className="text-center py-10 text-neutral-400 text-xs">
-              <svg className="w-12 h-12 mx-auto mb-2 text-primary/20" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4M4 21h16" />
-              </svg>
-              No commercial properties found. Click "Add New Property" to get started.
-            </div>
-          )}
+          <Table dataSource={properties} columns={columns} loading={isLoading} rowKey="key" scroll={{ x: 1200 }} />
         </div>
       </Card>
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingProperty ? 'Edit Commercial Property' : 'Add New Commercial Property'}>
-        <form onSubmit={handleSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto p-2 text-xs">
-          <div className="flex flex-col gap-3">
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Property Name', 'propertyName')}
-              <div>
-                <label htmlFor="commercialType" className="block text-xs font-medium text-neutral-700">Commercial Type</label>
-                <select name="commercialType" id="commercialType" value={formData.commercialType} onChange={handleInputChange} required
-                        className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs">
-                  {Object.values(CommercialPropertyType).map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
+
+      <Modal open={isModalOpen} onCancel={closeModal} title={editingProperty ? 'Edit Commercial Property' : 'Add New Commercial Property'} footer={null} width={800} destroyOnClose centered>
+        <Form form={form} layout="vertical" onFinish={handleFormSubmit} className="mt-4 max-h-[70vh] overflow-y-auto p-2">
+            <Row gutter={16}>
+                <Col xs={24} sm={12}><Form.Item name="property_name" label="Property Name" rules={[{ required: true }]}><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="commercial_type" label="Commercial Type" rules={[{ required: true }]}><Select options={COMMERCIAL_TYPE_CHOICES.map(c => ({ label: c, value: c }))}/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="address_line1" label="Address Line 1"><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="locality" label="Locality" rules={[{ required: true }]}><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="city" label="City" rules={[{ required: true }]}><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="pincode" label="Pincode"><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="area_sqft" label="Area (SqFt)" rules={[{ required: true }]}><InputNumber style={{width: '100%'}}/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="availability_status" label="Availability Status" rules={[{ required: true }]}><Select options={AVAILABILITY_CHOICES.map(c => ({ label: c, value: c }))}/></Form.Item></Col>
+                <Col xs={8}><Form.Item name="is_for_sale" valuePropName="checked"><Checkbox>For Sale</Checkbox></Form.Item></Col>
+                <Col xs={16}><Form.Item name="sale_price" label="Sale Price (₹)"><InputNumber style={{width: '100%'}} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={value => value!.replace(/\$\s?|(,*)/g, '')}/></Form.Item></Col>
+                <Col xs={8}><Form.Item name="is_for_rent" valuePropName="checked"><Checkbox>For Rent</Checkbox></Form.Item></Col>
+                <Col xs={16}><Form.Item name="rent_per_month" label="Rent per Month (₹)"><InputNumber style={{width: '100%'}} formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={value => value!.replace(/\$\s?|(,*)/g, '')}/></Form.Item></Col>
+                <Col span={24}><Form.Item name="description" label="Description"><Input.TextArea rows={3}/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="amenities" label="Amenities (comma-separated)"><Input/></Form.Item></Col>
+                <Col xs={24} sm={12}><Form.Item name="images_urls" label="Image URLs (comma-separated)"><Input/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="floor" label="Floor"><Input/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="total_floors" label="Total Floors"><InputNumber style={{width: '100%'}}/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="parking_spaces" label="Parking Spaces"><InputNumber style={{width: '100%'}}/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="year_built" label="Year Built"><InputNumber style={{width: '100%'}}/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="contact_person" label="Contact Person" rules={[{ required: true }]}><Input/></Form.Item></Col>
+                <Col xs={24} sm={8}><Form.Item name="contact_number" label="Contact Number" rules={[{ required: true }]}><Input/></Form.Item></Col>
+            </Row>
+            <div className="flex justify-end space-x-3 pt-4">
+                <Button type="button" variant="secondary" onClick={closeModal} disabled={isSubmitting}>Cancel</Button>
+                <Button type="submit" variant="primary" loading={isSubmitting}>{editingProperty ? 'Save Changes' : 'Add Property'}</Button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Address Line 1', 'location.addressLine1', 'text', false)}
-              {renderInputField('Locality', 'location.locality')}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('City', 'location.city')}
-              {renderInputField('Pincode', 'location.pincode', 'text', false)}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Area (Sq. Ft.)', 'areaSqFt', 'number')}
-              <div className="flex items-center gap-2">
-                <label htmlFor="isForSale" className="flex items-center text-xs font-medium text-neutral-700">
-                  <input type="checkbox" name="isForSale" id="isForSale" checked={formData.isForSale} onChange={handleInputChange} className="mr-2 h-4 w-4 text-primary border-neutral-300 rounded focus:ring-primary"/>
-                  For Sale
-                </label>
-                {formData.isForSale && renderInputField('Sale Price (₹)', 'salePrice', 'number', false)}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <label htmlFor="isForRent" className="flex items-center text-xs font-medium text-neutral-700">
-                  <input type="checkbox" name="isForRent" id="isForRent" checked={formData.isForRent} onChange={handleInputChange} className="mr-2 h-4 w-4 text-primary border-neutral-300 rounded focus:ring-primary"/>
-                  For Rent
-                </label>
-                {formData.isForRent && renderInputField('Rent per Month (₹)', 'rentPerMonth', 'number', false)}
-              </div>
-              <div>
-                <label htmlFor="availabilityStatus" className="block text-xs font-medium text-neutral-700">Availability Status</label>
-                <select name="availabilityStatus" id="availabilityStatus" value={formData.availabilityStatus} onChange={handleInputChange} required
-                        className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs">
-                  {['Available', 'Leased', 'Sold', 'Under Offer'].map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            {renderInputField('Description', 'description', 'text', true, true)}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="amenitiesInput" className="block text-xs font-medium text-neutral-700">Amenities (comma-separated)</label>
-                <input type="text" name="amenitiesInput" id="amenitiesInput" value={amenitiesInput} onChange={handleAmenitiesChange}
-                       className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs" />
-              </div>
-              <div>
-                <label htmlFor="imagesInput" className="block text-xs font-medium text-neutral-700">Image URLs (comma-separated)</label>
-                <input type="text" name="imagesInput" id="imagesInput" value={imagesInput} onChange={handleImagesChange}
-                       className="mt-1 block w-full px-2 py-1.5 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-xs" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Floor (e.g., Ground, 3rd)', 'floor', 'text', false)}
-              {renderInputField('Total Floors in Building', 'totalFloors', 'number', false)}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Parking Spaces', 'parkingSpaces', 'number', false)}
-              {renderInputField('Year Built', 'yearBuilt', 'number', false)}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {renderInputField('Contact Person Name', 'contactPerson')}
-              {renderInputField('Contact Person Number', 'contactNumber', 'tel')}
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2 pt-3">
-            <Button type="button" variant="secondary" onClick={closeModal} className="px-4 py-1 text-xs bg-gradient-to-r from-green-200 to-green-400 text-green-900 hover:from-green-300 hover:to-green-500">Cancel</Button>
-            <Button type="submit" variant="primary" className="px-4 py-1 text-xs bg-gradient-to-r from-green-500 to-green-700 text-white hover:from-green-600 hover:to-green-800">{editingProperty ? 'Save Changes' : 'Add Property'}</Button>
-          </div>
-        </form>
+        </Form>
       </Modal>
-      <style>{`
-        .shadow-2xl { box-shadow: 0 8px 32px 0 rgba(31, 41, 55, 0.12); }
-        .drop-shadow { filter: drop-shadow(0 2px 8px #22c55e33); }
-      `}</style>
+
+      <Modal
+        title="Confirm Deletion"
+        open={isDeleteModalVisible}
+        onCancel={() => setIsDeleteModalVisible(false)}
+        footer={null}
+        width={400}
+        centered
+      >
+        <p className="py-4">Are you sure you want to permanently delete the property: <strong className="text-primary">{propertyToDelete?.property_name}</strong>? This action cannot be undone.</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setIsDeleteModalVisible(false)} disabled={isSubmitting}>Cancel</Button>
+          <Button variant="danger" onClick={handleConfirmDelete} loading={isSubmitting}>Delete Property</Button>
+        </div>
+      </Modal>
     </div>
   );
 };
