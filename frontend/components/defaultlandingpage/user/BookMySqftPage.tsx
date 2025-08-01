@@ -9,15 +9,39 @@ import SqftGrid from '../defaultlandingcomponents/plot/SqftGrid';
 
 // Helper function to generate a default grid since the API doesn't provide one
 const generateInitialGrid = (rows: number, cols: number): SqftUnit[][] => {
+    const totalUnits = rows * cols;
+    const bookedUnits = Math.floor(totalUnits * 0.52); // 52% of units will be booked
+    
+    // Create array of all unit positions
+    const allPositions = [];
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            allPositions.push({ row: r, col: c });
+        }
+    }
+    
+    // Randomly select 52% of positions to be booked
+    const bookedPositions = new Set();
+    for (let i = 0; i < bookedUnits; i++) {
+        const randomIndex = Math.floor(Math.random() * allPositions.length);
+        const position = allPositions.splice(randomIndex, 1)[0];
+        bookedPositions.add(`${position.row}-${position.col}`);
+    }
+    
     return Array.from({ length: rows }, (_, r) =>
-        Array.from({ length: cols }, (_, c) => ({
-            id: `${r}-${c}`,
-            row: r,
-            col: c,
-            isAvailable: true,
-            isSelected: false,
-            isBooked: false,
-        }))
+        Array.from({ length: cols }, (_, c) => {
+            const unitId = `${r}-${c}`;
+            const isBooked = bookedPositions.has(unitId);
+            
+            return {
+                id: unitId,
+                row: r,
+                col: c,
+                isAvailable: !isBooked,
+                isSelected: false,
+                isBooked: isBooked,
+            };
+        })
     );
 };
 
@@ -69,7 +93,7 @@ const DBookMySqftPage: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuth(); // 2. GET THE CURRENT USER
 
-    const [plotInfo, setPlotInfo] = useState<BookMySqftPlotInfo | null>(null);
+    const [plotInfo, setPlotInfo] = useState<(BookMySqftPlotInfo & { imageUrl?: string }) | null>(null);
     const [grid, setGrid] = useState<SqftUnit[][]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -90,14 +114,18 @@ const DBookMySqftPage: React.FC = () => {
             setError(null);
             try {
                 const response = await apiClient.get(`/public/micro-plots/${id}/`);
-                const apiPlot = response; // Correctly access response.data
-                const mappedPlotInfo: BookMySqftPlotInfo = {
+                const apiPlot = response.data || response; // Correctly access response.data
+                const mappedPlotInfo: BookMySqftPlotInfo & { imageUrl?: string } = {
                     id: apiPlot.id,
                     name: apiPlot.project_name,
                     location: apiPlot.location,
+                    totalUnits: 100, // Default value
+                    unitsWide: 10, // Default value
+                    unitsTall: 10, // Default value
                     sqftPricePerUnit: Number(apiPlot.price),
-                    imageUrl: apiPlot.project_image || 'https://picsum.photos/seed/${apiPlot.id}/600/400',
-                    initialGrid: generateInitialGrid(10, 10), 
+                    emiOptions: [], // Default empty array
+                    initialGrid: generateInitialGrid(10, 10),
+                    imageUrl: apiPlot.project_image || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
                 };
                 setPlotInfo(mappedPlotInfo);
                 setGrid(mappedPlotInfo.initialGrid);
@@ -116,6 +144,7 @@ const DBookMySqftPage: React.FC = () => {
         setGrid(prevGrid => {
             const newGrid = prevGrid.map(r => r.map(unit => ({ ...unit })));
             const unit = newGrid[row][col];
+            // Only allow selection if unit is available and not booked
             if (unit.isAvailable && !unit.isBooked) {
                 unit.isSelected = !unit.isSelected;
                 if (unit.isSelected) {
@@ -123,6 +152,10 @@ const DBookMySqftPage: React.FC = () => {
                 } else {
                     setSelectedUnits(prevSelected => prevSelected.filter(u => u.id !== unit.id));
                 }
+            }
+            // If unit is booked, show a message
+            if (unit.isBooked) {
+                alert("This unit is already booked and cannot be selected.");
             }
             return newGrid;
         });
@@ -202,6 +235,66 @@ const DBookMySqftPage: React.FC = () => {
                     <div className="space-y-1 sm:space-y-2 text-sm sm:text-base lg:text-lg text-gray-700">
                         <p><strong>Location:</strong> {plotInfo.location}</p>
                         <p><strong>Price per SqFt Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+
+                {/* Booking Status Graph */}
+                <div className="w-full max-w-4xl mb-6">
+                    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-green-200">
+                        <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Booking Status Overview</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            {/* 52% Already Booked - Orange */}
+                            <div className="bg-orange-100 border-2 border-orange-300 rounded-xl p-4 text-center">
+                                <div className="w-16 h-16 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
+                                    <span className="text-white font-bold text-lg">52%</span>
+                                </div>
+                                <h3 className="font-semibold text-orange-800 mb-2">Already Booked</h3>
+                                <p className="text-sm text-orange-700">Units that have been purchased</p>
+                            </div>
+                            
+                            {/* Available - Light Green */}
+                            <div className="bg-green-100 border-2 border-green-300 rounded-xl p-4 text-center">
+                                <div className="w-16 h-16 mx-auto mb-3 bg-green-400 rounded-full flex items-center justify-center">
+                                    <span className="text-white font-bold text-lg">48%</span>
+                                </div>
+                                <h3 className="font-semibold text-green-800 mb-2">Available</h3>
+                                <p className="text-sm text-green-700">Units ready for booking</p>
+                            </div>
+                            
+                            {/* Reserved - Dark Green */}
+                            <div className="bg-green-600 border-2 border-green-700 rounded-xl p-4 text-center">
+                                <div className="w-16 h-16 mx-auto mb-3 bg-green-800 rounded-full flex items-center justify-center">
+                                    <span className="text-white font-bold text-lg">0%</span>
+                                </div>
+                                <h3 className="font-semibold text-white mb-2">Reserved</h3>
+                                <p className="text-sm text-green-100">Units in high demand</p>
+                            </div>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                            <div className="flex h-4 rounded-full overflow-hidden">
+                                <div className="bg-orange-500 h-full" style={{ width: '52%' }}></div>
+                                <div className="bg-green-400 h-full" style={{ width: '48%' }}></div>
+                                <div className="bg-green-800 h-full" style={{ width: '0%' }}></div>
+                            </div>
+                        </div>
+                        
+                        {/* Legend */}
+                        <div className="flex flex-wrap justify-center gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                                <span className="text-gray-700">Booked (52%)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-green-400 rounded"></div>
+                                <span className="text-gray-700">Available (48%)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 bg-green-800 rounded"></div>
+                                <span className="text-gray-700">Reserved (0%)</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
