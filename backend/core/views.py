@@ -80,6 +80,7 @@ class OTPRequestView(APIView):
                 return Response({"detail": "Provide email or mobile number."}, status=status.HTTP_400_BAD_REQUEST)
             # Generate OTP
             otp = user.generate_otp()
+            
             # Send OTP via email if email is provided
             if email:
                 try:
