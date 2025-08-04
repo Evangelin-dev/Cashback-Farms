@@ -159,10 +159,11 @@ const AppRoutes: React.FC = () => {
         <Route element={<RealLayout />}>
           <Route path="/realestate/realprofile" element={<RealProfile />} />
           <Route path="/realestate/*" element={<RealEstateRoutes />} />
-          <Route path="/referrealestate" element={<ReferAndEarnReal />} />
           <Route path="/realestate/post-plots" element={<PostPlots />} />
           <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
           <Route path="/realestate/dashboard" element={<Mydashboard />} />
+          <Route path="/realestate/referrealestate" element={<ReferAndEarnReal />} />
+          
         </Route>
       </Route>
 

@@ -5,12 +5,13 @@ import RealSideNav from "../pages/realestate/components/realsidenav"; // Adjust 
 import Header from "../components/Header"; // Adjust path if needed
 
 function getRealEstatePageTitle(pathname: string): string {
-  if (pathname === "/realestate/post-plots") return "Post Plots";
+  if (pathname === "/realestate/post-plots") return "Post Your Plots";
+  if (pathname === "/realestate/post-micro-plots") return "Post GIOO Plots";
   if (pathname === "/realestate/leads") return "Plot Inquiries & Leads";
-  if (pathname === "/realestate/commission") return "Commission Dashboard";
   if (pathname === "/realestate/lead-management") return "Lead Management";
   if (pathname === "/realestate/realprofile") return "Agent Profile";
-  if (pathname === "/realestate/dashboard") return "Dashboard";
+  if(pathname === "/realestate/dashboard") return "Dashboard";
+  if(pathname === "/realestate/referrealestate") return "Refer and Earn";
   return "RealEstate Agent Panel";
 }
 

@@ -78,7 +78,7 @@ const MyDashboard: React.FC = () => {
   const fetchPlots = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get<any[]>("/plots");
+      const res = await apiClient.get<any[]>("/plots/");
       const mappedProperties: Property[] = (res || []).map((plot: any) => ({
         id: plot.id.toString(),
         title: plot.title,

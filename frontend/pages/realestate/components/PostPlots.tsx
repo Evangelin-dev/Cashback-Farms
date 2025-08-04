@@ -73,7 +73,7 @@ const PostPlots: React.FC = () => {
     try {
       setIsLoading(true);
       const accessToken = localStorage.getItem("access_token");
-      const res = await apiClient.get("/plots", { headers: { Authorization: `Bearer ${accessToken}` } });
+      const res = await apiClient.get("/plots/", { headers: { Authorization: `Bearer ${accessToken}` } });
       const mappedPlots = (res || []).map((plot: any) => ({
         key: plot.id,
         id: plot.id,
@@ -125,11 +125,32 @@ const PostPlots: React.FC = () => {
   const handleAdd = async (values: any) => {
     try {
       const accessToken = localStorage.getItem("access_token");
-      const payload = { title: values.title, owner_name: values.owner, location: values.location, total_area_sqft: String(values.area), price_per_sqft: String(values.price), description };
-      await apiClient.post("/plots/", payload, { headers: { Authorization: `Bearer ${accessToken}` } });
+      
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      formData.append('title', values.title);
+      formData.append('owner_name', values.owner);
+      formData.append('location', values.location);
+      formData.append('total_area_sqft', String(values.area));
+      formData.append('price_per_sqft', String(values.price));
+      formData.append('description', description);
+      
+      // Append each image file to the FormData
+      images.forEach((file, index) => {
+        formData.append('plot_file', file);
+      });
+      
+      await apiClient.post("/plots/", formData, { 
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'multipart/form-data'
+        } 
+      });
+      
       // Refresh plots after adding a new one
       fetchPlots();
       resetAndCloseModal();
+      message.success("Plot added successfully!");
     } catch (err) {
       console.error("Error adding plot:", err);
       message.error("Failed to add plot.");
