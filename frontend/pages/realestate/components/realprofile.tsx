@@ -36,17 +36,17 @@ const initialProfile = {
 
 // --- KYC DOCUMENT INTERFACE & CONSTANTS ---
 interface IKycDocument {
-    id: number;
-    document_type: string;
-    file: string;
-    status: 'submitted' | 'pending' | 'approved' | 'rejected';
-    upload_date: string;
+  id: number;
+  document_type: string;
+  file: string;
+  status: 'submitted' | 'pending' | 'approved' | 'rejected';
+  upload_date: string;
 }
 const DOCUMENT_TYPES = [
-    { value: 'pan_card', label: 'PAN Card' },
-    { value: 'aadhaar_card', label: 'Aadhaar Card' },
-    { value: 'passport', label: 'Passport' },
-    { value: 'national_id', label: 'National ID' },
+  { value: 'pan_card', label: 'PAN Card' },
+  { value: 'aadhaar_card', label: 'Aadhaar Card' },
+  { value: 'passport', label: 'Passport' },
+  { value: 'national_id', label: 'National ID' },
 ];
 
 // --- HELPER COMPONENTS AND HOOKS (DEFINED OUTSIDE) ---
@@ -73,39 +73,39 @@ function useCountUp(target: number, duration = 2500) {
 }
 
 const KycModal: React.FC<{ onClose: () => void; onSubmit: (docType: string, file: File) => Promise<void>; }> = ({ onClose, onSubmit }) => {
-    const [docType, setDocType] = useState("pan_card");
-    const [file, setFile] = useState<File | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { setError(null); if (e.target.files && e.target.files[0]) { setFile(e.target.files[0]); } };
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!file) { setError("Please select a file to upload."); return; }
-        setError(null);
-        setIsSubmitting(true);
-        try {
-            await onSubmit(docType, file);
-        } catch (apiError: any) {
-            setError(apiError.message || "An unknown error occurred.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-adminpop">
-                <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition" aria-label="Close"><X className="w-6 h-6" /></button>
-                <h2 className="text-2xl font-bold text-primary mb-6 text-center">Submit KYC Document</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Document Type</label><select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm">{DOCUMENT_TYPES.map(doc => <option key={doc.value} value={doc.value}>{doc.label}</option>)}</select></div>
-                    <div><label className="block text-sm font-semibold text-gray-700 mb-2">Upload File</label><label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-xl appearance-none cursor-pointer hover:border-primary"><span className="flex items-center space-x-2"><UploadCloud className="w-6 h-6 text-gray-500" /><span className="font-medium text-gray-600">{file ? file.name : "Click to upload a file"}</span></span><input type="file" onChange={handleFileChange} className="hidden" /></label></div>
-                    {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-                    <button type="submit" disabled={isSubmitting || !file} className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-green-500 to-primary text-white font-bold text-lg shadow-lg hover:from-green-600 hover:to-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? "Submitting..." : "Submit for Verification"}</button>
-                </form>
-            </div>
-            <style>{`@keyframes adminpop {0%{transform:scale(.8) rotate(-5deg);opacity:0}60%{transform:scale(1.05) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}.animate-adminpop{animation:adminpop .6s cubic-bezier(.68,-.55,.27,1.55)}`}</style>
-        </div>
-    );
+  const [docType, setDocType] = useState("pan_card");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => { setError(null); if (e.target.files && e.target.files[0]) { setFile(e.target.files[0]); } };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) { setError("Please select a file to upload."); return; }
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(docType, file);
+    } catch (apiError: any) {
+      setError(apiError.message || "An unknown error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative animate-adminpop">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition" aria-label="Close"><X className="w-6 h-6" /></button>
+        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Submit KYC Document</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Document Type</label><select value={docType} onChange={(e) => setDocType(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-primary focus:outline-none shadow-sm">{DOCUMENT_TYPES.map(doc => <option key={doc.value} value={doc.value}>{doc.label}</option>)}</select></div>
+          <div><label className="block text-sm font-semibold text-gray-700 mb-2">Upload File</label><label className="flex flex-col items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-xl appearance-none cursor-pointer hover:border-primary"><span className="flex items-center space-x-2"><UploadCloud className="w-6 h-6 text-gray-500" /><span className="font-medium text-gray-600">{file ? file.name : "Click to upload a file"}</span></span><input type="file" onChange={handleFileChange} className="hidden" /></label></div>
+          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          <button type="submit" disabled={isSubmitting || !file} className="w-full py-3 mt-2 rounded-xl bg-gradient-to-r from-green-500 to-primary text-white font-bold text-lg shadow-lg hover:from-green-600 hover:to-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? "Submitting..." : "Submit for Verification"}</button>
+        </form>
+      </div>
+      <style>{`@keyframes adminpop {0%{transform:scale(.8) rotate(-5deg);opacity:0}60%{transform:scale(1.05) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}.animate-adminpop{animation:adminpop .6s cubic-bezier(.68,-.55,.27,1.55)}`}</style>
+    </div>
+  );
 };
 
 const WithdrawPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => { /* ... (WithdrawPopup remains the same) ... */ return null; };
@@ -127,31 +127,31 @@ const RealProfile: React.FC = () => {
     initialValues: initialProfile,
     enableReinitialize: true,
     onSubmit: async (values) => {
-        const accessToken = localStorage.getItem("access_token");
-        if (!accessToken || !agentId) return;
-        try {
-            await apiClient.put(`/agents/${agentId}/`, {
-                first_name: values.firstName,
-                last_name: values.lastName,
-                gender: values.gender,
-                date_of_birth: values.dob,
-                company_name: values.company,
-                email: values.email,
-                phone_number: `${values.countryCode}${values.phone}`,
-                company_number: `${values.companyCountryCode}${values.companyNumber}`,
-                gst_number: values.gstNumber,
-                city: values.address.city,
-                state: values.address.state,
-                country: values.address.country,
-            }, { headers: { Authorization: `Bearer ${accessToken}` } });
-            
-            setEditMode(false);
-            setProfileAnim(true);
-            setShowPopup(true);
-            setTimeout(() => { setProfileAnim(false); setTimeout(() => { setShowPopup(false); }, 1200); }, 1200);
-        } catch (err) {
-            alert("Failed to update agent profile.");
-        }
+      const accessToken = localStorage.getItem("access_token");
+      if (!accessToken || !agentId) return;
+      try {
+        await apiClient.put(`/agents/${agentId}/`, {
+          first_name: values.firstName,
+          last_name: values.lastName,
+          gender: values.gender,
+          date_of_birth: values.dob,
+          company_name: values.company,
+          email: values.email,
+          phone_number: `${values.countryCode}${values.phone}`,
+          company_number: `${values.companyCountryCode}${values.companyNumber}`,
+          gst_number: values.gstNumber,
+          city: values.address.city,
+          state: values.address.state,
+          country: values.address.country,
+        }, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+        setEditMode(false);
+        setProfileAnim(true);
+        setShowPopup(true);
+        setTimeout(() => { setProfileAnim(false); setTimeout(() => { setShowPopup(false); }, 1200); }, 1200);
+      } catch (err) {
+        alert("Failed to update agent profile.");
+      }
     },
   });
 
@@ -171,7 +171,7 @@ const RealProfile: React.FC = () => {
       const accessToken = localStorage.getItem("access_token");
       if (!accessToken) return;
       const headers = { Authorization: `Bearer ${accessToken}` };
-      
+
       setKycDataLoaded(false);
       try {
         const [agentRes, bankRes, kycRes] = await Promise.all([
@@ -202,7 +202,7 @@ const RealProfile: React.FC = () => {
 
         const bank = Array.isArray(bankRes) ? bankRes[0] : bankRes;
         if (bank) { setBankDetails({ id: bank.id || "", accountHolder: bank.account_holder_name || "", accountNumber: bank.account_number || "", ifsc: bank.ifsc || "", bankName: bank.bank_name || "", status: bank.status || "Pending" }); }
-        
+
         if (kycRes?.documents) { setKycDocuments(kycRes.documents); }
 
       } catch (err) {
@@ -310,154 +310,153 @@ const RealProfile: React.FC = () => {
           <div className="flex flex-col items-center mb-4">
             <div className="relative">
               <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden border-4 border-primary agent-photo profile-pulse">
-                {formik.values.photo ? <img src={formik.values.photo} alt="avatar" className="w-full h-full rounded-full object-cover" /> : ( (formik.values.firstName[0] || "U") + (formik.values.lastName[0] || "") )}
+                {formik.values.photo ? <img src={formik.values.photo} alt="avatar" className="w-full h-full rounded-full object-cover" /> : ((formik.values.firstName[0] || "U") + (formik.values.lastName[0] || ""))}
               </div>
               <label className="absolute bottom-0 right-0 bg-white border border-primary rounded-full p-1 cursor-pointer hover:bg-primary hover:text-white transition" title="Upload Photo" style={{ boxShadow: "0 2px 8px #22c55e33" }}>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => formik.setFieldValue("photo", ev.target?.result as string); reader.readAsDataURL(file); } }}/>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onload = (ev) => formik.setFieldValue("photo", ev.target?.result as string); reader.readAsDataURL(file); } }} />
                 <IconEdit className="w-4 h-4" />
               </label>
             </div>
             <h2 className="mt-2 text-lg font-bold text-primary-light tracking-wide animate-fadein">Edit RealEstate Profile</h2>
             <div className="mt-1 text-l text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">User Code:{" "}<span className="text-primary font-semibold">{userCode}</span></div>
           </div>
-          
+
           <form className="space-y-3 animate-slidein" onSubmit={formik.handleSubmit}>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="block text-xs text-gray-500 mb-1">First Name</label><input name="firstName" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.firstName} onChange={formik.handleChange} readOnly={!editMode}/></div>
-              <div><label className="block text-xs text-gray-500 mb-1">Last Name</label><input name="lastName" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.lastName} onChange={formik.handleChange} readOnly={!editMode}/></div>
+              <div><label className="block text-xs text-gray-500 mb-1">First Name</label><input name="firstName" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.firstName} onChange={formik.handleChange} readOnly={!editMode} /></div>
+              <div><label className="block text-xs text-gray-500 mb-1">Last Name</label><input name="lastName" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.lastName} onChange={formik.handleChange} readOnly={!editMode} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="block text-xs text-gray-500 mb-1">Gender</label><select name="gender" value={formik.values.gender} onChange={formik.handleChange} className="border rounded px-2 py-1 w-full text-xs"><option value="">Select Gender</option><option value="Female">Female</option><option value="Male">Male</option><option value="Other">Other</option></select></div>
-              <div><label className="block text-xs text-gray-500 mb-1">Date of Birth</label><input type="date" name="dob" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.dob} onChange={formik.handleChange} readOnly={!editMode}/></div>
+              <div><label className="block text-xs text-gray-500 mb-1">Date of Birth</label><input type="date" name="dob" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.dob} onChange={formik.handleChange} readOnly={!editMode} /></div>
             </div>
-            <div><label className="block text-xs text-gray-500 mb-1">Company Name</label><input name="company" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.company} onChange={formik.handleChange} readOnly={!editMode}/></div>
-            <div><label className="block text-xs text-gray-500 mb-1">Email</label><input name="email" type="email" className="border rounded px-2 py-1 w-full text-xs bg-gray-100" value={formik.values.email} readOnly/></div>
-            <div><label className="block text-xs text-gray-500 mb-1">Phone Number</label><div className="flex gap-2"><select name="countryCode" value={formik.values.countryCode} onChange={formik.handleChange} className="border rounded px-2 py-1 bg-white text-xs min-w-[3.5rem]"><option value="">Select</option>{countryCodes.map((c) => (<option key={c.code + c.label} value={c.code}>{c.flag} {c.code}</option>))}</select><input name="phone" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.phone} onChange={formik.handleChange} maxLength={15} readOnly={!editMode}/></div></div>
-            <div><label className="block text-xs text-gray-500 mb-1">Company Number</label><div className="flex gap-2"><select name="companyCountryCode" value={formik.values.companyCountryCode} onChange={formik.handleChange} className="border rounded px-2 py-1 bg-white text-xs min-w-[3.5rem]"><option value="">Select</option>{countryCodes.map((c) => (<option key={c.code + c.label} value={c.code}>{c.flag} {c.code}</option>))}</select><input name="companyNumber" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.companyNumber} onChange={formik.handleChange} maxLength={15} readOnly={!editMode}/></div></div>
-            <div><label className="block text-xs text-gray-500 mb-1">GST Number (Optional)</label><input name="gstNumber" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.gstNumber} onChange={formik.handleChange} readOnly={!editMode}/></div>
-            <div><label className="block text-xs text-gray-500 mb-1">Address</label><div className="grid grid-cols-2 gap-3"><input name="address.town" value={formik.values.address.town} onChange={formik.handleChange} placeholder="Town/Area" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode}/><input name="address.city" value={formik.values.address.city} onChange={formik.handleChange} placeholder="City" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode}/><input name="address.state" value={formik.values.address.state} onChange={formik.handleChange} placeholder="State" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode}/><input name="address.country" value={formik.values.address.country} onChange={formik.handleChange} placeholder="Country" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode}/></div></div>
+            <div><label className="block text-xs text-gray-500 mb-1">Company Name</label><input name="company" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.company} onChange={formik.handleChange} readOnly={!editMode} /></div>
+            <div><label className="block text-xs text-gray-500 mb-1">Email</label><input name="email" type="email" className="border rounded px-2 py-1 w-full text-xs bg-gray-100" value={formik.values.email} readOnly /></div>
+            <div><label className="block text-xs text-gray-500 mb-1">Phone Number</label><div className="flex gap-2"><select name="countryCode" value={formik.values.countryCode} onChange={formik.handleChange} className="border rounded px-2 py-1 bg-white text-xs min-w-[3.5rem]"><option value="">Select</option>{countryCodes.map((c) => (<option key={c.code + c.label} value={c.code}>{c.flag} {c.code}</option>))}</select><input name="phone" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.phone} onChange={formik.handleChange} maxLength={15} readOnly={!editMode} /></div></div>
+            <div><label className="block text-xs text-gray-500 mb-1">Company Number</label><div className="flex gap-2"><select name="companyCountryCode" value={formik.values.companyCountryCode} onChange={formik.handleChange} className="border rounded px-2 py-1 bg-white text-xs min-w-[3.5rem]"><option value="">Select</option>{countryCodes.map((c) => (<option key={c.code + c.label} value={c.code}>{c.flag} {c.code}</option>))}</select><input name="companyNumber" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.companyNumber} onChange={formik.handleChange} maxLength={15} readOnly={!editMode} /></div></div>
+            <div><label className="block text-xs text-gray-500 mb-1">GST Number (Optional)</label><input name="gstNumber" className="border rounded px-2 py-1 w-full text-xs" value={formik.values.gstNumber} onChange={formik.handleChange} readOnly={!editMode} /></div>
+            <div><label className="block text-xs text-gray-500 mb-1">Address</label><div className="grid grid-cols-2 gap-3"><input name="address.town" value={formik.values.address.town} onChange={formik.handleChange} placeholder="Town/Area" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode} /><input name="address.city" value={formik.values.address.city} onChange={formik.handleChange} placeholder="City" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode} /><input name="address.state" value={formik.values.address.state} onChange={formik.handleChange} placeholder="State" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode} /><input name="address.country" value={formik.values.address.country} onChange={formik.handleChange} placeholder="Country" className="border rounded px-2 py-1 w-full text-xs" readOnly={!editMode} /></div></div>
             <div className="pt-2"><label className="text-sm text-gray-700 mb-1 font-semibold">KYC Status</label><div className="flex items-center gap-4 mt-1 p-3 bg-gray-50 border rounded-lg justify-between">{kycDataLoaded ? getKycDisplay() : <span className="text-xs text-gray-500 animate-pulse">Loading...</span>}{shouldShowVerifyButton && (<button type="button" className="px-3 py-1 text-xs bg-primary text-white rounded-md hover:bg-primary-dark transition animate-kyc-btn" onClick={() => setShowKycModal(true)}>{currentKycStatus === "rejected" ? "Re-submit" : "Verify Now"}</button>)}</div></div>
             <div className="flex gap-2 mt-4">{editMode ? (<><button type="submit" className="bg-primary text-white px-4 py-1 rounded-md text-xs">Save Changes</button><button type="button" className="bg-red-500 text-white px-4 py-1 rounded-md text-xs" onClick={() => { setEditMode(false); formik.resetForm(); }}>Cancel</button></>) : (<button type="button" className="bg-primary text-white px-4 py-1 rounded-md text-xs" onClick={() => setEditMode(true)}>Edit Profile</button>)}</div>
           </form>
         </div>
         <div className="w-[18rem] flex-shrink-0 flex flex-col gap-4">
           <div className="w-[18rem] flex-shrink-0 flex flex-col gap-4">
-          {/* --- Bank Details Module Card --- */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 mb-4">
-            <h3 className="text-base font-bold text-primary-light mb-2 animate-fadein">
-              Bank Details Module
-            </h3>
-            <div className="space-y-2">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Account Holder Name
-                </label>
-                <input
-                className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
-                value={bankDetails.accountHolder}
-                onChange={e => setBankDetails({ ...bankDetails, accountHolder: e.target.value })}
-                readOnly={!editMode}
+            {/* --- Bank Details Module Card --- */}
+            <div className="bg-white rounded-2xl shadow-xl p-4 mb-4">
+              <h3 className="text-base font-bold text-primary-light mb-2 animate-fadein">
+                Bank Details Module
+              </h3>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account Holder Name
+                  </label>
+                  <input
+                    className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
+                    value={bankDetails.accountHolder}
+                    onChange={e => setBankDetails({ ...bankDetails, accountHolder: e.target.value })}
+                    readOnly={!editMode}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Account Number
+                  </label>
+                  <input
+                    className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
+                    value={bankDetails.accountNumber}
+                    onChange={e => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
+                    readOnly={!editMode}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">IFSC</label>
+                  <input
+                    className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
+                    value={bankDetails.ifsc}
+                    onChange={e => setBankDetails({ ...bankDetails, ifsc: e.target.value })}
+                    readOnly={!editMode}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">
+                    Bank Name
+                  </label>
+                  <input
+                    className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
+                    value={bankDetails.bankName}
+                    onChange={e => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                    readOnly={!editMode}
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-gray-500">Status:</span>
+                  <span
+                    className={`font-semibold flex items-center gap-1 text-xs ${bankDetails.status === "Verified"
+                        ? "text-green-600"
+                        : bankDetails.status === "Pending"
+                          ? "text-yellow-600 animate-pulse"
+                          : "text-red-600"
+                      }`}
+                    title={bankDetails.status}
+                  >
+                    {bankDetails.status}
+                  </span>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    type="button"
+                    className="bg-primary text-white px-4 py-1 rounded text-xs font-semibold shadow-lg hover:scale-105 transition-transform duration-200"
+                    onClick={handleSaveBankDetail}
+                  >
+                    Save Bank Detail
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-gray-200 text-gray-700 px-4 py-1 rounded text-xs font-semibold shadow hover:scale-105 transition-transform duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+            {/* --- Referral Code Card (from Refer & Earn) --- */}
+            <div className="bg-white rounded-2xl shadow-xl p-4 mb-4 flex flex-col items-center">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/3820/3820331.png"
+                alt="Refer and Earn"
+                className="w-12 h-12 mb-2 drop-shadow"
               />
+              <h3 className="text-base font-bold text-green-700 mb-1 text-center tracking-tight drop-shadow">
+                Your Referral Code
+              </h3>
+              <div className="bg-green-50 rounded-lg p-3 flex flex-col items-center w-full mb-3 shadow-inner">
+                <span className="text-green-700 font-semibold text-base mb-1">Share this code to earn rewards</span>
+                <div className="flex items-center gap-1">
+                  <span className="bg-white border border-green-200 px-3 py-1 rounded text-base font-bold tracking-widest text-green-700 shadow">
+                    {userCode}
+                  </span>
+                  <button
+                    onClick={handleCopyReferral}
+                    className="bg-green-600 text-white px-2 py-1 rounded font-semibold hover:bg-green-700 transition text-sm"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Account Number
-                </label>
-                <input
-                  className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
-                  value={bankDetails.accountNumber}
-                  onChange={e => setBankDetails({ ...bankDetails, accountNumber: e.target.value })}
-                  readOnly={!editMode}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">IFSC</label>
-                <input
-                  className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
-                  value={bankDetails.ifsc}
-                  onChange={e => setBankDetails({ ...bankDetails, ifsc: e.target.value })}
-                  readOnly={!editMode}
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Bank Name
-                </label>
-                <input
-                  className="border rounded px-2 py-1 w-full text-xs focus:border-primary transition"
-                  value={bankDetails.bankName}
-                  onChange={e => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                  readOnly={!editMode}
-                />
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-500">Status:</span>
-                <span
-                  className={`font-semibold flex items-center gap-1 text-xs ${
-                    bankDetails.status === "Verified"
-                      ? "text-green-600"
-                      : bankDetails.status === "Pending"
-                      ? "text-yellow-600 animate-pulse"
-                      : "text-red-600"
-                  }`}
-                  title={bankDetails.status}
-                >
-                  {bankDetails.status}
-                </span>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <button
-                  type="button"
-                  className="bg-primary text-white px-4 py-1 rounded text-xs font-semibold shadow-lg hover:scale-105 transition-transform duration-200"
-                  onClick={handleSaveBankDetail}
-                >
-                  Save Bank Detail
-                </button>
-                <button
-                  type="button"
-                  className="bg-gray-200 text-gray-700 px-4 py-1 rounded text-xs font-semibold shadow hover:scale-105 transition-transform duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
+              <button
+                className="w-full mt-2 py-2 bg-green-100 text-green-700 rounded-lg font-semibold shadow hover:bg-green-200 transition text-xs"
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/signup?ref=${userCode}`;
+                  const message = `Join Cashback Farm and earn rewards! Use my referral code: ${userCode} ${shareUrl}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                }}
+              >
+                Share on WhatsApp
+              </button>
             </div>
           </div>
-          {/* --- Referral Code Card (from Refer & Earn) --- */}
-          <div className="bg-white rounded-2xl shadow-xl p-4 mb-4 flex flex-col items-center">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/3820/3820331.png"
-              alt="Refer and Earn"
-              className="w-12 h-12 mb-2 drop-shadow"
-            />
-            <h3 className="text-base font-bold text-green-700 mb-1 text-center tracking-tight drop-shadow">
-              Your Referral Code
-            </h3>
-            <div className="bg-green-50 rounded-lg p-3 flex flex-col items-center w-full mb-3 shadow-inner">
-              <span className="text-green-700 font-semibold text-base mb-1">Share this code to earn rewards</span>
-              <div className="flex items-center gap-1">
-                <span className="bg-white border border-green-200 px-3 py-1 rounded text-base font-bold tracking-widest text-green-700 shadow">
-                  {userCode}
-                </span>
-                <button
-                  onClick={handleCopyReferral}
-                  className="bg-green-600 text-white px-2 py-1 rounded font-semibold hover:bg-green-700 transition text-sm"
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
-            </div>
-            <button
-              className="w-full mt-2 py-2 bg-green-100 text-green-700 rounded-lg font-semibold shadow hover:bg-green-200 transition text-xs"
-              onClick={() => {
-                const shareUrl = `${window.location.origin}/signup?ref=${userCode}`;
-                const message = `Join Cashback Farm and earn rewards! Use my referral code: ${userCode} ${shareUrl}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-              }}
-            >
-              Share on WhatsApp
-            </button>
-          </div>
-        </div>
         </div>
       </div>
     </>
