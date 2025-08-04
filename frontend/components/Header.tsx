@@ -41,23 +41,34 @@ const Header: React.FC<HeaderProps> = ({ pageTitle = "Dashboard" }) => {
     );
     if (isAgent) {
       setCurrentLocation('Detecting...');
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async pos => {
-            try {
-              const { latitude, longitude } = pos.coords;
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-              const data = await res.json();
-              setCurrentLocation(data.address?.city || data.address?.town || 'Location Found');
-            } catch {
-              setCurrentLocation('Location Unavailable');
-            }
-          },
-          () => setCurrentLocation('Location Unavailable')
-        );
-      } else {
-        setCurrentLocation('Location Unavailable');
+    const fetchCurrentLocation = () => {
+      if (!navigator.geolocation) {
+        setCurrentLocation('Geolocation is not supported.');
+        return;
       }
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const { latitude, longitude } = position.coords;
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+              {
+                referrerPolicy: 'no-referrer', 
+                headers: { 'User-Agent': 'GreenheapWebApp/1.0' },
+              }
+            );
+            if (!response.ok) throw new Error('Failed to reverse geocode');
+            const data = await response.json();
+            const locationName = data.address?.city || data.address?.state_district || data.address?.county || 'Location Found';
+            setCurrentLocation(locationName);
+          } catch (error) {
+            setCurrentLocation('Could not determine location.');
+          }
+        },
+        () => { setCurrentLocation('Location access denied.'); }
+      );
+    };
+    fetchCurrentLocation();
     } else {
       setCurrentLocation(null);
     }
