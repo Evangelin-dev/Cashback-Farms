@@ -10,7 +10,7 @@ function getRealEstatePageTitle(pathname: string): string {
   if (pathname === "/realestate/commission") return "Commission Dashboard";
   if (pathname === "/realestate/lead-management") return "Lead Management";
   if (pathname === "/realestate/realprofile") return "Agent Profile";
-  if(pathname === "/realestate/dashboard") return "Dashboard";
+  if (pathname === "/realestate/dashboard") return "Dashboard";
   return "RealEstate Agent Panel";
 }
 
