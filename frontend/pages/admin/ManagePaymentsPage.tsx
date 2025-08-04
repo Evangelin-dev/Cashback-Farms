@@ -51,6 +51,7 @@ const ManagePaymentsPage: React.FC = () => {
       try {
         const response = await apiClient.get<IPayment[]>(`/admin/payments/?${params.toString()}`);
         setPayments(response || []);
+        console.log(response,'ressssss');
       } catch (error) {
         console.error("Failed to fetch payments:", error);
         message.error("Could not fetch payment data.");
@@ -172,9 +173,9 @@ const ManagePaymentsPage: React.FC = () => {
       <Card bodyClassName="p-0">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-neutral-200">
-            <thead className="bg-gradient-to-r from-primary/10 via-white to-primary/10">
+            <thead className="bg-gradient-to-r text-center from-primary/10 via-white to-primary/10">
               <tr>
-                {['Payment ID', 'Order ID', 'Plot ID', 'User ID', 'Amount (₹)', 'Created At', 'Status', 'Actions'].map(header => (
+                {['Payment ID', 'Order ID', 'Plot ID', 'User', 'Amount (₹)', 'Created At', 'Status', 'Actions'].map(header => (
                   <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-bold text-primary uppercase tracking-wider">{header}</th>
                 ))}
               </tr>
@@ -188,7 +189,7 @@ const ManagePaymentsPage: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-neutral-900">{payment.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500 font-mono text-xs">{payment.razorpay_order_id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{payment.plot_id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{payment.user}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{payment?.user_email}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">₹{payment.amount.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-500">{new Date(payment.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
