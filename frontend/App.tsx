@@ -63,7 +63,7 @@ import BookConsultation from './components/detailpageandcart/bookconsultation';
 import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
 import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
-import RealMySqft from './pages/realestate/components/realMysqft';
+// import RealMySqft from './pages/realestate/components/realMysqft';
 import ManageMysqft from './pages/admin/ManageMysqft';
 import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
 import DCart from './components/detailpageandcart/cart';
@@ -160,7 +160,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/realestate/realprofile" element={<RealProfile />} />
           <Route path="/realestate/*" element={<RealEstateRoutes />} />
           <Route path="/realestate/post-plots" element={<PostPlots />} />
-          <Route path="/realestate/post-micro-plots" element={<RealMySqft />} />
+          {/* <Route path="/realestate/post-micro-plots" element={<RealMySqft />} /> */}
           <Route path="/realestate/dashboard" element={<Mydashboard />} />
           <Route path="/realestate/referrealestate" element={<ReferAndEarnReal />} />
           

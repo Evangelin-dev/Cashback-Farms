@@ -28,7 +28,6 @@ interface IKycDocument {
 const menuItems = [
   { key: "/realestate/dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard" },
   { key: "/realestate/post-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post Your Plots" },
-  { key: "/realestate/post-micro-plots", icon: <IconMapPin className="w-5 h-5" />, label: "Post GIOO Plots" },
   { key: "/realestate/leads", icon: <IconUsers className="w-5 h-5" />, label: "Plot Inquiries & Leads" },
   { key: "/realestate/lead-management", icon: <IconCollection className="w-5 h-5" />, label: "Lead Management" },
   { key: "/realestate/referrealestate", icon: <IconPlus className="w-5 h-5" />, label: "Refer and Earn" },

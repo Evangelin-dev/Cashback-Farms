@@ -41,6 +41,7 @@ export interface Plot {
   documents?: string[]; 
   sqftPrice?: number; // For plots that can be booked by sqft
   plotValue?: number; // Total value of the plot, if applicable
+  is_verified?: boolean;
 }
 
 export interface MaterialCategory {
