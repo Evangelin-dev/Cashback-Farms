@@ -90,10 +90,9 @@ const PlotMarketplacePage: React.FC = () => {
       const headers = { Authorization: `Bearer ${accessToken}` };
       try {
         const [plotsResponse, shortlistResponse] = await Promise.all([
-          apiClient.get('/plots/', { headers }),
+          apiClient.get('/public/plots/ ', { headers }),
           apiClient.get('/cart/', { headers }),
         ]);
-
         const formattedPlots: Plot[] = (plotsResponse || []).map((apiPlot: any) => ({
           id: apiPlot.id,
           title: apiPlot.title,
@@ -102,6 +101,7 @@ const PlotMarketplacePage: React.FC = () => {
           sqftPrice: parseFloat(apiPlot.price_per_sqft),
           price: parseFloat(apiPlot.total_area_sqft) * parseFloat(apiPlot.price_per_sqft),
           type: apiPlot.is_verified ? PlotType.VERIFIED : PlotType.PUBLIC,
+          is_verified: apiPlot.is_verified,
           imageUrl: apiPlot.plot_file || ``,
           description: `A prime piece of land in ${apiPlot.location}, owned by ${apiPlot.owner_name}.`,
           amenities: apiPlot.joint_owners.length > 0 ? ['Joint Ownership'] : [],
@@ -148,12 +148,18 @@ const PlotMarketplacePage: React.FC = () => {
   }, [locationSearchInput, showLocationSuggestions, fetchLocationSuggestions]);
 
   // Filter plots based on user selections
+  // Filter plots based on user selections
   const filteredPlots = useMemo(() => {
     return plots.filter(plot => {
-      const matchesFilter = filter === 'all' || plot.type === filter;
+      // [FIXED] This now correctly compares the `type` property of your plot object
+      const matchesFilter = 
+        filter === 'all' || 
+        plot.type === filter;
+
       const matchesSearch = !searchTerm ||
         plot.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         plot.location.toLowerCase().includes(searchTerm.toLowerCase());
+        
       return matchesFilter && matchesSearch;
     });
   }, [plots, filter, searchTerm]);

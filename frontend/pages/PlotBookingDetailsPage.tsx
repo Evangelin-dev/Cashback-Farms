@@ -6,7 +6,7 @@ import apiClient from '../src/utils/api/apiClient';
 import { Plot, PlotType } from '../types';
 import BookPlotPayment from './user/BookPlotPayment';
 import { BsFillCheckCircleFill } from 'react-icons/bs';
-import { FaUsers, FaWallet } from 'react-icons/fa'; // Icons for the new popup
+import { FaUsers, FaWallet, FaTimes } from 'react-icons/fa'; // Icons for the new popup
 
 declare global {
   interface Window {
@@ -78,7 +78,7 @@ const PlotOverviewDocs: React.FC<{ docsEnabled: boolean }> = ({ docsEnabled }) =
   </div>
 );
 
-// --- NEW Enquiry Popup Component ---
+// --- Enquiry Popup Component (Unchanged) ---
 const EnquiryPopup: React.FC<{ plotTitle: string; onClose: () => void }> = ({ plotTitle, onClose }) => {
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,9 +90,8 @@ const EnquiryPopup: React.FC<{ plotTitle: string; onClose: () => void }> = ({ pl
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Here you would typically send the data to your backend
         console.log("Enquiry Submitted:", { plot: plotTitle, ...formData });
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
         alert("Thank you for your enquiry! We will get back to you soon.");
         setIsSubmitting(false);
         onClose();
@@ -119,7 +118,7 @@ const EnquiryPopup: React.FC<{ plotTitle: string; onClose: () => void }> = ({ pl
     );
 };
 
-// --- NEW Booking Options Popup Component ---
+// --- Booking Options Popup Component (Unchanged) ---
 const BookingOptionsPopup: React.FC<{
   onClose: () => void;
   onNormalPayment: () => void;
@@ -146,6 +145,22 @@ const BookingOptionsPopup: React.FC<{
     );
 };
 
+// --- [NEW] Feature Unavailable Popup Component ---
+const FeatureUnavailablePopup: React.FC<{ onClose: () => void }> = ({ onClose }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm m-4 text-center">
+            <div className="flex justify-end">
+                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><FaTimes /></button>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Feature Not Available</h2>
+            <p className="text-gray-600 mb-6">This feature is currently under development and will be available soon. Thank you for your patience!</p>
+            <Button variant="primary" onClick={onClose} className="w-full">
+                OK
+            </Button>
+        </div>
+    </div>
+);
+
 
 // --- Main Page Component ---
 const PlotDetailsPage: React.FC = () => {
@@ -156,10 +171,11 @@ const PlotDetailsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [docsEnabled, setDocsEnabled] = useState(false);
   
-  // --- NEW and MODIFIED State ---
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false); // For the final payment form
-  const [showEnquiryPopup, setShowEnquiryPopup] = useState(false); // For unverified plots
-  const [showBookingOptionsPopup, setShowBookingOptionsPopup] = useState(false); // For verified plots
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [showEnquiryPopup, setShowEnquiryPopup] = useState(false);
+  const [showBookingOptionsPopup, setShowBookingOptionsPopup] = useState(false);
+  // [NEW] State for the new popup
+  const [showFeatureUnavailablePopup, setShowFeatureUnavailablePopup] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -290,7 +306,6 @@ const PlotDetailsPage: React.FC = () => {
             <p className="text-base text-green-600 font-semibold mb-1">Plot ID: {plot.id}</p>
             <p className="text-xs text-neutral-500 mb-2">A great investment opportunity.</p>
             <div className="flex items-center gap-2 mt-2">
-              {/* --- MODIFIED: Main button is now conditional --- */}
               {plot.is_verified ? (
                 <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowBookingOptionsPopup(true)}>Book This Plot</Button>
               ) : (
@@ -353,7 +368,6 @@ const PlotDetailsPage: React.FC = () => {
         </div>
       </div>
       
-      {/* --- NEW: Conditionally render all popups --- */}
       {showEnquiryPopup && plot && (
         <EnquiryPopup plotTitle={plot.title} onClose={() => setShowEnquiryPopup(false)} />
       )}
@@ -362,18 +376,24 @@ const PlotDetailsPage: React.FC = () => {
         <BookingOptionsPopup
             onClose={() => setShowBookingOptionsPopup(false)}
             onNormalPayment={() => {
-                setShowBookingOptionsPopup(false); // Close this popup
-                setShowPaymentPopup(true);      // Open the payment popup
+                setShowBookingOptionsPopup(false);
+                setShowPaymentPopup(true);
             }}
+            // [MODIFIED] This now opens the "unavailable" popup
             onSyndicatePlan={() => {
                 setShowBookingOptionsPopup(false);
-                navigate(`/syndicate-plan/${id}`); // Navigate to the syndicate page
+                setShowFeatureUnavailablePopup(true);
             }}
         />
       )}
 
       {showPaymentPopup && (
         <BookPlotPayment onClose={() => setShowPaymentPopup(false)} />
+      )}
+      
+      {/* [NEW] Conditionally render the new popup */}
+      {showFeatureUnavailablePopup && (
+        <FeatureUnavailablePopup onClose={() => setShowFeatureUnavailablePopup(false)} />
       )}
     </div>
   );
