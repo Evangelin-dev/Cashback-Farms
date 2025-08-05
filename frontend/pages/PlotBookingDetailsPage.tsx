@@ -6,7 +6,7 @@ import apiClient from '../src/utils/api/apiClient';
 import { Plot, PlotType } from '../types';
 import BookPlotPayment from './user/BookPlotPayment';
 import { BsFillCheckCircleFill } from 'react-icons/bs';
-import { FaUsers, FaWallet, FaTimes } from 'react-icons/fa'; // Icons for the new popup
+import { FaUsers, FaWallet, FaTimes, FaCheckCircle } from 'react-icons/fa'; // Icons for the new popup
 
 declare global {
   interface Window {
@@ -30,6 +30,20 @@ const PlotImageVideo: React.FC<{ imageUrl: string; videoUrl: string; alt: string
     </div>
   );
 };
+
+const SuccessPopup: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm m-4 text-center">
+            <FaCheckCircle className="text-green-500 text-5xl mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Success!</h2>
+            <p className="text-gray-600 mb-6">{message}</p>
+            <Button variant="primary" onClick={onClose} className="w-full">
+                OK
+            </Button>
+        </div>
+    </div>
+);
+
 
 const PlotOverviewDocs: React.FC<{ docsEnabled: boolean }> = ({ docsEnabled }) => (
   <div className="space-y-2">
@@ -177,6 +191,9 @@ const PlotDetailsPage: React.FC = () => {
   // [NEW] State for the new popup
   const [showFeatureUnavailablePopup, setShowFeatureUnavailablePopup] = useState(false);
 
+   const [isSubmittingEnquiry, setIsSubmittingEnquiry] = useState(false);
+  const [showEnquirySuccessPopup, setShowEnquirySuccessPopup] = useState(false);
+
   useEffect(() => {
     if (!id) {
       setError("No plot ID provided in URL.");
@@ -222,6 +239,36 @@ const PlotDetailsPage: React.FC = () => {
     };
     fetchPlotDetails();
   }, [id]);
+
+  const handleEnquirySubmit = async () => {
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken || !plot) {
+        // This case should ideally be handled by checking for currentUser before even showing the button
+        alert("You must be logged in to make an enquiry.");
+        return;
+    }
+
+    setIsSubmittingEnquiry(true);
+    const payload = {
+      item_type: "plot",
+      item_id: plot.id,
+      quantity: 1, // Default quantity for a plot enquiry/shortlist
+    };
+
+    try {
+      await apiClient.post('/cart/add/', payload, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // Show the success popup instead of the form
+      setShowEnquirySuccessPopup(true);
+    } catch (error: any) {
+      console.error("Failed to add item to shortlist:", error);
+      const errorMessage = error.response?.data?.detail || "An error occurred. Please try again.";
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsSubmittingEnquiry(false);
+    }
+  };
 
   const loadRazorpayScript = () => {
     return new Promise<void>((resolve, reject) => {
@@ -309,7 +356,7 @@ const PlotDetailsPage: React.FC = () => {
               {plot.is_verified ? (
                 <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowBookingOptionsPopup(true)}>Book This Plot</Button>
               ) : (
-                <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowEnquiryPopup(true)}>Make an Enquiry</Button>
+                <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={handleEnquirySubmit} disabled={isSubmittingEnquiry}>Make an Enquiry</Button>
               )}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -368,8 +415,11 @@ const PlotDetailsPage: React.FC = () => {
         </div>
       </div>
       
-      {showEnquiryPopup && plot && (
-        <EnquiryPopup plotTitle={plot.title} onClose={() => setShowEnquiryPopup(false)} />
+      {showEnquirySuccessPopup && (
+        <SuccessPopup 
+            message="Your enquiry has been submitted successfully! Our team will contact you shortly."
+            onClose={() => setShowEnquirySuccessPopup(false)} 
+        />
       )}
       
       {showBookingOptionsPopup && (

@@ -1,8 +1,9 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "antd";
 import React, { useState } from 'react';
 
 
-const referralCode = "CBF12345";
+
 
 // CommissionDashboard stats data
 const stats = [
@@ -56,9 +57,12 @@ const stats = [
 const ReferAndEarnReal: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
+  const { profile: globalProfile } = useAuth();
+
+  let referralCode = globalProfile?.referral_code || "";
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralCode);
+    navigator.clipboard.writeText(referralCode || "");
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };

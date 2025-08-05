@@ -10,6 +10,7 @@ import {
   IconEdit,
 } from "../../../constants.tsx";
 import "../AgentProfileSection.css";
+import { useAuth } from "@/contexts/AuthContext.tsx";
 
 // --- FIX: DEFINING 'initialProfile' AT THE TOP LEVEL ---
 // This ensures it's available to the component before it renders.
@@ -22,6 +23,7 @@ const initialProfile = {
   email: "",
   phone: "",
   countryCode: "+91",
+  user_code: "",
   companyNumber: "",
   companyCountryCode: "+91",
   photo: "",
@@ -123,6 +125,9 @@ const RealProfile: React.FC = () => {
   const [kycDataLoaded, setKycDataLoaded] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
 
+    const { profile: globalProfile } = useAuth();
+  
+
   const formik = useFormik({
     initialValues: initialProfile,
     enableReinitialize: true,
@@ -136,6 +141,7 @@ const RealProfile: React.FC = () => {
           gender: values.gender,
           date_of_birth: values.dob,
           company_name: values.company,
+          user_code: values.user_code,
           email: values.email,
           phone_number: `${values.countryCode}${values.phone}`,
           company_number: `${values.companyCountryCode}${values.companyNumber}`,
@@ -143,6 +149,7 @@ const RealProfile: React.FC = () => {
           city: values.address.city,
           state: values.address.state,
           country: values.address.country,
+          
         }, { headers: { Authorization: `Bearer ${accessToken}` } });
 
         setEditMode(false);
@@ -157,6 +164,7 @@ const RealProfile: React.FC = () => {
 
   const [countryCodes, setCountryCodes] = useState<{ code: string; label: string; flag: string }[]>([]);
 
+  
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all?fields=idd,name,flags")
       .then((res) => res.json())
@@ -179,7 +187,6 @@ const RealProfile: React.FC = () => {
           apiClient.get("/bank-details/", { headers }),
           apiClient.get("/user/kyc/status/", { headers })
         ]);
-
         const agent = Array.isArray(agentRes) ? agentRes[0] : agentRes;
         if (agent) {
           setAgentId(agent.id);
@@ -190,6 +197,7 @@ const RealProfile: React.FC = () => {
             dob: agent.date_of_birth || "",
             company: agent.company_name || "",
             email: agent.email || "",
+            user_code: agent.user_code || "",
             phone: agent.phone_number || "",
             companyNumber: agent.company_number || "",
             address: { town: "", city: agent.city || "", state: agent.state || "", country: agent.country || "" },
@@ -318,7 +326,7 @@ const RealProfile: React.FC = () => {
               </label>
             </div>
             <h2 className="mt-2 text-lg font-bold text-primary-light tracking-wide animate-fadein">Edit RealEstate Profile</h2>
-            <div className="mt-1 text-l text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">User Code:{" "}<span className="text-primary font-semibold">{userCode}</span></div>
+            <div className="mt-1 text-l text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">User Code:{" "}<span className="text-primary font-semibold">{formik.values.user_code}</span></div>
           </div>
 
           <form className="space-y-3 animate-slidein" onSubmit={formik.handleSubmit}>
@@ -435,7 +443,7 @@ const RealProfile: React.FC = () => {
                 <span className="text-green-700 font-semibold text-base mb-1">Share this code to earn rewards</span>
                 <div className="flex items-center gap-1">
                   <span className="bg-white border border-green-200 px-3 py-1 rounded text-base font-bold tracking-widest text-green-700 shadow">
-                    {userCode}
+                    {globalProfile?.referral_code}
                   </span>
                   <button
                     onClick={handleCopyReferral}
@@ -449,7 +457,7 @@ const RealProfile: React.FC = () => {
                 className="w-full mt-2 py-2 bg-green-100 text-green-700 rounded-lg font-semibold shadow hover:bg-green-200 transition text-xs"
                 onClick={() => {
                   const shareUrl = `${window.location.origin}/signup?ref=${userCode}`;
-                  const message = `Join Cashback Farm and earn rewards! Use my referral code: ${userCode} ${shareUrl}`;
+                  const message = `Join Cashback Farm and earn rewards! Use my referral code: ${globalProfile.referralCode}`;
                   window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
                 }}
               >
