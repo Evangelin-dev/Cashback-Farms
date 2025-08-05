@@ -5,22 +5,22 @@ import { message } from 'antd';
 const PAGE_SIZE = 5;
 
 interface User {
-    id: number;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-    mobile_number: string;
-    user_type: 'b2b_vendor' | 'real_estate_agent' | 'client';
+  id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  mobile_number: string;
+  user_type: 'b2b_vendor' | 'real_estate_agent' | 'client';
 }
 
 interface KYCDocument {
-    id: number;
-    document_type: string;
-    file: string;
-    status: 'pending' | 'approved' | 'rejected' | 'submitted';
-    upload_date: string;
-    user: User;
+  id: number;
+  document_type: string;
+  file: string;
+  status: 'pending' | 'approved' | 'rejected' | 'submitted';
+  upload_date: string;
+  user: User;
 }
 
 interface KYCSectionProps {
@@ -33,16 +33,20 @@ interface KYCSectionProps {
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
+function getFileExtension(filename: string) {
+  return filename.split('.').pop()?.toLowerCase();
+}
+
 function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setPage }: KYCSectionProps) {
   const [docPopup, setDocPopup] = useState<null | { fileUrl: string; name: string; docType: string }>(null);
 
   const filtered = data.filter(doc =>
     (!filter.status || doc.status === filter.status) &&
-    (!filter.search || 
-        `${doc.user.first_name} ${doc.user.last_name}`.toLowerCase().includes(filter.search.toLowerCase()) || 
-        doc.user.email.toLowerCase().includes(filter.search.toLowerCase()))
+    (!filter.search ||
+      `${doc.user.first_name} ${doc.user.last_name}`.toLowerCase().includes(filter.search.toLowerCase()) ||
+      doc.user.email.toLowerCase().includes(filter.search.toLowerCase()))
   );
-  
+
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -56,12 +60,18 @@ function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setP
             placeholder="Search by name or email"
             className="border border-green-200 rounded px-2 py-1 text-sm"
             value={filter.search}
-            onChange={e => { setFilter(f => ({ ...f, search: e.target.value })); setPage(1); }}
+            onChange={e => {
+              setFilter(f => ({ ...f, search: e.target.value }));
+              setPage(1);
+            }}
           />
           <select
             className="border border-green-200 rounded px-2 py-1 text-sm"
             value={filter.status}
-            onChange={e => { setFilter(f => ({ ...f, status: e.target.value })); setPage(1); }}
+            onChange={e => {
+              setFilter(f => ({ ...f, status: e.target.value }));
+              setPage(1);
+            }}
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -71,6 +81,7 @@ function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setP
           </select>
         </div>
       </div>
+
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border border-green-100 rounded-xl">
           <thead>
@@ -86,7 +97,9 @@ function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setP
           </thead>
           <tbody>
             {paginated.length === 0 ? (
-              <tr><td colSpan={7} className="text-center py-6 text-gray-400">No records found for this filter.</td></tr>
+              <tr>
+                <td colSpan={7} className="text-center py-6 text-gray-400">No records found for this filter.</td>
+              </tr>
             ) : paginated.map((doc) => (
               <tr key={doc.id} className="hover:bg-green-50">
                 <td className="px-3 py-2 border-b">{`${doc.user.first_name} ${doc.user.last_name}`}</td>
@@ -120,6 +133,7 @@ function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setP
           </tbody>
         </table>
       </div>
+
       <div className="flex justify-end gap-2 mt-4">
         <button
           className="px-3 py-1 rounded bg-green-100 text-green-700 font-semibold border border-green-200 disabled:opacity-50"
@@ -133,18 +147,44 @@ function KYCSection({ title, data, onStatusChange, filter, setFilter, page, setP
           disabled={page === totalPages || totalPages === 0}
         >Next</button>
       </div>
-    {docPopup && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] max-w-[90vw] relative">
-          <button className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold" onClick={() => setDocPopup(null)} type="button">×</button>
-          <h3 className="text-lg font-bold text-green-700 mb-2 capitalize">{docPopup.docType.replace('_', ' ')} Document</h3>
-          <div className="mb-2 text-sm text-gray-700 font-semibold">{docPopup.name}</div>
-          <div className="flex flex-col items-center justify-center">
-            <img src={`${apiClient.defaults.baseURL}${docPopup.fileUrl}`} alt={docPopup.docType} className="max-w-xs max-h-96 rounded shadow border border-green-100" />
+
+      {docPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 min-w-[320px] max-w-[90vw] relative">
+            <button className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold" onClick={() => setDocPopup(null)} type="button">×</button>
+            <h3 className="text-lg font-bold text-green-700 mb-2 capitalize">{docPopup.docType.replace('_', ' ')} Document</h3>
+            <div className="mb-2 text-sm text-gray-700 font-semibold">{docPopup.name}</div>
+            <div className="flex flex-col items-center justify-center">
+              {(() => {
+                const fileExt = getFileExtension(docPopup.fileUrl);
+                const fullUrl = docPopup.fileUrl.startsWith('http')
+                  ? docPopup.fileUrl
+                  : `${apiClient.defaults.baseURL.replace('/api', '')}${docPopup.fileUrl}`;
+
+                if (['pdf', 'doc', 'docx'].includes(fileExt || '')) {
+                  return (
+                    <iframe
+                      src={fullUrl}
+                      title="Document Preview"
+                      className="w-[300px] h-[500px] border border-green-200 rounded"
+                    />
+                  );
+                } else if (['jpg', 'jpeg', 'png'].includes(fileExt || '')) {
+                  return (
+                    <img
+                      src={fullUrl}
+                      alt={docPopup.docType}
+                      className="max-w-xs max-h-96 rounded shadow border border-green-100"
+                    />
+                  );
+                } else {
+                  return <p className="text-sm text-gray-500">Preview not supported for this file type.</p>;
+                }
+              })()}
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }
@@ -159,7 +199,7 @@ const ManageKYC: React.FC = () => {
   const fetchKycDocuments = useCallback(async () => {
     try {
       const accessToken = localStorage.getItem("access_token");
-      const response = await apiClient.get('/admin/kyc-documents/', {
+      const response = await apiClient.get(`/admin/kyc-documents/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setAllDocuments(response.documents || []);
@@ -175,16 +215,15 @@ const ManageKYC: React.FC = () => {
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
-        const accessToken = localStorage.getItem("access_token");
-        await apiClient.put('/user/kyc/update/', { id, status }, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        message.success("KYC status updated successfully.");
-      
-        fetchKycDocuments();
+      const accessToken = localStorage.getItem("access_token");
+      await apiClient.put('/user/kyc/update/', { id, status }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      message.success("KYC status updated successfully.");
+      fetchKycDocuments();
     } catch (error) {
-        console.error("Failed to update KYC status:", error);
-        message.error("Failed to update status.");
+      console.error("Failed to update KYC status:", error);
+      message.error("Failed to update status.");
     }
   };
 
