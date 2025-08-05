@@ -1,10 +1,11 @@
-import { Card, Form, Input, InputNumber, Modal, Table, Tag } from "antd";
+import { Card, Form, Input, InputNumber, Modal, Table, Tag, message } from "antd";
 import React, { useEffect, useState, useCallback } from "react";
 import Button from "../../../components/common/Button";
 import apiClient from "@/src/utils/api/apiClient";
 
 type Plot = {
   key: number;
+  id: number;
   title: string;
   owner: string;
   location: string;
@@ -13,6 +14,7 @@ type Plot = {
   status: string;
   description: string;
   images: File[];
+  is_available_full: boolean;
 };
 
 const debounce = (func: Function, delay: number) => {
@@ -67,34 +69,36 @@ const PostPlots: React.FC = () => {
     fetchLocationSuggestions(locationInput);
   }, [locationInput, fetchLocationSuggestions]);
 
+  const fetchPlots = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const accessToken = localStorage.getItem("access_token");
+      const res = await apiClient.get("/plots/", { headers: { Authorization: `Bearer ${accessToken}` } });
+      const mappedPlots = (res || []).map((plot: any) => ({
+        key: plot.id,
+        id: plot.id,
+        title: plot.title,
+        owner: plot.owner_name || plot.owner_username,
+        location: plot.location,
+        area: Number(plot.total_area_sqft) || 0,
+        price: Number(plot.price_per_sqft) || 0,
+        status: plot.is_available_full ? "Available" : "Unavailable",
+        is_available_full: plot.is_available_full,
+        description: "",
+        images: [],
+      }));
+      setPlots(mappedPlots.reverse());
+    } catch (err) {
+      console.error("Error fetching plots:", err);
+      setPlots([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchPlots = async () => {
-      try {
-        setIsLoading(true); 
-        const accessToken = localStorage.getItem("access_token");
-        const res = await apiClient.get("/plots", { headers: { Authorization: `Bearer ${accessToken}` } });
-        const mappedPlots = (res || []).map((plot: any) => ({
-          key: plot.id,
-          title: plot.title,
-          owner: plot.owner_name || plot.owner_username,
-          location: plot.location,
-          area: Number(plot.total_area_sqft) || 0,
-          price: Number(plot.price_per_sqft) || 0,
-          status: plot.is_verified ? "Active" : "Inactive",
-          description: "",
-          images: [],
-        }));
-        setPlots(mappedPlots.reverse());
-      } catch (err) {
-        console.error("Error fetching plots:", err);
-        setPlots([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchPlots();
-  }, []);
+  }, [fetchPlots]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -121,20 +125,52 @@ const PostPlots: React.FC = () => {
   const handleAdd = async (values: any) => {
     try {
       const accessToken = localStorage.getItem("access_token");
-      const payload = { title: values.title, owner_name: values.owner, location: values.location, total_area_sqft: String(values.area), price_per_sqft: String(values.price), description };
-      await apiClient.post("/plots/", payload, { headers: { Authorization: `Bearer ${accessToken}` } });
-      const res = await apiClient.get("/plots", { headers: { Authorization: `Bearer ${accessToken}` } });
-      const mappedPlots = (res || []).map((plot: any) => ({ key: plot.id, title: plot.title, owner: plot.owner_name || plot.owner_username, location: plot.location, area: Number(plot.total_area_sqft) || 0, price: Number(plot.price_per_sqft) || 0, status: plot.is_verified ? "Active" : "Inactive", description: "", images: [] }));
-      setPlots(mappedPlots.reverse());
+      
+      // Create FormData to handle file uploads
+      const formData = new FormData();
+      formData.append('title', values.title);
+      formData.append('owner_name', values.owner);
+      formData.append('location', values.location);
+      formData.append('total_area_sqft', String(values.area));
+      formData.append('price_per_sqft', String(values.price));
+      formData.append('description', description);
+      
+      // Append each image file to the FormData
+      images.forEach((file, index) => {
+        formData.append('plot_file', file);
+      });
+      
+      await apiClient.post("/plots/", formData, { 
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'multipart/form-data'
+        } 
+      });
+      
+      // Refresh plots after adding a new one
+      fetchPlots();
       resetAndCloseModal();
+      message.success("Plot added successfully!");
     } catch (err) {
       console.error("Error adding plot:", err);
-      alert("Failed to add plot.");
+      message.error("Failed to add plot.");
     }
   };
 
-  const handleToggleStatus = (key: number) => {
-    setPlots((prev) => prev.map((plot) => plot.key === key ? { ...plot, status: plot.status === "Active" ? "Inactive" : "Active" } : plot));
+  // ✨ NEW FUNCTION TO HANDLE API CALL FOR TOGGLING STATUS
+  const handleToggleAvailability = async (plotId: number) => {
+    try {
+      const accessToken = localStorage.getItem("access_token");
+      await apiClient.patch(`/plots/${plotId}/toggle-availability/`, {}, { 
+        headers: { Authorization: `Bearer ${accessToken}` } 
+      });
+      message.success("Plot status updated successfully!");
+      // Refresh the entire plot list to get the latest data
+      fetchPlots();
+    } catch (err) {
+      console.error("Failed to toggle plot status:", err);
+      message.error("Failed to update plot status.");
+    }
   };
   
   const handleLocationBlur = () => {
@@ -143,18 +179,48 @@ const PostPlots: React.FC = () => {
     }, 200);
   };
 
-  const columns = [ { title: "Plot Title", dataIndex: "title" }, { title: "Owner", dataIndex: "owner" }, { title: "Location", dataIndex: "location" }, { title: "Area (sqft)", dataIndex: "area" }, { title: "Price", dataIndex: "price", render: (v: number) => `₹${v.toLocaleString("en-IN")}`, }, { title: "Status", dataIndex: "status", render: (_: any, record: any) => ( <Tag color={record.status === "Active" ? "green" : "red"}>{record.status}</Tag> ), }, { title: "Images", dataIndex: "images", render: (imgs: File[] | undefined) => imgs && imgs.length > 0 ? ( <div style={{ display: "flex", gap: 8 }}>{imgs.map((img, idx) => ( <img key={idx} src={URL.createObjectURL(img)} alt={`Plot Img ${idx + 1}`} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8, border: "1.5px solid #dbeafe", boxShadow: "0 2px 8px #dbeafe55", cursor: "pointer", background: "#f1f5f9", }} onMouseOver={e => (e.currentTarget.style.transform = "scale(1.08)")} onMouseOut={e => (e.currentTarget.style.transform = "scale(1)")} /> ))}</div> ) : ( "-" ), }, { title: "Action", render: (_: any, record: any) => ( <Button variant={record.status === "Inactive" ? "primary" : "outline"} size="sm" onClick={() => handleToggleStatus(record.key)}>Set {record.status === "Inactive" ? "Active" : "Inactive"}</Button> ), }, ];
+  const columns = [
+    { title: "Plot Title", dataIndex: "title" },
+    { title: "Owner", dataIndex: "owner" },
+    { title: "Location", dataIndex: "location" },
+    { title: "Area (sqft)", dataIndex: "area" },
+    { title: "Price", dataIndex: "price", render: (v: number) => `₹${v.toLocaleString("en-IN")}` },
+    { 
+      title: "Status", 
+      dataIndex: "status", 
+      render: (status: string) => (
+        <Tag color={status === "Available" ? "green" : "red"}>{status}</Tag>
+      ) 
+    },
+    { 
+      title: "Images", 
+      dataIndex: "images", 
+      render: (imgs: File[] | undefined) => imgs && imgs.length > 0 ? ( <div style={{ display: "flex", gap: 8 }}>{imgs.map((img, idx) => ( <img key={idx} src={URL.createObjectURL(img)} alt={`Plot Img ${idx + 1}`} style={{ width: 44, height: 44, objectFit: "cover", borderRadius: 8 }} /> ))}</div> ) : ( "-" )
+    },
+    { 
+      title: "Action", 
+      render: (_: any, record: Plot) => (
+        // ✨ BUTTON NOW CALLS THE NEW API FUNCTION
+        <Button 
+          variant={record.status === "Unavailable" ? "primary" : "outline"} 
+          size="sm" 
+          onClick={() => handleToggleAvailability(record.id)}
+        >
+          Set {record.status === "Unavailable" ? "Available" : "Unavailable"}
+        </Button>
+      ) 
+    },
+  ];
 
   return (
     <>
-      <Card title={<span style={{ fontWeight: 700, fontSize: 22, color: "#1e293b" }}>Post Plots for Clients</span>} extra={<Button variant="primary" onClick={() => setModalVisible(true)} style={{ borderRadius: 8, fontWeight: 600, fontSize: 16, padding: "8px 20px", boxShadow: "0 2px 8px #2563eb22" }}>+ Add Plot</Button>} style={{ marginBottom: 32, borderRadius: 16, boxShadow: "0 4px 24px #e0e7ef", background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)", border: "none" }} bodyStyle={{ background: "#fff", borderRadius: 16, padding: 32 }}>
+      <Card title={<span style={{ fontWeight: 700, fontSize: 22, color: "#1e293b" }}>Post Plots for Clients</span>} extra={<Button variant="primary" onClick={() => setModalVisible(true)} style={{ borderRadius: 8, fontWeight: 600, fontSize: 16, padding: "8px 20px" }}>+ Add Plot</Button>} style={{ marginBottom: 32, borderRadius: 16, boxShadow: "0 4px 24px #e0e7ef", background: "linear-gradient(90deg, #f0f9ff 0%, #fff 100%)", border: "none" }} bodyStyle={{ background: "#fff", borderRadius: 16, padding: 32 }}>
         <Table dataSource={plots} columns={columns} pagination={false} rowKey="key" style={{ borderRadius: 12, overflow: "hidden" }} rowClassName={() => "custom-table-row"} loading={isLoading}/>
       </Card>
       
-      <Modal title={<span style={{ fontWeight: 700, fontSize: 20, color: "#059669" }}>Add Plot</span>} open={modalVisible} onCancel={resetAndCloseModal} footer={[<div key="footer-actions" style={{ display: "flex", gap: 16, justifyContent: "flex-end", padding: "8px 0" }}><Button key="cancel" variant="outline" onClick={resetAndCloseModal} style={{ borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", color: "#059669", borderColor: "#059669", background: "#f0fdf4" }}>Cancel</Button><Button key="submit" variant="primary" onClick={() => form.submit()} style={{ borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", boxShadow: "0 2px 8px #05966922", background: "#059669", color: "#fff", border: "none" }}>Add Plot</Button></div>]} style={{ borderRadius: 16, overflow: "hidden", top: 40 }} bodyStyle={{ borderRadius: 16, background: "#f0fdf4", padding: 28 }}>
+      <Modal title={<span style={{ fontWeight: 700, fontSize: 20, color: "#059669" }}>Add Plot</span>} open={modalVisible} onCancel={resetAndCloseModal} footer={[<div key="footer-actions" style={{ display: "flex", gap: 16, justifyContent: "flex-end", padding: "8px 0" }}><Button key="cancel" variant="outline" onClick={resetAndCloseModal} style={{ borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", color: "#059669", borderColor: "#059669", background: "#f0fdf4" }}>Cancel</Button><Button key="submit" variant="primary" onClick={() => form.submit()} style={{ borderRadius: 8, fontWeight: 600, fontSize: 15, padding: "7px 18px", background: "#059669", color: "#fff", border: "none" }}>Add Plot</Button></div>]} style={{ borderRadius: 16, overflow: "hidden", top: 40 }} bodyStyle={{ borderRadius: 16, background: "#f0fdf4", padding: 28 }}>
         <Form form={form} layout="vertical" onFinish={handleAdd} style={{ gap: 12, display: "flex", flexDirection: "column" }}>
           <Form.Item name="title" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Plot Title</span>} rules={[{ required: true }]} style={{ marginBottom: 16 }}><Input style={{ borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0" }} placeholder="e.g. Sunshine Meadows" /></Form.Item>
-          <Form.Item name="owner" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Owner Name</span>} rules={[{ required: true }]} style={{ marginBottom: 16 }}><Input style={{ borderRadius: 8, fontSize: 15, padding: "8px 12px", background: "#dcfce7", color: "#065f46", border: "1.5px solid #bbf7d0" }} placeholder="e.g. Ravi Kumar" /></Form.Item>
           
           <div style={{ position: 'relative' }} onBlur={handleLocationBlur}>
             <Form.Item name="location" label={<span style={{ fontWeight: 600, color: "#065f46" }}>Location</span>} rules={[{ required: true, message: 'Please select a location!' }]} style={{ marginBottom: 16 }}>

@@ -45,7 +45,7 @@ const menuItems = [
 // --- ProfileSection copied from RealEstateAgentPanel ---
 const ProfileSection: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-   const { currentUser } = useAuth();
+  const { currentUser } = useAuth();
   const [profile, setProfile] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",
@@ -126,9 +126,8 @@ const ProfileSection: React.FC = () => {
       </div>
       {/* Dropdown */}
       <div
-        className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${
-          dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
-        }`}
+        className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
+          }`}
         style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
       >
         <div className="p-4 flex flex-col items-center">
@@ -263,12 +262,13 @@ const RealEstateSideNav: React.FC = () => {
 };
 
 function getRealEstatePageTitle(pathname: string): string {
-  if (pathname === "/realestate/post-plots") return "Post Plots";
+  if (pathname === "/realestate/post-plots") return "Post Your Plots";
   if (pathname === "/realestate/leads") return "Plot Inquiries & Leads";
   if (pathname === "/realestate/commission") return "Commission Dashboard";
   if (pathname === "/realestate/lead-management") return "Lead Management";
   if (pathname === "/realestate/realprofile") return "Agent Profile";
-  if(pathname === "/realestate/dashboard") return "Dashboard";  
+  if (pathname === "/realestate/dashboard") return "Dashboard";
+  if (pathname === "/realestate/post-micro-plots") return "Post GIOO Plots";
   return "RealEstate Agent Panel";
 }
 

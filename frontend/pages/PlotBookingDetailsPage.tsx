@@ -27,11 +27,50 @@ const PlotImageVideo: React.FC<{ imageUrl: string; videoUrl: string; alt: string
   );
 };
 
-const PlotOverviewDocs: React.FC<{ plot: Plot }> = ({ plot }) => (
+const PlotOverviewDocs: React.FC<{ docsEnabled: boolean }> = ({ docsEnabled }) => (
   <div className="space-y-2">
-    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2"><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg><div><div className="font-semibold text-green-700 text-xs">Legal Documents</div><div className="text-xs text-gray-500">View and download plot registry, NOC.</div><div className="flex gap-1 mt-1"><Button variant="outline" size="sm">View Registry</Button><Button variant="outline" size="sm">Download NOC</Button></div></div></div>
-    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2"><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7m-1 4V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1v4m0 0v6a1 1 0 001 1h3m10 0h3a1 1 0 001-1v-6m-1 6v-6m0 0V7m0 0h-3m-10 0H4" /></svg><div><div className="font-semibold text-green-700 text-xs">Site Plan & Layout</div><div className="text-xs text-gray-500">Download site plan and layout.</div><div className="flex gap-1 mt-1"><Button variant="outline" size="sm">View Site Plan</Button><Button variant="outline" size="sm">Download Layout</Button></div></div></div>
-    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2"><svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={2} /></svg><div><div className="font-semibold text-green-700 text-xs">Construction Guidelines</div><div className="text-xs text-gray-500">Short doc on rules, setbacks, approvals.</div><div className="flex gap-1 mt-1"><Button variant="outline" size="sm">View Guidelines</Button></div></div></div>
+    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2">
+      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+      <div>
+        <div className="font-semibold text-green-700 text-xs">Legal Documents</div>
+        <div className="text-xs text-gray-500">View and download plot registry, NOC.</div>
+        <div className="flex gap-1 mt-1">
+          <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+            <Button variant="outline" size="sm" disabled={!docsEnabled}>View Registry</Button>
+          </span>
+          <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+            <Button variant="outline" size="sm" disabled={!docsEnabled}>Download NOC</Button>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2">
+      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v4a1 1 0 001 1h3m10 0h3a1 1 0 001-1V7m-1 4V7a1 1 0 00-1-1h-3m-10 0H4a1 1 0 00-1 1v4m0 0v6a1 1 0 001 1h3m10 0h3a1 1 0 001-1v-6m-1 6v-6m0 0V7m0 0h-3m-10 0H4" /></svg>
+      <div>
+        <div className="font-semibold text-green-700 text-xs">Site Plan & Layout</div>
+        <div className="text-xs text-gray-500">Download site plan and layout.</div>
+        <div className="flex gap-1 mt-1">
+          <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+            <Button variant="outline" size="sm" disabled={!docsEnabled}>View Site Plan</Button>
+          </span>
+          <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+            <Button variant="outline" size="sm" disabled={!docsEnabled}>Download Layout</Button>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2">
+      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3" /><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={2} /></svg>
+      <div>
+        <div className="font-semibold text-green-700 text-xs">Construction Guidelines</div>
+        <div className="text-xs text-gray-500">Short doc on rules, setbacks, approvals.</div>
+        <div className="flex gap-1 mt-1">
+          <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+            <Button variant="outline" size="sm" disabled={!docsEnabled}>View Guidelines</Button>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
@@ -42,6 +81,7 @@ const PlotDetailsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [docsEnabled, setDocsEnabled] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -61,9 +101,9 @@ const PlotDetailsPage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         const response = await apiClient.get(`/plots/${id}/`, { headers });
-        const apiPlot = response;
+        const apiPlot = response.data || response;
         const formattedPlot: Plot = {
-          id: apiPlot.id.toString(),
+          id: apiPlot.id?.toString() || '',
           title: apiPlot.title,
           location: apiPlot.location,
           area: parseFloat(apiPlot.total_area_sqft),
@@ -72,7 +112,10 @@ const PlotDetailsPage: React.FC = () => {
           type: apiPlot.is_verified ? PlotType.VERIFIED : PlotType.PUBLIC,
           imageUrl: apiPlot.plot_file || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
           description: `A prime piece of land located in ${apiPlot.location}, owned by ${apiPlot.owner_name}.`,
-          amenities: apiPlot.joint_owners.length > 0 ? ['Joint Ownership'] : [],
+          amenities: apiPlot.joint_owners && apiPlot.joint_owners.length > 0 ? ['Joint Ownership'] : [],
+          client: apiPlot.owner || 'Unknown Client',
+          isAvailable: true,
+          value: 0,
         };
         setPlot(formattedPlot);
       } catch (err) {
@@ -109,9 +152,13 @@ const PlotDetailsPage: React.FC = () => {
 
       // Step 1: Create order on backend using apiClient
       const payload = {
-        amount: 5000, // ₹5000
-        plot_id: plot.id,
-      };
+      amount: 5000,
+      plot_id: plot.id,
+      client: plot.client,
+      booking_type:"full_plot"
+
+   
+    };
       const headers = { Authorization: `Bearer ${accessToken}` };
       const res = await apiClient.post("/payments/create-order/", payload, { headers });
       const data = res.data || res; // adjust if your apiClient returns .data
@@ -147,6 +194,7 @@ const PlotDetailsPage: React.FC = () => {
           const verifyData = await verifyRes.json();
           if (verifyData.status === 'Payment verified') {
             alert('✅ Payment Successful');
+            setDocsEnabled(true);
           } else {
             alert('❌ Payment verification failed');
           }
@@ -214,7 +262,7 @@ const PlotDetailsPage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <PlotOverviewDocs plot={plot} />
+                <PlotOverviewDocs docsEnabled={docsEnabled} />
               </div>
             </Card>
           </div>
@@ -229,7 +277,7 @@ const PlotDetailsPage: React.FC = () => {
               </ul>     
             </Card>
             {/* Land Document Verification Card */}
-            <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm" style={{ backgroundColor: '#22c55e' }}>
+            <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm ">
               <div className="flex flex-col gap-2">
                 <div className="font-semibold" >Verify the land document before you buy it</div>
                 <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
