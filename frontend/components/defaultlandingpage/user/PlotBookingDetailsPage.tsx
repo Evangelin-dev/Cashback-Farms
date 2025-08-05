@@ -1,14 +1,19 @@
-// This is a simplified version of your component, focused on fetching and displaying a single plot.
-// Helper components like PlotImageVideo and PlotOverviewDocs are assumed to be in the same file or imported.
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../../../src/utils/api/apiClient';
 import Button from '../../../components/common/Button';
 import Card from '../../../components/Card';
-import { Plot, PlotType } from '../../../types'; // Ensure Plot and PlotType are correctly defined
-import { FaSpinner } from 'react-icons/fa'; // Example for loading spinner
-import { useAuth } from '../../../contexts/AuthContext'; // 1. IMPORT a custom hook
-import { BsFillCheckCircleFill } from 'react-icons/bs'; // NEW: Import a checkmark icon
+import { Plot, PlotType } from '../../../types'; 
+import { FaSpinner } from 'react-icons/fa'; 
+import { useAuth } from '../../../contexts/AuthContext';
+import { BsFillCheckCircleFill } from 'react-icons/bs';
+
+// Global type declaration for the Razorpay window object
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 // --- Helper Components (Full Code Included) ---
 
@@ -62,7 +67,7 @@ const PlotImageVideo: React.FC<{ imageUrl: string; videoUrl: string; alt: string
   );
 };
 
-const PlotOverviewDocs: React.FC<{ plot: Plot; onAuthAction: () => void }> = ({ plot, onAuthAction }) => (
+const PlotOverviewDocs: React.FC<{ docsEnabled: boolean; onAuthAction: () => void }> = ({ docsEnabled, onAuthAction }) => (
     <div className="space-y-2">
       <div className="bg-green-50 rounded p-2 shadow flex items-center gap-2">
         <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2a4 4 0 014-4h4a4 4 0 014 4v2M9 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -70,8 +75,12 @@ const PlotOverviewDocs: React.FC<{ plot: Plot; onAuthAction: () => void }> = ({ 
           <div className="font-semibold text-green-700 text-xs">Legal Documents</div>
           <div className="text-xs text-gray-500">View plot registry, NOC, etc.</div>
           <div className="flex gap-1 mt-1">
-            <Button variant="outline" size="sm" onClick={onAuthAction}>View Registry</Button>
-            <Button variant="outline" size="sm" onClick={onAuthAction}>Download NOC</Button>
+            <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+                <Button variant="outline" size="sm" onClick={onAuthAction} disabled={!docsEnabled}>View Registry</Button>
+            </span>
+            <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+                <Button variant="outline" size="sm" onClick={onAuthAction} disabled={!docsEnabled}>Download NOC</Button>
+            </span>
           </div>
         </div>
       </div>
@@ -81,7 +90,9 @@ const PlotOverviewDocs: React.FC<{ plot: Plot; onAuthAction: () => void }> = ({ 
           <div className="font-semibold text-green-700 text-xs">Site Plan & Layout</div>
            <div className="text-xs text-gray-500">View site plan and layout.</div>
           <div className="flex gap-1 mt-1">
-            <Button variant="outline" size="sm" onClick={onAuthAction}>View Site Plan</Button>
+             <span title={!docsEnabled ? 'Pay for Land Document Verification to enable download' : ''}>
+                <Button variant="outline" size="sm" onClick={onAuthAction} disabled={!docsEnabled}>View Site Plan</Button>
+             </span>
           </div>
         </div>
       </div>
@@ -90,17 +101,17 @@ const PlotOverviewDocs: React.FC<{ plot: Plot; onAuthAction: () => void }> = ({ 
 
 
 // --- Main Component ---
-
 const DPlotBookingDetailsPage: React.FC = () => {
   const { plotId } = useParams<{ plotId: string }>();
   const [plot, setPlot] = useState<Plot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [docsEnabled, setDocsEnabled] = useState(false);
 
-  // 2. GET THE CURRENT USER FROM THE AUTH CONTEXT
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  
   useEffect(() => {
     if (!plotId) {
       setError("No Plot ID provided in the URL.");
@@ -113,17 +124,17 @@ const DPlotBookingDetailsPage: React.FC = () => {
       setError(null);
       try {
         const response = await apiClient.get(`/public/plots/${plotId}/`);
-        const apiPlot = response; // Use response.data
+        const apiPlot = response; 
 
         const mappedPlot: Plot = {
-          id: apiPlot.id,
+          id: apiPlot.id, // Kept as number
           title: apiPlot.title,
           location: apiPlot.location,
           area: Number(apiPlot.total_area_sqft),
-          price: Number(apiPlot.price_per_sqft),
+          price: Number(apiPlot.price_per_sqft) * Number(apiPlot.total_area_sqft),
           sqftPrice: Number(apiPlot.price_per_sqft),
           imageUrl: apiPlot.plot_file || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
-          description: apiPlot.description || `A prime plot located in ${apiPlot.location}, perfect for investment or building your dream home.`,
+          description: apiPlot.description || `A prime plot located in ${apiPlot.location}.`,
           isVerified: apiPlot.is_verified,
           amenities: [],
           type: apiPlot.is_verified ? PlotType.VERIFIED : PlotType.PUBLIC,
@@ -131,7 +142,7 @@ const DPlotBookingDetailsPage: React.FC = () => {
         setPlot(mappedPlot);
       } catch (err) {
         console.error("Failed to fetch plot details:", err);
-        setError("This plot could not be found or there was a problem loading its details.");
+        setError("This plot could not be found.");
       } finally {
         setIsLoading(false);
       }
@@ -140,10 +151,86 @@ const DPlotBookingDetailsPage: React.FC = () => {
     fetchPlot();
   }, [plotId]);
 
-  // 3. CREATE A HANDLER FOR PROTECTED ACTIONS
+  const loadRazorpayScript = () => {
+    return new Promise<void>((resolve, reject) => {
+      if (document.getElementById('razorpay-script')) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-script';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject('Razorpay SDK failed to load');
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayPayment = async () => {
+    if (!currentUser) {
+        setShowLoginPopup(true);
+        return;
+    }
+    if (!plot) return;
+
+    try {
+      await loadRazorpayScript();
+
+      const payload = {
+        amount: 5000,
+        plot_id: plot.id,
+        booking_type: "document_verification"
+      };
+
+      const res = await apiClient.post("/payments/create-order/", payload);
+      const data = res.data || res;
+
+      if (!data.order_id) {
+        alert('Failed to create Razorpay order');
+        return;
+      }
+
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: 'INR',
+        name: 'Land Document Verification',
+        description: `Payment for verifying documents of Plot ID: ${plot.id}`,
+        order_id: data.order_id,
+        handler: async (response: any) => {
+          const verifyPayload = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          };
+          
+          try {
+            await apiClient.post('/payments/verify-payment/', verifyPayload);
+            alert('✅ Payment Successful! You can now view the documents.');
+            setDocsEnabled(true);
+          } catch (verifyErr) {
+            console.error('Verification error:', verifyErr);
+            alert('❌ Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: currentUser.name || 'Valued Customer',
+          email: currentUser.email,
+          contact: currentUser.mobile || ''
+        },
+        theme: { color: '#22c55e' },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error('Payment error:', err);
+      alert('Something went wrong while initiating the payment.');
+    }
+  };
+
   const handleProtectedAction = () => {
     if (!currentUser) {
-      // If no user is logged in, show the popup
       setShowLoginPopup(true);
     } else {
       navigate(`/book-my-sqft/${plotId}`);
@@ -177,7 +264,6 @@ const DPlotBookingDetailsPage: React.FC = () => {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="relative flex flex-col md:flex-row items-center gap-4 bg-gradient-to-r from-green-100 via-white to-green-200 rounded-2xl shadow-xl p-4 border border-green-200">
             <div className="flex-1">
-              {/* --- MODIFIED SECTION: Add verified icon next to title --- */}
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-2xl font-extrabold text-green-800">{plot.title}</h1>
                 {plot.isVerified && (
@@ -186,7 +272,6 @@ const DPlotBookingDetailsPage: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* --- END OF MODIFIED SECTION --- */}
               <p className="text-base text-green-600 font-semibold mb-1">Plot ID: {plot.id}</p>
               <div className="flex items-center gap-2 mt-2">
                 <Button variant="primary" size='sm' onClick={handleProtectedAction}>Book Plot</Button>
@@ -194,7 +279,7 @@ const DPlotBookingDetailsPage: React.FC = () => {
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Area: {plot.area.toLocaleString()} sqft</span>
-                <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Price: ₹{plot.price.toLocaleString()}/sqft</span>
+                <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Price: ₹{plot.sqftPrice.toLocaleString()}/sqft</span>
               </div>
             </div>
             <div className="flex-1 flex justify-center">
@@ -211,12 +296,12 @@ const DPlotBookingDetailsPage: React.FC = () => {
                     <div className="font-bold text-base mb-1 text-green-700">{plot.title}</div>
                     <div className="text-xs text-gray-600 mb-1">{plot.location}</div>
                     <p className="text-xs text-gray-500 mb-1 h-16 overflow-auto">{plot.description}</p>
-                    <div className="text-sm text-green-700 font-semibold mb-1">₹{plot.price.toLocaleString()} /sqft</div>
+                    <div className="text-sm text-green-700 font-semibold mb-1">₹{plot.price.toLocaleString()} (~₹{plot.sqftPrice.toLocaleString()}/sqft)</div>
                     <div className="text-xs text-gray-400">Area: {plot.area.toLocaleString()} sqft</div>
                   </div>
                 </div>
                 <div className="mt-4">
-                    <PlotOverviewDocs plot={plot} onAuthAction={handleProtectedAction} />
+                    <PlotOverviewDocs docsEnabled={docsEnabled} onAuthAction={handleProtectedAction} />
                 </div>
             </Card>
           </div>
@@ -230,11 +315,19 @@ const DPlotBookingDetailsPage: React.FC = () => {
                 </ul>
             </Card>
              {plot.isVerified && (
-              <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm" style={{ backgroundColor: '#22c55e' }}>
+              <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm">
                 <div className="flex flex-col gap-2">
                   <div className="font-semibold" >Verify the land document before you buy it</div>
                   <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
-                  <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow text-white" style={{ backgroundColor: '#22c55e', border: 'none' }}>Pay ₹5000 for Verification</Button>
+                  <Button 
+                    variant="primary" 
+                    size="sm" 
+                    className="w-fit px-4 py-1 rounded shadow text-white" 
+                    style={{ backgroundColor: '#22c55e', border: 'none' }}
+                    onClick={handleRazorpayPayment}
+                  >
+                    Pay ₹5000 for Verification
+                  </Button>
                 </div>
               </Card>
             )}

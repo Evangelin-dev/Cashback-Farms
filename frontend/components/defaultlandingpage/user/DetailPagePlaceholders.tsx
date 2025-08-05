@@ -5,6 +5,7 @@ import apiClient from '../../../src/utils/api/apiClient';
 import { Plot, Material, Professional } from '../../../types';
 import { FaSpinner } from 'react-icons/fa';
 import { useAuth } from '../../../contexts/AuthContext'; // 1. IMPORT a custom hook
+import AuthModal from '@/components/auth/AuthForm';
 
 // --- Layout Component (Unchanged) ---
 const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (
@@ -102,7 +103,7 @@ export const DMaterialDetailPage: React.FC = () => {
           });
       }
   };
-console.log('test',material?.id , material?.vendor,material?.name);
+
   if (isLoading) return <DDetailPageLayout title="Loading..." backLink="/Dmaterials" backLinkText="Back to Materials Store"><FaSpinner className="animate-spin" /></DDetailPageLayout>;
   if (error || !material) return <DDetailPageLayout title="Error" backLink="/Dmaterials" backLinkText="Back to Materials Store"><p>{error}</p></DDetailPageLayout>;
 
@@ -122,7 +123,8 @@ console.log('test',material?.id , material?.vendor,material?.name);
                 </Button>
             </div>
         </DDetailPageLayout>
-        {showLoginPopup && <AuthPopup onClose={() => setShowLoginPopup(false)} />}
+        {/* 2. USE THE REAL AUTHMODAL */}
+        <AuthModal isOpen={showLoginPopup} onClose={() => setShowLoginPopup(false)} />
     </>
   );
 };

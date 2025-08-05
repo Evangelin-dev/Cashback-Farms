@@ -4,19 +4,14 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 
-// Optional: MUI ThemeProvider and CssBaseline
 import { ThemeProvider, CssBaseline } from '@mui/material';
-// your custom MUI theme (optional)
 
-// Create a cache instance
 const emotionCache = createCache({ key: 'mui', prepend: true });
 
-// Layouts
 import AdminLayout from './layouts/AdminLayout';
 import UserLayout from './layouts/UserLayout';
 
-// Pages
-// import HomePage from './pages/HomePage';
+
 import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
 
 import HelpAndSupport from './components/helpandsupport/helpandsupport';
@@ -89,6 +84,7 @@ import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
 import B2bProtectedRoute from './components/ProtectedB2BRoute';
 import AdminLogin from './pages/admin/AdminLogin';
 import ManageKYC from './pages/admin/ManageKYC';
+import ScrollToTop from './components/ScrollToTop';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -207,6 +203,7 @@ const App: React.FC = () => {
       <CssBaseline />
       <BrowserRouter>
         <AuthProvider>
+          <ScrollToTop />
           <AppRoutes />
         </AuthProvider>
       </BrowserRouter>

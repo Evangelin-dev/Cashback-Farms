@@ -5,12 +5,16 @@ import Card from '../components/Card';
 import apiClient from '../src/utils/api/apiClient';
 import { Plot, PlotType } from '../types';
 import BookPlotPayment from './user/BookPlotPayment';
+import { BsFillCheckCircleFill } from 'react-icons/bs';
+import { FaUsers, FaWallet } from 'react-icons/fa'; // Icons for the new popup
 
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
+
+// --- Helper Components (Unchanged) ---
 
 const DEMO_VIDEO_URL = "https://www.w3schools.com/html/mov_bbb.mp4";
 const PlotImageVideo: React.FC<{ imageUrl: string; videoUrl: string; alt: string }> = ({ imageUrl, videoUrl, alt }) => {
@@ -74,14 +78,88 @@ const PlotOverviewDocs: React.FC<{ docsEnabled: boolean }> = ({ docsEnabled }) =
   </div>
 );
 
+// --- NEW Enquiry Popup Component ---
+const EnquiryPopup: React.FC<{ plotTitle: string; onClose: () => void }> = ({ plotTitle, onClose }) => {
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        // Here you would typically send the data to your backend
+        console.log("Enquiry Submitted:", { plot: plotTitle, ...formData });
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+        alert("Thank you for your enquiry! We will get back to you soon.");
+        setIsSubmitting(false);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md m-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-green-800">Enquire About "{plotTitle}"</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input type="text" name="name" placeholder="Your Name" required onChange={handleChange} className="w-full p-2 border rounded" />
+                    <input type="email" name="email" placeholder="Your Email" required onChange={handleChange} className="w-full p-2 border rounded" />
+                    <input type="tel" name="phone" placeholder="Your Phone Number" required onChange={handleChange} className="w-full p-2 border rounded" />
+                    <textarea name="message" placeholder="Your Message" rows={4} required onChange={handleChange} className="w-full p-2 border rounded" />
+                    <Button type="submit" variant="primary" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Submit Enquiry'}
+                    </Button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+// --- NEW Booking Options Popup Component ---
+const BookingOptionsPopup: React.FC<{
+  onClose: () => void;
+  onNormalPayment: () => void;
+  onSyndicatePlan: () => void;
+}> = ({ onClose, onNormalPayment, onSyndicatePlan }) => {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md m-4 text-center">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-bold text-green-800">Choose Your Booking Plan</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">×</button>
+                </div>
+                <p className="text-gray-600 mb-6">Select how you would like to proceed with booking this plot.</p>
+                <div className="space-y-4">
+                    <button onClick={onNormalPayment} className="w-full flex items-center justify-center gap-3 p-4 border-2 border-green-600 text-green-700 font-bold rounded-lg hover:bg-green-100 transition">
+                        <FaWallet size={20} /> Normal Payment
+                    </button>
+                    <button onClick={onSyndicatePlan} className="w-full flex items-center justify-center gap-3 p-4 border-2 border-blue-600 text-blue-700 font-bold rounded-lg hover:bg-blue-100 transition">
+                        <FaUsers size={20} /> Syndicate Plan (Group Investment)
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+// --- Main Page Component ---
 const PlotDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [plot, setPlot] = useState<Plot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [docsEnabled, setDocsEnabled] = useState(false);
+  
+  // --- NEW and MODIFIED State ---
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false); // For the final payment form
+  const [showEnquiryPopup, setShowEnquiryPopup] = useState(false); // For unverified plots
+  const [showBookingOptionsPopup, setShowBookingOptionsPopup] = useState(false); // For verified plots
 
   useEffect(() => {
     if (!id) {
@@ -103,7 +181,7 @@ const PlotDetailsPage: React.FC = () => {
         const response = await apiClient.get(`/plots/${id}/`, { headers });
         const apiPlot = response.data || response;
         const formattedPlot: Plot = {
-          id: apiPlot.id?.toString() || '',
+          id: apiPlot.id,
           title: apiPlot.title,
           location: apiPlot.location,
           area: parseFloat(apiPlot.total_area_sqft),
@@ -116,10 +194,11 @@ const PlotDetailsPage: React.FC = () => {
           client: apiPlot.owner || 'Unknown Client',
           isAvailable: true,
           value: 0,
+          is_verified: apiPlot.is_verified,
         };
         setPlot(formattedPlot);
       } catch (err) {
-        setError("Failed to load plot details. It might not exist or you may not have permission.");
+        setError("Failed to load plot details.");
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -149,48 +228,34 @@ const PlotDetailsPage: React.FC = () => {
 
     try {
       await loadRazorpayScript();
-
-      // Step 1: Create order on backend using apiClient
       const payload = {
-      amount: 5000,
-      plot_id: plot.id,
-      client: plot.client,
-      booking_type:"full_plot"
-
-   
-    };
+        amount: 5000,
+        plot_id: plot.id,
+        client: plot.client,
+        booking_type: "full_plot"
+      };
       const headers = { Authorization: `Bearer ${accessToken}` };
       const res = await apiClient.post("/payments/create-order/", payload, { headers });
-      const data = res.data || res; // adjust if your apiClient returns .data
+      const data = res.data || res;
 
       if (!data.order_id) {
         alert('Failed to create Razorpay order');
         return;
       }
-
-      // Step 2: Open Razorpay checkout
       const options = {
-        key: data.key_id,
-        amount: data.amount,
-        currency: 'INR',
-        name: 'Land Document Verification',
-        description: 'Verify land documents before purchase',
+        key: data.key_id, amount: data.amount, currency: 'INR',
+        name: 'Land Document Verification', description: 'Verify land documents before purchase',
         order_id: data.order_id,
         handler: async (response: any) => {
-          // Step 3: Verify payment with backend
           const verifyRes = await fetch('/api/verify-payment/', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              Authorization: `Bearer ${accessToken}`,
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', Authorization: `Bearer ${accessToken}` },
             body: new URLSearchParams({
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             }),
           });
-
           const verifyData = await verifyRes.json();
           if (verifyData.status === 'Payment verified') {
             alert('✅ Payment Successful');
@@ -199,16 +264,9 @@ const PlotDetailsPage: React.FC = () => {
             alert('❌ Payment verification failed');
           }
         },
-        prefill: {
-          name: 'Your Name',
-          email: 'your@email.com',
-          contact: '9876543210',
-        },
-        theme: {
-          color: '#22c55e',
-        },
+        prefill: { name: 'Your Name', email: 'your@email.com', contact: '9876543210' },
+        theme: { color: '#22c55e' },
       };
-
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (err) {
@@ -217,28 +275,32 @@ const PlotDetailsPage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return <div className="text-center py-20">Loading Plot Details...</div>;
-  }
-  if (error || !plot) {
-    return <div className="text-center py-20 text-red-500">{error || "Plot not found."}</div>;
-  }
+  if (isLoading) return <div className="text-center py-20">Loading Plot Details...</div>;
+  if (error || !plot) return <div className="text-center py-20 text-red-500">{error || "Plot not found."}</div>;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100 py-4 px-1">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="relative flex flex-col md:flex-row items-center gap-4 bg-gradient-to-r from-green-100 via-white to-green-200 rounded-2xl shadow-xl p-4 border border-green-200 overflow-hidden">
           <div className="flex-1">
-            <h1 className="text-2xl font-extrabold text-green-800 mb-1 flex items-center gap-2"><span className="inline-block w-1 h-6 bg-green-400 rounded-full"></span>{plot.title}</h1>
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-extrabold text-green-800 mb-1 flex items-center gap-2"><span className="inline-block w-1 h-6 bg-green-400 rounded-full"></span>{plot.title}</h1>
+              {plot.is_verified && (<div title="Verified Plot"><BsFillCheckCircleFill className="text-green-600 text-xl" /></div>)}
+            </div>
             <p className="text-base text-green-600 font-semibold mb-1">Plot ID: {plot.id}</p>
             <p className="text-xs text-neutral-500 mb-2">A great investment opportunity.</p>
             <div className="flex items-center gap-2 mt-2">
-              <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowPaymentPopup(true)}>Book This Plot</Button>
+              {/* --- MODIFIED: Main button is now conditional --- */}
+              {plot.is_verified ? (
+                <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowBookingOptionsPopup(true)}>Book This Plot</Button>
+              ) : (
+                <Button variant="primary" size='sm' className="px-3 py-1 text-sm rounded shadow" onClick={() => setShowEnquiryPopup(true)}>Make an Enquiry</Button>
+              )}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Area: {plot.area} sqft</span>
               <span className="inline-block bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold shadow">Price: ₹{plot.price?.toLocaleString()}</span>
-              {plot.amenities && plot.amenities.length > 0 && ( <span className="inline-block bg-green-50 text-green-600 px-2 py-0.5 rounded-full text-xs font-semibold shadow"> Amenities: {plot.amenities.join(', ')} </span> )}
+              {plot.amenities && plot.amenities.length > 0 && (<span className="inline-block bg-green-50 text-green-600 px-2 py-0.5 rounded-full text-xs font-semibold shadow"> Amenities: {plot.amenities.join(', ')} </span>)}
             </div>
           </div>
           <div className="flex-1 flex justify-center">
@@ -249,7 +311,7 @@ const PlotDetailsPage: React.FC = () => {
           <div className="lg:col-span-2 space-y-4">
             <Card title="Plot Overview" className="bg-white/90 shadow border-0 rounded-xl text-sm">
               <div className="flex flex-col md:flex-row gap-4">
-                <img src={plot.imageUrl || 'https://picsum.photos/seed/defaultplot/600/400'} alt={`Plot ${plot.id}`} className="w-full md:w-1/2 h-40 object-cover rounded shadow-md border border-green-100" onError={(e) => (e.currentTarget.src = 'https://picsum.photos/seed/errorplot/600/400')}/>
+                <img src={plot.imageUrl || 'https://picsum.photos/seed/defaultplot/600/400'} alt={`Plot ${plot.id}`} className="w-full md:w-1/2 h-40 object-cover rounded shadow-md border border-green-100" onError={(e) => (e.currentTarget.src = 'https://picsum.photos/seed/errorplot/600/400')} />
                 <div className="md:w-1/2 flex flex-col justify-between">
                   <div>
                     <div className="font-bold text-base mb-1 text-green-700">{plot.title}</div>
@@ -273,29 +335,46 @@ const PlotDetailsPage: React.FC = () => {
                 <li>Ready for construction</li>
                 <li>Clear title and legal documentation</li>
                 <li>Flexible payment options</li>
-                <li>Gated community with amenities</li>  
-              </ul>     
+                <li>Gated community with amenities</li>
+              </ul>
             </Card>
-            {/* Land Document Verification Card */}
-            <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm ">
-              <div className="flex flex-col gap-2">
-                <div className="font-semibold" >Verify the land document before you buy it</div>
-                <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-fit px-4 py-1 rounded shadow text-white"
-                  style={{ backgroundColor: '#22c55e', border: 'none' }}
-                  onClick={handleRazorpayPayment}
-                >
-                  Pay ₹5000 for Verification
-                </Button>
-              </div>
-            </Card>
+            {plot?.is_verified && (
+              <Card title="Land Document Verification" className="border-0 shadow rounded-xl text-sm ">
+                <div className="flex flex-col gap-2">
+                  <div className="font-semibold" >Verify the land document before you buy it</div>
+                  <div className="text-xs mb-2" >Get peace of mind by verifying the legal status of the land before making your investment.</div>
+                  <Button variant="primary" size="sm" className="w-fit px-4 py-1 rounded shadow text-white" style={{ backgroundColor: '#22c55e', border: 'none' }} onClick={handleRazorpayPayment}>
+                    Pay ₹5000 for Verification
+                  </Button>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
-      {showPaymentPopup && (<BookPlotPayment onClose={() => setShowPaymentPopup(false)} />)}
+      
+      {/* --- NEW: Conditionally render all popups --- */}
+      {showEnquiryPopup && plot && (
+        <EnquiryPopup plotTitle={plot.title} onClose={() => setShowEnquiryPopup(false)} />
+      )}
+      
+      {showBookingOptionsPopup && (
+        <BookingOptionsPopup
+            onClose={() => setShowBookingOptionsPopup(false)}
+            onNormalPayment={() => {
+                setShowBookingOptionsPopup(false); // Close this popup
+                setShowPaymentPopup(true);      // Open the payment popup
+            }}
+            onSyndicatePlan={() => {
+                setShowBookingOptionsPopup(false);
+                navigate(`/syndicate-plan/${id}`); // Navigate to the syndicate page
+            }}
+        />
+      )}
+
+      {showPaymentPopup && (
+        <BookPlotPayment onClose={() => setShowPaymentPopup(false)} />
+      )}
     </div>
   );
 };

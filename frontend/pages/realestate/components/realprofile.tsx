@@ -14,7 +14,7 @@ import "../AgentProfileSection.css";
 // --- FIX: DEFINING 'initialProfile' AT THE TOP LEVEL ---
 // This ensures it's available to the component before it renders.
 const initialProfile = {
-  firstName: "",
+  firstName: "",  
   lastName: "",
   gender: "",
   dob: "",

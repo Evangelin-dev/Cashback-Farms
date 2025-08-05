@@ -103,6 +103,11 @@ const DBookMySqftPage: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
+        if (!currentUser) {
+            navigate('/');
+        }
+    })
+    useEffect(() => {
         if (!id) {
             setIsLoading(false);
             setError("No Micro-Plot ID was provided in the URL.");
