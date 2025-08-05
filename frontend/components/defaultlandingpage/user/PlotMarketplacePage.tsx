@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../../../contexts/AuthContext'; // Your Auth context
 import apiClient from '../../../src/utils/api/apiClient'; // Your API client
-import AuthForm from '../../auth/AuthForm'; // Adjust this import path if needed
+import AuthForm from '../../auth/AuthForm'; // Your AuthForm component
 // --- ICONS ---
 import { FaHeart, FaSpinner, FaUserCheck } from 'react-icons/fa';
 import { FiHeart } from 'react-icons/fi';
@@ -59,7 +59,7 @@ const PlotCard: React.FC<{ plot: Plot; onToggleWishlist: (plotId: number) => voi
     const total_price = plot.area * plot.pricePerSqFt;
     return (
         <div className="bg-white border rounded-lg overflow-hidden flex flex-col sm:flex-row mb-6 shadow-sm hover:shadow-lg transition-shadow">
-            <div className="sm:w-1/3 p-2">{plot.hasPhotos && plot.imageUrl ? (<img src={plot?.imageUrl} alt={plot.title} className="w-full h-full rounded-md" />) : (<div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-md"><LuRectangleHorizontal className="text-gray-400 text-5xl" /></div>)}</div>
+            <div className="sm:w-1/3 p-2">{plot.hasPhotos && plot.imageUrl ? (<img src={plot?.imageUrl} alt={plot.title} className="w-full h-full rounded-md object-cover" />) : (<div className="w-full h-full bg-gray-100 flex items-center justify-center rounded-md"><LuRectangleHorizontal className="text-gray-400 text-5xl" /></div>)}</div>
             <div className="sm:w-2/3 flex flex-col p-4">
                 <h2 className="font-bold text-lg text-gray-800">{plot.title}</h2>
                 <p className="text-sm text-gray-500 mb-4">{plot.location}</p>
@@ -131,9 +131,10 @@ const DPlotMarketplacePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [wishlistLoadingId, setWishlistLoadingId] = useState<number | null>(null);
-
     const { currentUser } = useAuth();
     const navigate = useNavigate();
+
+    const [showAuth, setShowAuth] = useState(false); // THIS STATE CONTROLS YOUR POPUP
 
     const initialPriceRange = { min: 0, max: 1000000000 };
     const initialAreaRange = { min: 0, max: 100000 };
@@ -144,7 +145,6 @@ const DPlotMarketplacePage: React.FC = () => {
     const [showAgentPlot, setShowAgentPlot] = useState(false);
     const [locationFilter, setLocationFilter] = useState('All Locations');
     const [plotType, setPlotType] = useState("");
-    
     const [searchTerm, setSearchTerm] = useState('');
     const [locationSearchInput, setLocationSearchInput] = useState('');
     const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
@@ -164,20 +164,15 @@ const DPlotMarketplacePage: React.FC = () => {
         } catch (err) { console.error("Could not refresh shortlist:", err); }
     }, [currentUser]);
 
-    // *** NEW: useEffect to read search query from URL ***
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const searchQueryFromUrl = params.get('search');
-
         if (searchQueryFromUrl) {
-            // Decode the URL component to handle spaces and special characters
             const decodedSearchQuery = decodeURIComponent(searchQueryFromUrl);
-            // Set the search term for filtering
             setSearchTerm(decodedSearchQuery);
-            // Set the value for the input box so the user sees their search term
             setLocationSearchInput(decodedSearchQuery);
         }
-    }, []); // Empty dependency array [] means this runs only once when the component mounts.
+    }, []);
 
     useEffect(() => {
         const fetchPageData = async () => {
@@ -190,11 +185,8 @@ const DPlotMarketplacePage: React.FC = () => {
                     apiClient.get('/public/plots/'),
                     currentUser ? apiClient.get('/cart/', { headers }) : Promise.resolve([]),
                 ]);
-                
                 setPlots(plotsResponse || []);
                 setShortlistedItems(shortlistResponse || []);
-                console.log(plotsResponse, 'plots');
-
             } catch (err) {
                 setError('Failed to fetch data. Please try again later.');
             } finally {
@@ -206,8 +198,7 @@ const DPlotMarketplacePage: React.FC = () => {
 
     const fetchLocationSuggestions = useCallback(
       debounce(async (text: string) => {
-        if (!GEOAPIFY_API_KEY) return;
-        if (!text || text.length < 3) { setLocationSuggestions([]); return; }
+        if (!GEOAPIFY_API_KEY || !text || text.length < 3) { setLocationSuggestions([]); return; }
         setIsLocationSearching(true);
         const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(text)}&apiKey=${GEOAPIFY_API_KEY}`;
         try {
@@ -229,9 +220,11 @@ const DPlotMarketplacePage: React.FC = () => {
       }
     }, [locationSearchInput, showLocationSuggestions, fetchLocationSuggestions]);
 
-    const [ showAuth,setShowAuth] = useState(false);
     const handleToggleWishlist = async (plotId: number) => {
-        if (!currentUser) { setShowAuth(true); return; }
+        if (!currentUser) { 
+            setShowAuth(true); 
+            return; 
+        }
         setWishlistLoadingId(plotId); 
         const accessToken = localStorage.getItem("access_token");
         const headers = { Authorization: `Bearer ${accessToken}` };
@@ -252,25 +245,31 @@ const DPlotMarketplacePage: React.FC = () => {
         }
     };
     
-    const handleViewDetails = (id: number) => { navigate(`/book-my-sqft/${id}`); };
+    // [MODIFIED] - This function now opens the popup if the user is not logged in.
+    const handleViewDetails = (id: number) => {
+        if (currentUser) {
+            navigate(`/book-my-sqft/${id}`);
+        } else {
+            setShowAuth(true); // This will open your AuthForm popup
+        }
+    };
 
     const finalFilteredPlots = useMemo(() => {
         const shortlistedIds = new Set(shortlistedItems.map(item => item.item_id));
-        let filtered = plots
-            .map(apiPlot => ({
-                id: apiPlot.id,
-                title: apiPlot.title,
-                location: apiPlot.location,
-                area: Number(apiPlot.total_area_sqft),
-                pricePerSqFt: Number(apiPlot.price_per_sqft),
-                ownerName: apiPlot.owner_name,
-                isVerified: apiPlot.is_verified,
-                postedOn: new Date(apiPlot.created_at).toLocaleDateString(),
-                lastUpdated: new Date(apiPlot.updated_at).toLocaleDateString(),
-                imageUrl: apiPlot.plot_file || ``,
-                hasPhotos: !!apiPlot.plot_file,
-                isShortlisted: shortlistedIds.has(apiPlot.id),
-            }));
+        let filtered = plots.map(apiPlot => ({
+            id: apiPlot.id,
+            title: apiPlot.title,
+            location: apiPlot.location,
+            area: Number(apiPlot.total_area_sqft),
+            pricePerSqFt: Number(apiPlot.price_per_sqft),
+            ownerName: apiPlot.owner_name,
+            isVerified: apiPlot.is_verified,
+            postedOn: new Date(apiPlot.created_at).toLocaleDateString(),
+            lastUpdated: new Date(apiPlot.updated_at).toLocaleDateString(),
+            imageUrl: apiPlot.plot_file || ``,
+            hasPhotos: !!apiPlot.plot_file,
+            isShortlisted: shortlistedIds.has(apiPlot.id),
+        }));
 
         if (showAgentPlot) filtered = filtered.filter(plot => !plot.isVerified);
         if (plotType) {
@@ -306,10 +305,16 @@ const DPlotMarketplacePage: React.FC = () => {
 
     return (
         <div className="bg-gray-50 min-h-screen">
-            <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center"><div className="text-2xl font-bold text-green-600">PLOT-MARKET</div></div></header>
+            <header className="bg-white shadow-sm sticky top-0 z-10">
+                <div className="max-w-screen-xl mx-auto px-4 py-3 flex justify-between items-center">
+                    <div className="text-2xl font-bold text-green-600">PLOT-MARKET</div>
+                </div>
+            </header>
             <main className="max-w-screen-xl mx-auto p-4">
                 <div className="bg-white p-3 rounded-lg border shadow-sm mb-6 flex flex-col md:flex-row items-center gap-4">
-                    <select className="w-full md:w-auto md:min-w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>{metropolitanCities.map(city => (<option key={city} value={city}>{city}</option>))}</select>
+                    <select className="w-full md:w-auto md:min-w-[180px] px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+                        {metropolitanCities.map(city => (<option key={city} value={city}>{city}</option>))}
+                    </select>
                     
                     <div className="flex-grow relative w-full" onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}>
                         <input type="text" placeholder="Search by location (e.g., Koramangala, Bangalore)..." className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-600 focus:border-green-600" value={locationSearchInput} onChange={(e) => { setLocationSearchInput(e.target.value); if(e.target.value === '') { setSearchTerm(''); } setShowLocationSuggestions(true); }}/>
@@ -339,8 +344,10 @@ const DPlotMarketplacePage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            <AuthForm isOpen={showAuth} onClose={() => setShowAuth(false)} />
             </main>
+            
+            {/* This renders your existing popup when `showAuth` is true */}
+            <AuthForm isOpen={showAuth} onClose={() => setShowAuth(false)} />
         </div>
     );
 };

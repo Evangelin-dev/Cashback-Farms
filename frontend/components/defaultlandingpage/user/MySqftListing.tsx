@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "../../../src/utils/api/apiClient";
 import { FaSpinner } from 'react-icons/fa';
 import { IoLocationOutline } from "react-icons/io5";
+import { useAuth } from "../../../contexts/AuthContext"; // 1. IMPORT useAuth HOOK
+import AuthForm from "../../auth/AuthForm"; // 2. IMPORT AuthForm POPUP
 
-
+// --- TYPE DEFINITIONS ---
 interface MicroPlot {
     id: number;
     name: string;
@@ -23,7 +25,6 @@ interface ApiMicroPlot {
     project_image: string | null;
 }
 
-
 const debounce = (func: Function, delay: number) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: any[]) => {
@@ -34,7 +35,7 @@ const debounce = (func: Function, delay: number) => {
   };
 };
 
-
+// --- CARD COMPONENT ---
 const MicroPlotCard: React.FC<{ plot: MicroPlot; onViewDetails: (id: number) => void; }> = ({ plot, onViewDetails }) => {
     return (
         <div className="bg-white border rounded-lg overflow-hidden flex flex-col sm:flex-row mb-6 shadow-sm hover:shadow-lg transition-shadow">
@@ -64,7 +65,7 @@ const MicroPlotCard: React.FC<{ plot: MicroPlot; onViewDetails: (id: number) => 
     );
 };
 
-
+// --- SIDEBAR COMPONENT ---
 const FilterSidebar: React.FC<{
     locationSearchInput: string;
     setLocationSearchInput: (value: string) => void;
@@ -143,18 +144,18 @@ const FilterSidebar: React.FC<{
 };
 
 
-
+// --- MAIN PAGE COMPONENT ---
 const DMySqftListing: React.FC = () => {
     const navigate = useNavigate();
-    
+    const { currentUser } = useAuth(); // GET THE CURRENT USER
+
     const [plots, setPlots] = useState<ApiMicroPlot[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showAuthModal, setShowAuthModal] = useState(false); // 3. STATE TO CONTROL THE POPUP
 
-    
     const initialPriceRange = { min: 0, max: 100000 };
     const [priceRange, setPriceRange] = useState(initialPriceRange);
-    
     
     const [searchTerm, setSearchTerm] = useState(''); 
     const [locationSearchInput, setLocationSearchInput] = useState(''); 
@@ -180,7 +181,6 @@ const DMySqftListing: React.FC = () => {
         fetchPageData();
     }, []);
 
-    
     const fetchLocationSuggestions = useCallback(
         debounce(async (text: string) => {
             if (!GEOAPIFY_API_KEY) { return; }
@@ -206,8 +206,13 @@ const DMySqftListing: React.FC = () => {
         }
     }, [locationSearchInput, showLocationSuggestions, fetchLocationSuggestions]);
 
+    // 4. MODIFIED HANDLER TO CHECK FOR USER
     const handleViewDetails = (id: number) => {
-        navigate(`/micro-plots/${id}`);
+        if (currentUser) {
+            navigate(`/micro-plots/${id}`);
+        } else {
+            setShowAuthModal(true); // Open the popup if not logged in
+        }
     };
 
 	const finalFilteredPlots = useMemo(() => {
@@ -221,7 +226,6 @@ const DMySqftListing: React.FC = () => {
                 imageUrl: apiPlot.project_image || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
             }))
             .filter(plot => {
-                
                 const matchesLocation = !searchTerm || plot.location.toLowerCase().includes(searchTerm.toLowerCase());
                 const withinPrice = plot.pricePerUnit <= priceRange.max;
                 return matchesLocation && withinPrice;
@@ -245,7 +249,6 @@ const DMySqftListing: React.FC = () => {
 		<div className="bg-gray-50 min-h-screen">
             <header className="bg-white shadow-sm sticky top-0 z-10"><div className="max-w-screen-xl mx-auto px-4 py-3"><h1 className="text-2xl font-bold text-green-700">Book My GIOO Plots</h1></div></header>
             <main className="max-w-screen-xl mx-auto p-4 flex flex-col lg:flex-row gap-6">
-                {/* --- PASSING NEW GEOAPIFY PROPS TO SIDEBAR --- */}
                 <FilterSidebar
                     locationSearchInput={locationSearchInput}
                     setLocationSearchInput={setLocationSearchInput}
@@ -274,6 +277,9 @@ const DMySqftListing: React.FC = () => {
                     )}
                 </div>
             </main>
+            
+            {/* 5. RENDER THE AUTHFORM CONDITIONALLY */}
+            <AuthForm isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
 		</div>
 	);
 };

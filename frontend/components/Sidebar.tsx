@@ -1,3 +1,4 @@
+import { Home, LayoutDashboard } from "lucide-react";
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -8,11 +9,10 @@ import {
   IconMapPin,
   IconTableCells,
   IconUsers,
-  IconWallet,
-  generateUserCode
+  IconWallet
 } from '../constants';
 import { useAuth } from '../contexts/AuthContext';
-import { Home ,LayoutDashboard } from "lucide-react";
+
 interface NavItemProps {
   to: string;
   icon: React.ReactNode;
@@ -37,26 +37,15 @@ const NavItem: React.FC<NavItemProps & { onClick?: () => void }> = ({ to, icon, 
   );
 };
 
+// [MODIFIED] This component is now fully driven by the AuthContext
 const ProfileSection: React.FC = () => {
-  const { currentUser } = useAuth();
+  // 1. Get the detailed profile and loading state from the context
+  const { profile, isProfileLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Don't use useState for profile - derive it directly from currentUser
-  const profile = {
-    name: currentUser?.username || "User",
-    email: currentUser?.email || "",
-    phone: currentUser?.mobile_number || "",
-    photo: currentUser?.photo || "", // Add this if you have photo in currentUser
-    company: currentUser?.company || "",
-    joiningDate: currentUser?.created_at ? new Date(currentUser.created_at) : new Date(),
-  };
-
-  // Generate User Code
-  const userCode = generateUserCode(profile.name, profile.joiningDate);
-
-  // Add loading state if needed
-  if (!currentUser) {
+  // Show a loading skeleton while the context fetches the profile
+  if (isProfileLoading || !profile) {
     return (
       <div className="w-full mb-4 p-4 rounded-lg bg-gray-100 animate-pulse">
         <div className="flex items-center gap-3">
@@ -70,6 +59,10 @@ const ProfileSection: React.FC = () => {
     );
   }
 
+  // Derive display values from the fetched profile data
+  const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+  const initials = `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase() || 'U';
+
   return (
     <div className="relative w-full mb-4">
       <div
@@ -77,16 +70,16 @@ const ProfileSection: React.FC = () => {
         onClick={() => setDropdownOpen((open) => !open)}
       >
         <div className="relative">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold overflow-hidden border-2 border-primary agent-photo">
-            {profile.photo ? (
-              <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
+          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold overflow-hidden border-2 border-primary agent-photo">
+            {profile.photo_url ? (
+              <img src={profile.photo_url} alt="avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
-              profile.name[0]?.toUpperCase() || "U"
+              initials
             )}
           </div>
         </div>
         <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-primary-light truncate">{profile.name}</span>
+          <span className="font-semibold text-primary-light truncate">{fullName || 'User'}</span>
           <span className="text-xs text-gray-500 truncate">{profile.email}</span>
         </div>
         <span className="ml-auto">
@@ -95,42 +88,34 @@ const ProfileSection: React.FC = () => {
           </svg>
         </span>
       </div>
-      {/* Dropdown */}
+
       <div
-        className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${
-          dropdownOpen ? "scale-y-100 opacity-100 pointer-events-auto" : "scale-y-95 opacity-0 pointer-events-none"
-        }`}
-        style={{ minWidth: "220px", maxWidth: "100%", width: "100%" }}
+        className={`absolute left-0 right-0 z-30 bg-white rounded-lg shadow-lg border border-neutral-200 mt-2 transition-all duration-200 origin-top ${dropdownOpen ? "scale-y-100 opacity-100" : "scale-y-95 opacity-0 pointer-events-none"
+          }`}
       >
         <div className="p-4 flex flex-col items-center">
           <div className="relative mb-2">
             <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white text-3xl font-bold overflow-hidden agent-photo border-4 border-primary">
-              {profile.photo ? (
-                <img src={profile.photo} alt="avatar" className="w-full h-full rounded-full object-cover" />
+              {profile.photo_url ? (
+                <img src={profile.photo_url} alt="avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                profile.name[0]?.toUpperCase() || "U"
+                initials
               )}
             </div>
           </div>
-          <div className="mt-1 text-lg font-semibold text-primary-light">{profile.name}</div>
-          {profile.phone && (
-            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-              <span>{profile.phone}</span>
-            </div>
-          )}
-          {profile.email && (
-            <div className="text-xs text-gray-500 flex items-center gap-1 mb-2">
-              <span>{profile.email}</span>
-            </div>
-          )}
-          <div className="mt-2 text-xs text-gray-600 font-mono bg-gray-100 px-3 py-1 rounded shadow-sm">
-            User Code: <span className="text-primary font-semibold">{userCode}</span>
+          <div className="mt-1 text-lg font-semibold text-primary-light">{fullName}</div>
+          <div className="text-xs text-gray-500 mb-2">{profile.email}</div>
+
+          {/* Display the real user_code from the API */}
+          <div className="mt-2 flex items-center justify-center gap-2 text-lg font-mono bg-gray-100 px-3 py-1 rounded shadow-sm whitespace-nowrap">
+            <span className="text-gray-600">User Code:</span>
+            <span className="text-primary font-semibold">{profile.user_code}</span>
           </div>
+
           <button
             className="mt-3 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark transition font-semibold flex items-center gap-2"
             onClick={() => {
               setDropdownOpen(false);
-              // Go to user profile page (myprofile)
               navigate("/myprofile");
             }}
           >
@@ -141,13 +126,9 @@ const ProfileSection: React.FC = () => {
           </button>
         </div>
       </div>
-      {/* Overlay for dropdown */}
+
       {dropdownOpen && (
-        <div
-          className="fixed inset-0 z-10"
-          style={{ background: "transparent" }}
-          onClick={() => setDropdownOpen(false)}
-        />
+        <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
       )}
     </div>
   );
@@ -159,61 +140,41 @@ const Sidebar: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    logout(); // logout function from your context
     navigate('/');
   };
 
-  // Sidebar menu items
   const menuItems = [
     { to: "/Landing", icon: <Home className="w-5 h-5" />, label: "Home", exact: true },
     { to: "/user-dashboard", icon: <LayoutDashboard className="w-5 h-5" />, label: "My Dashboard", exact: true },
     { to: "/my-bookings", icon: <IconWallet className="w-5 h-5" />, label: "My Bookings / Properties" },
     { to: "/plots", icon: <IconMapPin className="w-5 h-5" />, label: "Plot Marketplace" },
-    { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "Micro Plots" },
+    { to: "/mysqft-listing", icon: <IconTableCells className="w-5 h-5" />, label: "GIOO Plots" },
     { to: "/materials", icon: <IconCollection className="w-5 h-5" />, label: "Materials Store" },
     { to: "/services", icon: <IconUsers className="w-5 h-5" />, label: "Professional Services" },
-    // { to: "/book-my-sqft/B001", icon: <IconShieldCheck className="w-5 h-5" />, label: "View Plot Details" },
-    // { to: "/refer-earn", icon: <IconPlus className="w-5 h-5" />, label: "Refer & Earn" },
     { to: "/knowledge-base", icon: <IconInformationCircle className="w-5 h-5" />, label: "Knowledge Base" },
     { to: "/help-support", icon: <IconCog className="w-5 h-5" />, label: "Help & Support" },
   ];
 
   return (
     <>
-      {/* Mobile menu button */}
       <button
         className="md:hidden fixed top-4 left-4 z-50 bg-gradient-to-br from-green-500 to-green-700 text-white p-2 rounded-full shadow-lg"
         onClick={() => setSidebarOpen((open) => !open)}
         aria-label="Open sidebar"
-        style={{ boxShadow: '0 4px 24px 0 rgba(34,197,94,0.15)' }}
       >
         <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      {/* Sidebar as creative side drawer on mobile, static on desktop */}
+
       <div
-        className={`
-          fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200
-          transition-transform duration-300
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-          md:static md:translate-x-0 md:w-64 md:flex
-        `}
-        style={{
-          minWidth: "17rem",
-          borderTopRightRadius: 32,
-          borderBottomRightRadius: 32,
-          boxShadow: sidebarOpen ? "0 8px 32px 0 rgba(34,197,94,0.15)" : undefined,
-          background: "linear-gradient(135deg, #f0fdf4 60%, #e0f2f1 100%)",
-          marginTop: sidebarOpen ? 60 : 0,
-          overflowY: "auto", // Make sidebar scrollable
-          maxHeight: "100vh"
-        }}
+        className={`fixed z-40 top-0 left-0 h-full w-72 bg-white shadow-2xl flex flex-col p-4 space-y-2 border-r border-green-200 transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:static md:translate-x-0 md:w-64`}
+        style={{ minWidth: "17rem", background: "linear-gradient(135deg, #f0fdf4 60%, #e0f2f1 100%)", overflowY: "auto" }}
       >
-        {/* Profile section at the top */}
+        {/* The ProfileSection no longer needs any props passed to it! */}
         <ProfileSection />
+
         <Link to='/' className="text-xl font-bold text-green-700 py-4 px-2 mb-4 border-b border-green-200 flex items-center gap-2">
           <img src='/images/logobg.png' alt="CashbackHomes Logo" className="w-10 h-10" />
           Cashback<span className="text-black text-md">Homes</span>
@@ -222,14 +183,10 @@ const Sidebar: React.FC = () => {
           {menuItems.map((item) => (
             <NavItem
               key={item.to}
-              to={item.to}
-              icon={item.icon}
-              label={item.label}
-              exact={item.exact}
+              {...item}
               onClick={() => setSidebarOpen(false)}
             />
           ))}
-          <div className="my-2 border-t border-green-200"></div>
         </nav>
         <div className="mt-auto">
           <hr className="my-2 border-t border-green-100" />
@@ -242,21 +199,10 @@ const Sidebar: React.FC = () => {
           </button>
         </div>
       </div>
-      {/* Overlay for mobile sidebar */}
+
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
-      <style>{`
-        @media (max-width: 768px) {
-          .sidebar-glass {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(16px);
-          }
-        }
-      `}</style>
     </>
   );
 };
