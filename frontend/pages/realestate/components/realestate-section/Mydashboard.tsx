@@ -98,19 +98,6 @@ const MyDashboard: React.FC = () => {
     }
   }, []);
 
-  const fetchMicroPlots = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await apiClient.get<{ data: MicroPlot[] }>("/sqlft-projects/");
-      setMicroPlots(Array.isArray(res.data) ? res.data.reverse() : []);
-    } catch (err) {
-      console.error("Failed to fetch microplots:", err);
-      message.error("Could not fetch microplots.");
-      setMicroPlots([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
 
     const fetchShortlistedData = useCallback(async () => {
@@ -131,13 +118,11 @@ const MyDashboard: React.FC = () => {
     if (activeTab === 'listings') {
       if (listingType === 'plots') {
         fetchPlots();
-      } else {
-        fetchMicroPlots();
       }
     } else if (activeTab === 'inquiries' || activeTab === 'shortlisted') {
       fetchShortlistedData();
     }
-  }, [activeTab, listingType, fetchPlots, fetchMicroPlots, fetchShortlistedData]);
+  }, [activeTab, listingType, fetchPlots, fetchShortlistedData]);
 
   // --- GENERALIZED CRUD & MODAL ---
   const openEditModal = (item: Property | MicroPlot) => {
@@ -168,8 +153,7 @@ const MyDashboard: React.FC = () => {
       try {
         await apiClient.delete(endpoint);
         message.success(`${type} deleted successfully!`);
-        if (isMicro) fetchMicroPlots();
-        else fetchPlots();
+        fetchPlots();
       } catch (error) {
         message.error(`Failed to delete ${type}.`);
       }
@@ -213,8 +197,7 @@ const MyDashboard: React.FC = () => {
       });
       message.success(`${type} updated successfully!`);
       setIsModalOpen(false);
-      if (isMicro) fetchMicroPlots();
-      else fetchPlots();
+      fetchPlots();
     } catch (error) {
       console.error(`Failed to update ${type}:`, error);
       message.error(`Failed to update ${type}. Check console for details.`);
@@ -253,10 +236,6 @@ const MyDashboard: React.FC = () => {
       <div>
         {activeTab === 'listings' && (
           <div>
-            <div className="mb-6 flex items-center gap-2 p-1 rounded-lg bg-gray-200 w-max">
-              <button onClick={() => setListingType('plots')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${listingType === 'plots' ? 'bg-white text-green-700 shadow' : 'text-gray-600 hover:bg-gray-300'}`}>Plots</button>
-              <button onClick={() => setListingType('microplots')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${listingType === 'microplots' ? 'bg-white text-green-700 shadow' : 'text-gray-600 hover:bg-gray-300'}`}>Microplots</button>
-            </div>
             {isLoading ? <Loader /> : (
               <>
                 {listingType === 'plots' && (
