@@ -147,19 +147,39 @@ class PlotListingSerializer(serializers.ModelSerializer):
     owner_username = serializers.CharField(source='owner.username', read_only=True)
     listed_by_agent_username = serializers.CharField(source='listed_by_agent.username', read_only=True)
     joint_owners = JointOwnerSerializer(many=True, read_only=True)
+    
+    # Helper method to get all images as a list
+    images = serializers.SerializerMethodField()
+    
+    def get_images(self, obj):
+        images = []
+        if obj.image_1:
+            images.append(obj.image_1.url)
+        if obj.image_2:
+            images.append(obj.image_2.url)
+        if obj.image_3:
+            images.append(obj.image_3.url)
+        if obj.image_4:
+            images.append(obj.image_4.url)
+        if obj.image_5:
+            images.append(obj.image_5.url)
+        return images
 
     class Meta:
         model = PlotListing
         fields = [
-            'id', 'owner', 'owner_name', 'title', 'location', 'total_area_sqft',
-            'price_per_sqft', 'is_available_full', 'available_sqft_for_investment',
-            'is_verified', 'listed_by_agent', 'plot_file', 'created_at', 'updated_at',
-            'owner_username', 'listed_by_agent_username', 'joint_owners'
+            'id', 'owner', 'owner_name', 'title', 'location', 
+            'google_maps_link', 'facing', 'survey_number', 'plot_type',
+            'total_area', 'area_unit', 'price_per_unit',
+            'total_area_sqft', 'price_per_sqft',  # Legacy fields
+            'is_available_full', 'available_sqft_for_investment',
+            'is_verified', 'listed_by_agent', 'plot_file',
+            'image_1', 'image_2', 'image_3', 'image_4', 'image_5', 'images',
+            'created_at', 'updated_at', 'owner_username', 'listed_by_agent_username', 'joint_owners'
         ]
         read_only_fields = (
-            'owner',
-            'available_sqft_for_investment', 'joint_owners',
-            'owner_username', 'listed_by_agent_username'
+            'owner', 'available_sqft_for_investment', 'joint_owners',
+            'owner_username', 'listed_by_agent_username', 'images'
         )
 
 

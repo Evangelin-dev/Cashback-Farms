@@ -206,13 +206,57 @@ class OTPVerification(models.Model):
 
 
 class PlotListing(models.Model):
+    PLOT_TYPE_CHOICES = [
+        ('residential', 'Residential'),
+        ('farms', 'Farms'),
+        ('commercial', 'Commercial'),
+    ]
+    
+    AREA_UNIT_CHOICES = [
+        ('sqft', 'Square Feet'),
+        ('sqyards', 'Square Yards'),
+        ('cent', 'Cent'),
+        ('acres', 'Acres'),
+    ]
+    
+    FACING_CHOICES = [
+        ('north', 'North'),
+        ('south', 'South'),
+        ('east', 'East'),
+        ('west', 'West'),
+        ('northeast', 'Northeast'),
+        ('northwest', 'Northwest'),
+        ('southeast', 'Southeast'),
+        ('southwest', 'Southwest'),
+    ]
+
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='listed_plots',
                               help_text="Primary owner of the plot.")
-    owner_name = models.CharField(max_length=255)  # <-- Add this line
+    owner_name = models.CharField(max_length=255, help_text="Name of the plot owner")
     title = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
-    total_area_sqft = models.DecimalField(max_digits=10, decimal_places=2)
-    price_per_sqft = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Live location with Google Maps link
+    google_maps_link = models.URLField(blank=True, null=True, help_text="Google Maps link for live location")
+    
+    # Facing direction
+    facing = models.CharField(max_length=20, choices=FACING_CHOICES, blank=True, null=True, help_text="Direction the plot faces")
+    
+    # Survey Number
+    survey_number = models.CharField(max_length=100, blank=True, null=True, help_text="Survey number of the plot")
+    
+    # Plot type
+    plot_type = models.CharField(max_length=20, choices=PLOT_TYPE_CHOICES, default='residential', help_text="Type of plot")
+    
+    # Area and pricing with flexible units
+    total_area = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Total area of the plot")
+    area_unit = models.CharField(max_length=10, choices=AREA_UNIT_CHOICES, default='sqft', help_text="Unit for area measurement")
+    price_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price per unit (sqft/sqyards/cent/acres)")
+    
+    # Legacy fields for backward compatibility
+    total_area_sqft = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Total area in square feet (legacy)")
+    price_per_sqft = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Price per square foot (legacy)")
+    
     is_available_full = models.BooleanField(default=True)
     available_sqft_for_investment = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00,
@@ -229,7 +273,17 @@ class PlotListing(models.Model):
         related_name='plots_listed_as_agent',
         help_text="Real Estate Agent who listed this plot on behalf of the owner."
     )
-    plot_file = models.FileField(upload_to='plot_files/', blank=True, null=True)
+    
+    # File uploads
+    plot_file = models.FileField(upload_to='plot_files/', blank=True, null=True, help_text="Plot document file")
+    
+    # Multiple images (up to 5)
+    image_1 = models.ImageField(upload_to='plot_images/', blank=True, null=True, help_text="Plot image 1")
+    image_2 = models.ImageField(upload_to='plot_images/', blank=True, null=True, help_text="Plot image 2")
+    image_3 = models.ImageField(upload_to='plot_images/', blank=True, null=True, help_text="Plot image 3")
+    image_4 = models.ImageField(upload_to='plot_images/', blank=True, null=True, help_text="Plot image 4")
+    image_5 = models.ImageField(upload_to='plot_images/', blank=True, null=True, help_text="Plot image 5")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

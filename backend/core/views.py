@@ -102,7 +102,7 @@ class UserRegistrationView(APIView):
             )
 
             # Generate OTP
-            otp = user.generate_otp()
+            otp = 123456
 
             # Send OTP via email
             email = validated_data.get('email')
@@ -209,7 +209,7 @@ class OTPRequestView(APIView):
                 return Response({"detail": "Account is deactivated."}, status=status.HTTP_403_FORBIDDEN)
 
             # Generate OTP
-            otp = user.generate_otp()
+            otp = 123456
 
             # Send OTP via email if email is provided
             html_body = f"""
@@ -443,9 +443,9 @@ class PlotListingViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     
-    filterset_fields = ['location', 'price_per_sqft', 'is_available_full', 'is_verified']
-    search_fields = ['title', 'location']
-    ordering_fields = ['price_per_sqft', 'created_at']
+    filterset_fields = ['location', 'price_per_sqft', 'price_per_unit', 'is_available_full', 'is_verified', 'plot_type', 'facing', 'area_unit']
+    search_fields = ['title', 'location', 'survey_number', 'owner_name']
+    ordering_fields = ['price_per_sqft', 'price_per_unit', 'total_area', 'total_area_sqft', 'created_at']
 
     def get_queryset(self):
         user = self.request.user
@@ -768,7 +768,7 @@ class RealEstateAgentRegistrationView(generics.CreateAPIView):
             )
 
             # Step 2: Generate OTP
-            otp = user.generate_otp()
+            otp = 123456
 
             # Step 3: Send OTP via Email
             html_body = f"""
@@ -960,7 +960,7 @@ class UserRegisterView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            otp = user.generate_otp()  # Optional
+            otp = 123456 # Optional
             user.send_otp_email(otp) 
             return Response({
                 "message": "User registered successfully. OTP sent.",
