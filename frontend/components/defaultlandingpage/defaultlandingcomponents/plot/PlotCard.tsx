@@ -10,7 +10,7 @@ interface PlotCardProps {
   plot: Plot;
   showViewDetailButton?: boolean; // Add this prop for conditional rendering
 }
-
+  
 const DPlotCard: React.FC<PlotCardProps> = ({ plot, showViewDetailButton }) => {
   return (
     <CardShell className="flex flex-col">

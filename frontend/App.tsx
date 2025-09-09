@@ -74,11 +74,11 @@ import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarke
 
 import PostPlots from './pages/realestate/components/PostPlots';
 import BookPlotPayment from './pages/user/BookPlotPayment';
-import TermsAndConditions from './pages/TermsAndConditions';
+import TermsAndConditions from './components/TermsAndConditions';
 import BookMySqftPayment from './pages/user/BookMySqftPayment';
 import RegistrationPage from './pages/registration/registration';
 import OTPPage from './pages/registration/OTP';
-import PrivacyPolicy from './pages/PrivacyPolicy';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -89,6 +89,7 @@ import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
 import B2bProtectedRoute from './components/ProtectedB2BRoute';
 import AdminLogin from './pages/admin/AdminLogin';
 import ManageKYC from './pages/admin/ManageKYC';
+import SyndicatePlot from './pages/user/SyndicatePlot';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -139,6 +140,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/paymentvai" element={<PaymentVai />} />
           <Route path="/mysqft-listing" element={<MySqftListing />} />
           <Route path="/mysqft-listing/:id" element={<PlotDetailsPage />} />
+          <Route path="/user/syndicate-plot" element={<SyndicatePlot />} />
           <Route path="/myprofile" element={<MyProfile />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/materialcheckout" element={<MaterialCheckout />} />
