@@ -237,7 +237,7 @@ const MySqftListing: React.FC = () => {
                     className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] text-sm sm:text-base"
                     onClick={() => navigate(`/mysqft-listing/${plot.id}`)}
                   >
-                    View Details & Book
+                    View Details
                   </button>
                 </div>
               </div>

@@ -150,7 +150,7 @@ const Navbar: React.FC = () => {
                     Login / Sign Up
                   </button>
                   <button onClick={() => navigate('/registration')} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-green-600 shadow hover:bg-green-700 transition">
-                    Agents / B2B Vendor
+                    Agents / Vendor
                   </button>
                   <button onClick={() => navigate('/admin/login')} className="px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-blue-600 shadow hover:bg-blue-700 transition">
                     Admin
@@ -237,7 +237,7 @@ const Navbar: React.FC = () => {
                       Login / Sign Up
                     </button>
                     <button onClick={() => { setIsOpen(false); navigate('/registration'); }} className="w-full px-4 py-3 rounded-xl font-bold text-white bg-green-600 shadow hover:bg-green-700 transition">
-                      Agents / Professional Services  
+                      Agents / Vendor 
                     </button>
                     <button onClick={() => { setIsOpen(false); navigate('/admin'); }} className="w-full px-4 py-3 rounded-xl font-bold text-white bg-blue-600 shadow hover:bg-blue-700 transition">
                       Admin

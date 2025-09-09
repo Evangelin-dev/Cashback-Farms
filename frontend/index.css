@@ -1,0 +1,26 @@
+/*
+	Globally hide native scrollbars but keep scrolling behavior.
+	- Firefox: scrollbar-width
+	- IE/Edge: -ms-overflow-style
+	- WebKit: ::-webkit-scrollbar
+	Use .show-scrollbar on an element to re-enable the scrollbar when needed.
+*/
+
+html, body {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+/* WebKit browsers */
+html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+/* Helper class to re-enable scrollbars on specific elements */
+.show-scrollbar {
+	-ms-overflow-style: auto;
+	scrollbar-width: auto;
+}
+.show-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+
