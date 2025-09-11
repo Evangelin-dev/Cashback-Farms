@@ -6,6 +6,7 @@ import OrderManager from "./components/OrderManager";
 import PriceStockManager from "./components/PriceStockManager";
 import ProductManager from "./components/ProductManager";
 import WalletPanel from "./components/WalletPanel";
+import ServiceManage from "./components/ServiceManage";
 
 const B2BPanelRoutes: React.FC = () => (
   <Routes>
@@ -16,6 +17,7 @@ const B2BPanelRoutes: React.FC = () => (
       <Route path="pricing" element={<PriceStockManager />} />
       <Route path="customers" element={<CustomersManager />} />
       <Route path="wallet" element={<WalletPanel />} />
+      <Route path="services" element={<ServiceManage />} />
     </Route>
   </Routes>
 );

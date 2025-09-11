@@ -162,6 +162,11 @@ const menuItems = [
     label: "Manage Products",
   },
   {
+    key: "/b2b/services",
+    icon: <IconUsers className="w-5 h-5" />,
+    label: "Manage Services",
+  },
+  {
     key: "/b2b/orders",
     icon: <IconMapPin className="w-5 h-5" />,
     label: "Product Orders",

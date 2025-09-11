@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext"; // 1. IMPORT the useAuth hook
@@ -61,10 +61,77 @@ const AuthPopup: React.FC<{ onClose: () => void }> = ({ onClose }) => (
 
 const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
     const [idx, setIdx] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const autoplayRef = useRef<number | null>(null);
+    const touchStartX = useRef<number | null>(null);
+    const touchDeltaX = useRef<number>(0);
+    const AUTOPLAY_MS = 3500;
+
     if (!images || images.length === 0) return null;
+
+    // autoplay effect
+    useEffect(() => {
+        // clear any existing interval
+        if (autoplayRef.current) {
+            window.clearInterval(autoplayRef.current);
+            autoplayRef.current = null;
+        }
+        if (!isPaused && images.length > 1) {
+            autoplayRef.current = window.setInterval(() => {
+                setIdx((prev) => (prev + 1) % images.length);
+            }, AUTOPLAY_MS);
+        }
+        return () => {
+            if (autoplayRef.current) {
+                window.clearInterval(autoplayRef.current);
+                autoplayRef.current = null;
+            }
+        };
+    }, [images.length, isPaused]);
+
+    const goPrev = () => {
+        setIdx((s) => (s - 1 + images.length) % images.length);
+    };
+    const goNext = () => {
+        setIdx((s) => (s + 1) % images.length);
+    };
+
+    const onTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+        touchDeltaX.current = 0;
+        setIsPaused(true);
+    };
+
+    const onTouchMove = (e: React.TouchEvent) => {
+        if (touchStartX.current == null) return;
+        touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+    };
+
+    const onTouchEnd = () => {
+        const delta = touchDeltaX.current;
+        const SWIPE_THRESHOLD = 40; // pixels
+        if (delta > SWIPE_THRESHOLD) {
+            goPrev();
+        } else if (delta < -SWIPE_THRESHOLD) {
+            goNext();
+        }
+        touchStartX.current = null;
+        touchDeltaX.current = 0;
+        // resume autoplay after a short delay so user can view
+        setTimeout(() => setIsPaused(false), 600);
+    };
+
     return (
         <div className="w-full flex flex-col items-center mb-6 sm:mb-8">
-            <div className="relative w-full flex justify-center" style={{ aspectRatio: '16/9' }}>
+            <div
+                className="relative w-full flex justify-center"
+                style={{ aspectRatio: '16/9' }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
                 {images.map((image, index) => (
                     <img
                         key={index}
@@ -72,16 +139,42 @@ const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
                         alt={`carousel-${index}`}
                         className={`rounded-xl shadow-xl object-cover w-full max-w-2xl h-48 sm:h-64 md:h-72 lg:h-80 transition-opacity duration-500 absolute ${index === idx ? 'opacity-100' : 'opacity-0'}`}
                         style={{ aspectRatio: '16/9' }}
+                        draggable={false}
                     />
                 ))}
+
                 {images.length > 1 && (
                     <>
-                        <button className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center z-10 hover:bg-black/60 transition" onClick={() => setIdx((idx - 1 + images.length) % images.length)} type="button" tabIndex={0}>←</button>
-                        <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center z-10 hover:bg-black/60 transition" onClick={() => setIdx((idx + 1) % images.length)} type="button" tabIndex={0}>→</button>
+                        <button
+                            aria-label="previous image"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center z-10 hover:bg-black/60 transition"
+                            onClick={() => { goPrev(); setIsPaused(true); setTimeout(() => setIsPaused(false), 1200); }}
+                            type="button"
+                            tabIndex={0}
+                        >
+                            ←
+                        </button>
+                        <button
+                            aria-label="next image"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 text-white rounded-full w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center z-10 hover:bg-black/60 transition"
+                            onClick={() => { goNext(); setIsPaused(true); setTimeout(() => setIsPaused(false), 1200); }}
+                            type="button"
+                            tabIndex={0}
+                        >
+                            →
+                        </button>
                     </>
                 )}
+
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-10">
-                    {images.map((_, i) => (<span key={i} className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${i === idx ? 'bg-green-500' : 'bg-white/70 border border-green-400'} inline-block`}/>))}
+                    {images.map((_, i) => (
+                        <button
+                            key={i}
+                            aria-label={`go to image ${i + 1}`}
+                            className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${i === idx ? 'bg-green-500' : 'bg-white/70 border border-green-400'} inline-block`}
+                            onClick={() => { setIdx(i); setIsPaused(true); setTimeout(() => setIsPaused(false), 1200); }}
+                        />
+                    ))}
                 </div>
             </div>
         </div>
@@ -93,7 +186,7 @@ const DBookMySqftPage: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser } = useAuth(); // 2. GET THE CURRENT USER
 
-    const [plotInfo, setPlotInfo] = useState<(BookMySqftPlotInfo & { imageUrl?: string }) | null>(null);
+    const [plotInfo, setPlotInfo] = useState<(BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string }) | null>(null);
     const [grid, setGrid] = useState<SqftUnit[][]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -101,6 +194,13 @@ const DBookMySqftPage: React.FC = () => {
     const [showLoginPopup, setShowLoginPopup] = useState(false); // 3. State for the popup
     const [showPaymentPopup, setShowPaymentPopup] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    // Zoom / pan state for the large image
+    const [zoomScale, setZoomScale] = useState<number>(1);
+    const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const isPanningRef = useRef(false);
+    const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
+    // Buyer listing pagination
+    const [buyerPage, setBuyerPage] = useState(0);
 
     useEffect(() => {
         if (!id) {
@@ -115,17 +215,37 @@ const DBookMySqftPage: React.FC = () => {
             try {
                 const response = await apiClient.get(`/public/micro-plots/${id}/`);
                 const apiPlot = response.data || response; // Correctly access response.data
-                const mappedPlotInfo: BookMySqftPlotInfo & { imageUrl?: string } = {
+                // Build an images array from multiple possible fields (support up to 5)
+                const collectedImages: string[] = [];
+                // If API provides an array of images
+                if (Array.isArray(apiPlot.images) && apiPlot.images.length) {
+                    collectedImages.push(...apiPlot.images);
+                }
+                // push common single fields
+                if (apiPlot.project_image) collectedImages.push(apiPlot.project_image);
+                if (apiPlot.image_1) collectedImages.push(apiPlot.image_1);
+                if (apiPlot.image_2) collectedImages.push(apiPlot.image_2);
+                if (apiPlot.image_3) collectedImages.push(apiPlot.image_3);
+                if (apiPlot.image_4) collectedImages.push(apiPlot.image_4);
+                if (apiPlot.image_5) collectedImages.push(apiPlot.image_5);
+                if (apiPlot.gallery && Array.isArray(apiPlot.gallery)) collectedImages.push(...apiPlot.gallery);
+                // filter falsy and unique, limit to 5
+                const uniqueImages = Array.from(new Set(collectedImages.filter(Boolean))).slice(0, 5);
+
+                const mappedPlotInfo: BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string } = {
                     id: apiPlot.id,
-                    name: apiPlot.project_name,
-                    location: apiPlot.location,
+                    name: apiPlot.project_name || apiPlot.title || apiPlot.name,
+                    location: apiPlot.location || apiPlot.address || '',
                     totalUnits: 100, // Default value
                     unitsWide: 10, // Default value
                     unitsTall: 10, // Default value
-                    sqftPricePerUnit: Number(apiPlot.price),
+                    sqftPricePerUnit: Number(apiPlot.price || apiPlot.price_per_unit || apiPlot.sqft_price_per_unit || 0),
                     emiOptions: [], // Default empty array
                     initialGrid: generateInitialGrid(10, 10),
-                    imageUrl: apiPlot.project_image || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
+                    imageUrl: uniqueImages[0] || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
+                    images: uniqueImages.length ? uniqueImages : undefined,
+                    // Accept several possible names for a map URL from the backend
+                    google_maps_link: apiPlot.google_maps_link || apiPlot.map_url || apiPlot.mapUrl || apiPlot.google_map || apiPlot.embed_map_url || null,
                 };
                 setPlotInfo(mappedPlotInfo);
                 setGrid(mappedPlotInfo.initialGrid);
@@ -217,100 +337,345 @@ const DBookMySqftPage: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Image at the top */}
-                <div className="w-full max-w-4xl">
-                    <img
-                        src={plotInfo.imageUrl}
-                        alt={plotInfo.name}
-                        className="w-full h-48 sm:h-64 md:h-72 lg:h-80 object-cover rounded-2xl shadow-xl border border-green-200 mt-2 sm:mt-6 mb-2"
-                        style={{ aspectRatio: '16/9' }}
-                    />
-                </div>
+                                {/* Two-column layout: left 40% (image + map stacked), right 60% (dashboard + description) */}
+                                <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-10 gap-6 items-start">
+                                    {/* Left column: 40% */}
+                                    <div className="md:col-span-4 space-y-4">
+                                        <div>
+                                            {plotInfo.images && plotInfo.images.length ? (
+                                                <ImageCarousel images={plotInfo.images} />
+                                            ) : (
+                                                <div className="bg-white rounded-xl shadow p-2 border border-green-100 h-48 overflow-hidden">
+                                                    <img src={plotInfo.imageUrl} alt={plotInfo.name} className="w-full h-full object-cover rounded-md" />
+                                                </div>
+                                            )}
+                                        </div>
 
-                {/* Description below image */}
-                <div className="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col items-start mb-2 sm:mb-4">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-green-800 mb-2 sm:mb-3 tracking-tight drop-shadow leading-tight">
-                        {plotInfo.name}
-                    </h1>
-                    <div className="space-y-1 sm:space-y-2 text-sm sm:text-base lg:text-lg text-gray-700">
-                        <p><strong>Location:</strong> {plotInfo.location}</p>
-                        <p><strong>Price per SqFt Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+                                        <div className="bg-white rounded-xl shadow p-2 border border-green-100 h-48 overflow-hidden">
+                                            <h4 className="text-sm font-semibold text-green-700 mb-2">Map</h4>
+                                            {plotInfo.google_maps_link ? (
+                                                <div className="w-full h-36 rounded-md overflow-hidden border border-gray-100">
+                                                    <iframe
+                                                        src={plotInfo.google_maps_link}
+                                                        title="Plot Map"
+                                                        className="w-full h-full border-0"
+                                                        loading="lazy"
+                                                        referrerPolicy="no-referrer-when-downgrade"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-600">{plotInfo.location || 'Map unavailable'}</div>
+                                            )}
+                                            {plotInfo.google_maps_link && (
+                                                <div className="mt-2">
+                                                    <a href={plotInfo.google_maps_link} target="_blank" rel="noreferrer" className="inline-block text-xs bg-green-600 text-white px-3 py-1 rounded">Open in Maps</a>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Right column: 60% */}
+                                    <div className="md:col-span-6 space-y-4">
+                                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-green-200">
+                                            <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Booking Status Overview</h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                                <div className="bg-orange-100 border-2 border-orange-300 rounded-xl p-4 text-center">
+                                                    <div className="w-16 h-16 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-bold text-lg">52%</span>
+                                                    </div>
+                                                    <h3 className="font-semibold text-orange-800 mb-2">Already Booked</h3>
+                                                    <p className="text-sm text-orange-700">Units that have been purchased</p>
+                                                </div>
+
+                                                <div className="bg-green-100 border-2 border-green-300 rounded-xl p-4 text-center">
+                                                    <div className="w-16 h-16 mx-auto mb-3 bg-green-400 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-bold text-lg">48%</span>
+                                                    </div>
+                                                    <h3 className="font-semibold text-green-800 mb-2">Available</h3>
+                                                    <p className="text-sm text-green-700">Units ready for booking</p>
+                                                </div>
+
+                                                <div className="bg-green-600 border-2 border-green-700 rounded-xl p-4 text-center">
+                                                    <div className="w-16 h-16 mx-auto mb-3 bg-green-800 rounded-full flex items-center justify-center">
+                                                        <span className="text-white font-bold text-lg">0%</span>
+                                                    </div>
+                                                    <h3 className="font-semibold text-white mb-2">Reserved</h3>
+                                                    <p className="text-sm text-green-100">Units in high demand</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
+                                                <div className="flex h-4 rounded-full overflow-hidden">
+                                                    <div className="bg-orange-500 h-full" style={{ width: '52%' }}></div>
+                                                    <div className="bg-green-400 h-full" style={{ width: '48%' }}></div>
+                                                    <div className="bg-green-800 h-full" style={{ width: '0%' }}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap justify-center gap-4 text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                                                    <span className="text-gray-700">Booked (52%)</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 bg-green-400 rounded"></div>
+                                                    <span className="text-gray-700">Available (48%)</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-4 h-4 bg-green-800 rounded"></div>
+                                                    <span className="text-gray-700">Reserved (0%)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col border border-green-200">
+                                            <h1 className="text-xl sm:text-2xl font-extrabold text-green-800 mb-2 tracking-tight">{plotInfo.name}</h1>
+                                            <div className="space-y-1 sm:space-y-2 text-sm sm:text-base text-gray-700">
+                                                <p><strong>Location:</strong> {plotInfo.location}</p>
+                                                <p><strong>Price per SqFt Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
+                                                <p className="text-sm text-gray-600">{plotInfo.description || ''}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                {/* Two-column info + zoom image (left) and How it works + Buyer Listing (right) */}
+                <div className="w-full max-w-6xl">
+                    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 lg:p-8 mb-6 border border-green-200">
+                        <div className="grid grid-cols-1 md:grid-cols-10 gap-6 items-start">
+                            {/* Left: zoomable image (60%) */}
+                            <div className="md:col-span-6 flex flex-col items-center">
+                                <div
+                                    className="w-full bg-gray-50 rounded-lg overflow-hidden border border-gray-100"
+                                >
+                                    <div
+                                        className="w-full h-96 flex items-center justify-center bg-white relative overflow-hidden touch-none"
+                                        // mouse events for pan
+                                        onMouseDown={(e) => {
+                                            if (zoomScale <= 1) return;
+                                            isPanningRef.current = true;
+                                            lastPointerRef.current = { x: e.clientX, y: e.clientY };
+                                        }}
+                                        onMouseMove={(e) => {
+                                            if (!isPanningRef.current || !lastPointerRef.current) return;
+                                            const dx = e.clientX - lastPointerRef.current.x;
+                                            const dy = e.clientY - lastPointerRef.current.y;
+                                            setPan(p => ({ x: p.x + dx, y: p.y + dy }));
+                                            lastPointerRef.current = { x: e.clientX, y: e.clientY };
+                                        }}
+                                        onMouseUp={() => { isPanningRef.current = false; lastPointerRef.current = null; }}
+                                        onMouseLeave={() => { isPanningRef.current = false; lastPointerRef.current = null; }}
+                                        // touch events
+                                        onTouchStart={(e) => {
+                                            if (zoomScale <= 1) return;
+                                            const t = e.touches[0];
+                                            isPanningRef.current = true;
+                                            lastPointerRef.current = { x: t.clientX, y: t.clientY };
+                                        }}
+                                        onTouchMove={(e) => {
+                                            if (!isPanningRef.current || !lastPointerRef.current) return;
+                                            const t = e.touches[0];
+                                            const dx = t.clientX - lastPointerRef.current.x;
+                                            const dy = t.clientY - lastPointerRef.current.y;
+                                            setPan(p => ({ x: p.x + dx, y: p.y + dy }));
+                                            lastPointerRef.current = { x: t.clientX, y: t.clientY };
+                                        }}
+                                        onTouchEnd={() => { isPanningRef.current = false; lastPointerRef.current = null; }}
+                                    >
+                                        <div className="relative w-full h-full flex items-center justify-center">
+                                            <img
+                                                src={plotInfo.imageUrl}
+                                                alt={plotInfo.name}
+                                                className="object-cover w-full h-full transition-transform duration-150"
+                                                style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomScale})`, cursor: zoomScale > 1 ? 'grab' : 'auto' }}
+                                                draggable={false}
+                                            />
+
+                                            {/* Zoom controls (overlay) */}
+                                            <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
+                                                <button
+                                                    type="button"
+                                                    className="px-3 py-2 bg-green-600 text-white rounded-md text-sm shadow"
+                                                    onClick={() => setZoomScale(s => Math.min(3, +(s + 0.25).toFixed(2)))}
+                                                >+</button>
+                                                <button
+                                                    type="button"
+                                                    className="px-3 py-2 bg-white text-gray-800 rounded-md text-sm shadow"
+                                                    onClick={() => setZoomScale(s => Math.max(1, +(s - 0.25).toFixed(2)))}
+                                                >−</button>
+                                                <button
+                                                    type="button"
+                                                    className="px-3 py-2 bg-gray-100 text-gray-800 rounded-md text-sm shadow"
+                                                    onClick={() => { setZoomScale(1); setPan({ x: 0, y: 0 }); }}
+                                                >Reset</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right: two rows - How it works & Buyer Listing (40%) */}
+                            <div className="md:col-span-4 space-y-4">
+                                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-2">How it works:</h3>
+                                    <ol className="list-decimal list-inside text-gray-600 space-y-1 sm:space-y-2 text-sm sm:text-base pl-2">
+                                        <li>Visually select the square footage units you wish to purchase from the grid.</li>
+                                        <li>The grid shows available, selected, and already booked units.</li>
+                                        <li>Your total cost is updated in real-time.</li>
+                                        <li>Proceed to book and make your payment.</li>
+                                        <li>Receive your digital booking receipt.</li>
+                                    </ol>
+                                </div>
+
+                                <div className="bg-white rounded-lg p-4 border border-gray-100">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-3">Buyer Listing</h3>
+                                    <div className="space-y-2 text-sm text-gray-700">
+                                        {grid && grid.length ? (
+                                            (() => {
+                                                const booked = grid.flat().filter(u => u.isBooked);
+                                                const perPage = 3;
+                                                const totalPages = Math.max(1, Math.ceil(booked.length / perPage));
+                                                const start = buyerPage * perPage;
+                                                const pageItems = booked.slice(start, start + perPage);
+
+                                                return (
+                                                    <div>
+                                                        <div className="grid grid-cols-1 gap-2">
+                                                            {pageItems.map((u, i) => (
+                                                                <div key={u.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                                    <div>
+                                                                        <div className="text-sm font-medium">Buyer {start + i + 1}</div>
+                                                                        <div className="text-xs text-gray-500">Unit {u.id}</div>
+                                                                    </div>
+                                                                    <div className="text-xs text-green-700 font-semibold">Booked</div>
+                                                                </div>
+                                                            ))}
+                                                            {booked.length === 0 && (
+                                                                <div className="text-xs text-gray-500">No recent buyers to show.</div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Pagination controls */}
+                                                        {booked.length > perPage && (
+                                                            <div className="mt-3 flex items-center justify-between">
+                                                                <button
+                                                                    className="px-3 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
+                                                                    onClick={() => setBuyerPage(p => Math.max(0, p - 1))}
+                                                                    disabled={buyerPage === 0}
+                                                                >Prev</button>
+                                                                <div className="text-xs text-gray-600">Page {buyerPage + 1} of {totalPages}</div>
+                                                                <button
+                                                                    className="px-3 py-1 text-sm bg-gray-100 rounded disabled:opacity-50"
+                                                                    onClick={() => setBuyerPage(p => Math.min(totalPages - 1, p + 1))}
+                                                                    disabled={buyerPage >= totalPages - 1}
+                                                                >Next</button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()
+                                        ) : (
+                                            <div className="text-xs text-gray-500">Buyer data unavailable.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Booking Status Graph */}
-                <div className="w-full max-w-4xl mb-6">
-                    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-green-200">
-                        <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Booking Status Overview</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                            {/* 52% Already Booked - Orange */}
-                            <div className="bg-orange-100 border-2 border-orange-300 rounded-xl p-4 text-center">
-                                <div className="w-16 h-16 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
-                                    <span className="text-white font-bold text-lg">52%</span>
-                                </div>
-                                <h3 className="font-semibold text-orange-800 mb-2">Already Booked</h3>
-                                <p className="text-sm text-orange-700">Units that have been purchased</p>
-                            </div>
-                            
-                            {/* Available - Light Green */}
-                            <div className="bg-green-100 border-2 border-green-300 rounded-xl p-4 text-center">
-                                <div className="w-16 h-16 mx-auto mb-3 bg-green-400 rounded-full flex items-center justify-center">
-                                    <span className="text-white font-bold text-lg">48%</span>
-                                </div>
-                                <h3 className="font-semibold text-green-800 mb-2">Available</h3>
-                                <p className="text-sm text-green-700">Units ready for booking</p>
-                            </div>
-                            
-                            {/* Reserved - Dark Green */}
-                            <div className="bg-green-600 border-2 border-green-700 rounded-xl p-4 text-center">
-                                <div className="w-16 h-16 mx-auto mb-3 bg-green-800 rounded-full flex items-center justify-center">
-                                    <span className="text-white font-bold text-lg">0%</span>
-                                </div>
-                                <h3 className="font-semibold text-white mb-2">Reserved</h3>
-                                <p className="text-sm text-green-100">Units in high demand</p>
-                            </div>
-                        </div>
-                        
-                        {/* Progress Bar */}
-                        <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-                            <div className="flex h-4 rounded-full overflow-hidden">
-                                <div className="bg-orange-500 h-full" style={{ width: '52%' }}></div>
-                                <div className="bg-green-400 h-full" style={{ width: '48%' }}></div>
-                                <div className="bg-green-800 h-full" style={{ width: '0%' }}></div>
-                            </div>
-                        </div>
-                        
-                        {/* Legend */}
-                        <div className="flex flex-wrap justify-center gap-4 text-sm">
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                                <span className="text-gray-700">Booked (52%)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-green-400 rounded"></div>
-                                <span className="text-gray-700">Available (48%)</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 bg-green-800 rounded"></div>
-                                <span className="text-gray-700">Reserved (0%)</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Grid section */}
-                <div className="w-full max-w-4xl">
+                {/* Section 3: Ranges + Grid + Selected plots */}
+                <div className="w-full max-w-6xl">
                     <div className="bg-white rounded-2xl shadow-lg p-3 sm:p-4 lg:p-6 border border-green-200">
-                        <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Select Your Units</h2>
-                        <div className="flex justify-center items-center overflow-auto" style={{ minHeight: '300px' }}>
-                            <div className="flex-shrink-0">
-                                <SqftGrid 
-                                    gridData={grid} 
-                                    onUnitSelect={handleUnitSelect} 
-                                    unitSize={window.innerWidth < 640 ? 24 : window.innerWidth < 1024 ? 26 : 28} 
-                                />
+                        <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Choose Range & Select Units</h2>
+
+                        {/* First row: ranges */}
+                        <div className="mb-4">
+                            <div className="flex flex-wrap gap-2 justify-center">
+                                {Array.from({ length: 30 }).map((_, i) => {
+                                    const start = i * 100 + 1;
+                                    const end = (i + 1) * 100;
+                                    const label = `${start}-${end}`;
+                                    return (
+                                        <button
+                                            key={label}
+                                            type="button"
+                                            className="text-xs sm:text-sm px-3 py-1 rounded-full bg-gray-100 border border-gray-200 hover:bg-green-50"
+                                        >
+                                            {label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
+
+                        {/* Second row: grid (left) and selected plots (right) */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                            <div className="md:col-span-2">
+                                <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 overflow-auto" style={{ minHeight: '300px' }}>
+                                    <SqftGrid
+                                        gridData={grid}
+                                        onUnitSelect={handleUnitSelect}
+                                        unitSize={window.innerWidth < 640 ? 24 : window.innerWidth < 1024 ? 26 : 28}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="md:col-span-1 bg-white rounded-lg p-3 border border-gray-100">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm sm:text-base font-semibold text-gray-800">Selected Plots</h3>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            className="text-xs px-2 py-1 bg-gray-100 rounded disabled:opacity-50"
+                                            onClick={() => {
+                                                // clear all selections
+                                                setGrid(prev => prev.map(row => row.map(u => ({ ...u, isSelected: false }))));
+                                                setSelectedUnits([]);
+                                            }}
+                                            disabled={selectedUnits.length === 0}
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2 text-sm text-gray-700">
+                                    <div className="text-xs text-gray-500">Total selected: <strong>{totalSelectedArea}</strong></div>
+                                    <div className="text-xs text-gray-500">Total cost: <strong>₹{totalCost.toLocaleString('en-IN')}</strong></div>
+
+                                    <div className="mt-3 space-y-2">
+                                        {selectedUnits.length ? (
+                                            selectedUnits.map(u => (
+                                                <div key={u.id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                                    <div>
+                                                        <div className="text-sm font-medium">Unit {u.id}</div>
+                                                        <div className="text-xs text-gray-500">Row {u.row + 1}, Col {u.col + 1}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="text-sm text-green-700">₹{(plotInfo?.sqftPricePerUnit || 0).toLocaleString('en-IN')}</div>
+                                                        <button
+                                                            type="button"
+                                                            className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded"
+                                                            onClick={() => {
+                                                                // remove this unit from selection
+                                                                setGrid(prev => prev.map(row => row.map(unit => unit.id === u.id ? { ...unit, isSelected: false } : unit)));
+                                                                setSelectedUnits(prev => prev.filter(x => x.id !== u.id));
+                                                            }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-xs text-gray-500">No units selected yet.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -347,17 +712,6 @@ const DBookMySqftPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* How it works section */}
-                <div className="w-full max-w-4xl mt-8 sm:mt-12 p-4 sm:p-6 bg-green-50 rounded-lg border border-green-200">
-                    <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-3 sm:mb-4">How it works:</h3>
-                    <ol className="list-decimal list-inside text-gray-600 space-y-1 sm:space-y-2 text-sm sm:text-base pl-2">
-                        <li>Visually select the square footage units you wish to purchase from the grid.</li>
-                        <li>The grid shows available, selected, and already booked units.</li>
-                        <li>Your total cost is updated in real-time.</li>
-                        <li>Proceed to book and make your payment.</li>
-                        <li>Receive your digital booking receipt.</li>
-                    </ol>
-                </div>
             </div>
 
             {/* 5. RENDER THE POPUP CONDITIONALLY */}

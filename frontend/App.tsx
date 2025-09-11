@@ -150,14 +150,14 @@ const AppRoutes: React.FC = () => {
         </Route>
       </Route>
 
-      <Route element={<B2bProtectedRoute />}>
+     
         <Route element={<B2BLayout />}>
           <Route path="/b2b/b2bprofile" element={<B2BProfile />} />
           <Route path="/b2b/*" element={<B2BPanelRoutes />} />
         </Route>
-      </Route>
+      
 
-      <Route element={<RealEstateRoute />}>
+      
         <Route element={<RealLayout />}>
           <Route path="/realestate/realprofile" element={<RealProfile />} />
           <Route path="/realestate/*" element={<RealEstateRoutes />} />
@@ -167,11 +167,11 @@ const AppRoutes: React.FC = () => {
           <Route path="/realestate/referrealestate" element={<ReferAndEarnReal />} />
           
         </Route>
-      </Route>
+      
 
 
 <Route path="/admin/login" element={<AdminLogin />} />
-<Route element={<ProtectedRoute />}>
+
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="plots" element={<ManagePlotsPage />} />
@@ -188,7 +188,7 @@ const AppRoutes: React.FC = () => {
         <Route path="kyc" element={<ManageKYC />} />
         <Route index element={<AdminDashboardPage />} />
       </Route>
-</Route>
+
 
 
       <Route path="/registration" element={<RegistrationPage />} />

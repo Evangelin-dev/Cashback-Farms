@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Card, Form, Input, InputNumber, Modal, Table, Tag, message, Upload } from 'antd';
-import type { UploadFile } from 'antd/es/upload/interface';
-import Button from '../../components/Button';
 import apiClient from '@/src/utils/api/apiClient';
-import { IconPencil, IconPlus, IconTrash } from '../../constants';
 import { PlusOneOutlined } from '@mui/icons-material';
+import { Card, Form, Input, InputNumber, message, Modal, Select, Table, Tag, Upload } from 'antd';
+import type { UploadFile } from 'antd/es/upload/interface';
+import React, { useCallback, useEffect, useState } from 'react';
+import Button from '../../components/Button';
+import { IconPlus } from '../../constants';
 
 type Plot = {
   id: number;
@@ -105,21 +105,43 @@ const ManagePlotsPage: React.FC = () => {
     setShowSuggestions(true);
   };
 
+  const getCurrentUserName = () => {
+    return (
+      localStorage.getItem('user_name') ||
+      localStorage.getItem('name') ||
+      localStorage.getItem('username') ||
+      ''
+    );
+  };
+
   const openModalForNew = () => {
     setEditingPlot(null);
     form.resetFields();
     resetLocationState();
-    setIsModalOpen(true);
+  // prefill owner name from localStorage if available
+  const ownerPrefill = getCurrentUserName();
+  if (ownerPrefill) form.setFieldsValue({ owner_name: ownerPrefill });
+  setIsModalOpen(true);
   };
 
   const openModalForEdit = (plot: Plot) => {
     setEditingPlot(plot);
-    const fileList: UploadFile[] = plot.plot_file ? [{ uid: '-1', name: 'image.png', status: 'done', url: plot.plot_file }] : [];
+    const fileList: UploadFile[] = [];
+    try {
+      if (Array.isArray((plot as any).plot_file)) {
+        ((plot as any).plot_file as string[]).forEach((u: string, i: number) => fileList.push({ uid: `-p-${i}`, name: `image-${i}.jpg`, status: 'done', url: u }));
+      } else if (plot.plot_file) {
+        fileList.push({ uid: '-1', name: 'image.png', status: 'done', url: plot.plot_file });
+      }
+    } catch (e) {
+      // ignore
+    }
+
     form.setFieldsValue({
       ...plot,
       total_area_sqft: Number(plot.total_area_sqft),
       price_per_sqft: Number(plot.price_per_sqft),
-      // plot_file: fileList,
+      plot_file: fileList,
     });
     setLocationInput(plot.location);
     setShowSuggestions(false);
@@ -144,14 +166,27 @@ const ManagePlotsPage: React.FC = () => {
     formData.append('title', values.title);
     formData.append('owner_name', values.owner_name);
     formData.append('location', values.location);
-    formData.append('description', values.description || '');
-    formData.append('total_area_sqft', String(values.total_area_sqft));
-    formData.append('price_per_sqft', String(values.price_per_sqft));
+  formData.append('description', values.description || '');
+  formData.append('total_area_sqft', String(values.total_area_sqft));
+  formData.append('price_per_sqft', String(values.price_per_sqft));
+  // new fields to match PostPlots UI
+  formData.append('area_unit', values.area_unit || 'sqft');
+  formData.append('price_unit', values.price_unit || 'sqft');
+  formData.append('plot_type', values.plot_type || 'Residential');
+  formData.append('survey_number', values.survey_number || '');
+  formData.append('google_maps_link', values.google_maps_link || '');
+  formData.append('facing', values.facing || '');
+  formData.append('near_by', values.near_by || '');
 
     // Handle file uploads
-    const fileList = values.plot_file as UploadFile[] | undefined;
-    if (fileList && fileList.length > 0 && fileList[0].originFileObj) {
-      formData.append('plot_file', fileList[0].originFileObj);
+  const fileList = values.plot_file as UploadFile[] | undefined;
+    if (fileList && fileList.length > 0) {
+      // append all selected files that are newly added (originFileObj exists)
+      for (const f of fileList) {
+        if ((f as any).originFileObj) {
+          formData.append('plot_file', (f as any).originFileObj);
+        }
+      }
     } else if (!fileList || fileList.length === 0) {
       if(editingPlot) { // Only send empty if it's an edit, to clear the image
         formData.append('plot_file', '');
@@ -203,12 +238,33 @@ const ManagePlotsPage: React.FC = () => {
   };
 
   const columns = [
-    { title: "Image", dataIndex: "plot_file", key: "plot_file", render: (url: string | null) => url ? <img src={url} alt="Plot" className="w-16 h-16 object-cover rounded-md" /> : 'No Image' },
+    {
+      title: "Image / Owner",
+      dataIndex: "plot_file",
+      key: "plot_file_owner",
+      render: (_: any, record: Plot) => (
+        <div className="flex items-center">
+          {record.plot_file ? (
+            <img src={Array.isArray((record as any).plot_file) ? (record as any).plot_file[0] : (record as any).plot_file} alt="Plot" className="w-16 h-16 object-cover rounded-md" />
+          ) : (
+            <div className="w-16 h-16 bg-gray-100 flex items-center justify-center rounded-md text-gray-400">No Image</div>
+          )}
+          <div className="ml-3">
+            <div className="font-medium">{(record as any).owner_name || '—'}</div>
+            <div className="text-sm text-gray-500">{(record as any).title || ''}</div>
+          </div>
+        </div>
+      ),
+    },
     { title: "Plot Title", dataIndex: "title", key: "title" },
-    { title: "Owner", dataIndex: "owner_name", key: "owner_name" },
+    { title: "Type", dataIndex: "plot_type", key: "plot_type" },
     { title: "Location", dataIndex: "location", key: "location" },
-    { title: "Area (sqft)", dataIndex: "total_area_sqft", key: "total_area_sqft" },
-    { title: "Price/sqft", dataIndex: "price_per_sqft", key: "price_per_sqft", render: (v: string) => `₹${Number(v).toLocaleString("en-IN")}` },
+    { title: "Survey No.", dataIndex: "survey_number", key: "survey_number" },
+    { title: "Facing", dataIndex: "facing", key: "facing" },
+    { title: "Area", dataIndex: "total_area_sqft", key: "total_area_sqft", render: (_: any, record: Plot) => `${record.total_area_sqft} ${((record as any).area_unit) || 'sqft'}` },
+    { title: "Price", dataIndex: "price_per_sqft", key: "price_per_sqft", render: (v: string, record: Plot) => `₹${Number(v).toLocaleString("en-IN")} / ${((record as any).price_unit) || 'sqft'}` },
+    { title: "Google Maps", dataIndex: "google_maps_link", key: "google_maps_link", render: (link: string) => link ? <a href={link} target="_blank" rel="noreferrer">Map</a> : '—' },
+    { title: "Near By", dataIndex: "near_by", key: "near_by" },
     { title: "Status", dataIndex: "is_verified", key: "is_verified", render: (isVerified: boolean) => (<Tag color={isVerified ? "green" : "red"}>{isVerified ? "Verified" : "Not Verified"}</Tag>) },
     { title: "Actions", key: "actions", render: (_: any, record: Plot) => (<div className="flex flex-col items-start space-y-1"><Button size="sm" variant="outline" onClick={() => openModalForEdit(record)}>Edit</Button><button className="text-red-600 ms-1 hover:text-red-800 text-sm hover:underline" onClick={() => handleDeletePlot(record.id)}>Delete</button></div>) },
   ];
@@ -216,51 +272,108 @@ const ManagePlotsPage: React.FC = () => {
   return (
     <>
       <Card title={<span className="text-2xl font-semibold text-neutral-800">Manage Plots</span>} extra={<Button onClick={openModalForNew} leftIcon={<IconPlus className="w-5 h-5"/>}>Add New Plot</Button>} bordered={false} className="shadow-md">
-        <Table dataSource={plots} columns={columns} loading={isLoading} rowKey="key" pagination={{ pageSize: 10 }} />
+        <Table dataSource={plots} columns={columns} loading={isLoading} rowKey="key" pagination={{ pageSize: 10 }} scroll={{ x: 1200, y: 520 }} />
       </Card>
       
-      <Modal title={<span className="font-bold text-xl text-gray-700">{editingPlot ? 'Edit Plot' : 'Add New Plot'}</span>} open={isModalOpen} onCancel={closeModal} footer={null} destroyOnClose>
-        <Form form={form} layout="vertical" onFinish={handleFormSubmit} initialValues={{ description: '' }}>
-          <Form.Item name="title" label="Plot Title" rules={[{ required: true }]}><Input placeholder="e.g. Green Acres Plot 12" /></Form.Item>          
-          <div style={{ position: 'relative' }} onBlur={handleLocationBlur}>
-            <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select a location!' }]}>
-              <Input
-                placeholder="Start typing an address..."
-                onChange={(e) => {
-                  setLocationInput(e.target.value);
-                  form.setFieldsValue({ location: e.target.value });
-                  if (!showSuggestions) setShowSuggestions(true);
-                }}
-                autoComplete="off"
-              />
+      <Modal width={900} title={<span className="font-bold text-xl text-gray-700">{editingPlot ? 'Edit Plot' : 'Add New Plot'}</span>} open={isModalOpen} onCancel={closeModal} footer={null} destroyOnClose>
+        <Form form={form} layout="vertical" onFinish={handleFormSubmit} initialValues={{ description: '', plot_type: 'Residential', area_unit: 'sqft', price_unit: 'sqft' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            {/* Row 1: Plot Title + Plot Type */}
+            <Form.Item name="title" label="Plot Title" rules={[{ required: true }]}><Input size="small" placeholder="e.g. Green Acres Plot 12" /></Form.Item>
+            <Form.Item name="plot_type" label="Plot Type" rules={[{ required: true }]}>
+              <Select size="small">
+                <Select.Option value="Residential">Residential</Select.Option>
+                <Select.Option value="Farms">Farms</Select.Option>
+                <Select.Option value="Commercial">Commercial</Select.Option>
+              </Select>
             </Form.Item>
-            {isLocationLoading && <span style={{ position: 'absolute', right: 12, top: 40, color: '#065f46' }}>...</span>}
-            {showSuggestions && locationInput.length >= 3 && locationSuggestions.length > 0 && (
-              <ul className="suggestions-list">
-                {locationSuggestions.map((suggestion, index) => (
-                  <li key={index} onMouseDown={() => {
-                      const selectedAddress = suggestion.properties.formatted;
-                      form.setFieldsValue({ location: selectedAddress });
-                      setLocationInput(selectedAddress);
-                      setShowSuggestions(false);
-                    }}>
-                    {suggestion.properties.formatted}
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            {/* Row 2: Location + Google Maps Link */}
+            <div style={{ position: 'relative' }} onBlur={handleLocationBlur}>
+              <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select a location!' }]}>
+                <Input size="small"
+                  placeholder="Start typing an address..."
+                  onChange={(e) => {
+                    setLocationInput(e.target.value);
+                    form.setFieldsValue({ location: e.target.value });
+                    if (!showSuggestions) setShowSuggestions(true);
+                  }}
+                  autoComplete="off"
+                />
+              </Form.Item>
+              {isLocationLoading && <span style={{ position: 'absolute', right: 12, top: 40, color: '#065f46' }}>...</span>}
+              {showSuggestions && locationInput.length >= 3 && locationSuggestions.length > 0 && (
+                <ul className="suggestions-list">
+                  {locationSuggestions.map((suggestion, index) => (
+                    <li key={index} onMouseDown={() => {
+                        const selectedAddress = suggestion.properties.formatted;
+                        form.setFieldsValue({ location: selectedAddress });
+                        setLocationInput(selectedAddress);
+                        setShowSuggestions(false);
+                      }}>
+                      {suggestion.properties.formatted}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <Form.Item name="google_maps_link" label="Google Maps Link" rules={[{ required: true }]}>
+              <Input size="small" placeholder="https://maps.google.com/..." />
+            </Form.Item>
+
+            {/* Row 3: Facing + Survey Number */}
+            <Form.Item name="facing" label="Facing" rules={[{ required: true }]}>
+              <Select size="small">
+                <Select.Option value="North">North</Select.Option>
+                <Select.Option value="South">South</Select.Option>
+                <Select.Option value="East">East</Select.Option>
+                <Select.Option value="West">West</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="survey_number" label="Survey Number" rules={[{ required: true }]}>
+              <Input size="small" placeholder="e.g. 123/45" />
+            </Form.Item>
+
+            {/* Row 4: Area + Price */}
+            <Form.Item label="Area">
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Form.Item name="total_area_sqft" noStyle rules={[{ required: true }]}>
+                  <InputNumber size="small" min={1} className="w-full" placeholder="e.g. 2500" />
+                </Form.Item>
+                <Form.Item name="area_unit" noStyle initialValue={'sqft'} rules={[{ required: true }]}>
+                  <Select size="small" style={{ width: 120 }} options={[{ label: 'Sqft', value: 'sqft' }, { label: 'Sqyards', value: 'sqyards' }, { label: 'Cent', value: 'cent' }, { label: 'Acres', value: 'acres' }]} />
+                </Form.Item>
+              </div>
+            </Form.Item>
+            <Form.Item label="Price">
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Form.Item name="price_per_sqft" noStyle rules={[{ required: true }]}>
+                  <InputNumber size="small" min={1} className="w-full" placeholder="e.g. 1200" />
+                </Form.Item>
+                <Form.Item name="price_unit" noStyle initialValue={'sqft'} rules={[{ required: true }]}>
+                  <Select size="small" style={{ width: 120 }} options={[{ label: 'Sqft', value: 'sqft' }, { label: 'Sqyards', value: 'sqyards' }, { label: 'Cent', value: 'cent' }, { label: 'Acres', value: 'acres' }]} />
+                </Form.Item>
+              </div>
+            </Form.Item>
+
+            {/* Row 5: Near By + Description (description not required) */}
+            <Form.Item name="near_by" label="Near By" rules={[{ required: false }]}>
+              <Input size="small" placeholder="Nearby landmarks (e.g. school, market)" />
+            </Form.Item>
+            <Form.Item name="description" label="Description"><Input.TextArea rows={3} placeholder="Premium plot ideal for residential development." /></Form.Item>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="total_area_sqft" label="Total Area (sqft)" rules={[{ required: true }]}><InputNumber min={1} className="w-full" placeholder="e.g. 2500" /></Form.Item>
-            <Form.Item name="price_per_sqft" label="Price per sqft (₹)" rules={[{ required: true }]}><InputNumber min={1} className="w-full" placeholder="e.g. 1200" /></Form.Item>
-          </div>
-          <Form.Item name="description" label="Description"><Input.TextArea rows={4} placeholder="Premium plot ideal for residential development." /></Form.Item>
-          <Form.Item name="plot_file" label="Plot Image/File" valuePropName="fileList" getValueFromEvent={normFile}>
-            <Upload name="plot_file" listType="picture-card" beforeUpload={() => false} maxCount={1}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginTop: 8 }}>
+            <Form.Item name="plot_file" label="Plot Images" valuePropName="fileList" getValueFromEvent={normFile} style={{ marginBottom: 0 }}>
+              <Upload name="plot_file" listType="picture-card" beforeUpload={() => false} multiple accept="image/*" maxCount={5}>
                 <div> <PlusOneOutlined /><div style={{ marginTop: 8 }}>Upload</div></div>
-            </Upload>
-          </Form.Item>
+              </Upload>
+            </Form.Item>
+
+            <Form.Item name="owner_name" label="Owner Name" rules={[{ required: true }]} style={{ minWidth: 220 }}>
+              <Input size="small" placeholder="Owner name" />
+            </Form.Item>
+          </div>
           <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
             <Button type="submit" variant="primary">{editingPlot ? 'Save Changes' : 'Add Plot'}</Button>
