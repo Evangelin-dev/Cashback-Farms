@@ -1,0 +1,148 @@
+import BlueParticleNetwork from '@/components/Background/BlueParticleNetwork';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import apiClient from '../../src/utils/api/apiClient';
+
+const AdminLogin = () => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();
+    const { setCurrentUser, currentUser, isLoading: authIsLoading } = useAuth();
+
+    useEffect(() => {
+        if (!authIsLoading && currentUser) {
+            if (currentUser.user_type === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (currentUser.user_type === 'client') {
+                navigate('/user-dashboard');
+            } else if (currentUser.user_type === 'b2b_vendor') {
+                navigate('/b2b/products');
+            }else if (currentUser.user_type === 'real_estate_agent' ) {
+                navigate('/realestate/dashboard');
+            } 
+            else {
+                navigate('/');
+            }
+        }
+    }, [currentUser, authIsLoading, navigate]);
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const response = await apiClient.post('/auth/username-login/', {
+                username,
+                password,
+            });
+
+            const { access, refresh, user } = response;
+
+            localStorage.setItem('access_token', access);
+            localStorage.setItem('refresh_token', refresh);
+            localStorage.setItem('currentUser', JSON.stringify(user));
+
+            setCurrentUser(user);
+            
+            if (user.user_type === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/');
+            }
+
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.detail || 'Invalid username or password.';
+            setError(errorMessage);
+            console.error("Login failed:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (authIsLoading || currentUser) {
+        return (
+            <div className="flex justify-center items-center h-screen bg-gray-100">
+                <span className="loader" style={{width: '48px', height: '48px'}}></span>
+                <style>{`.loader { border: 4px solid #f3f3f3; border-top: 4px solid #15a349; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+        );
+    }
+
+    return (
+        <BlueParticleNetwork>
+            <div className="relative z-20 w-full max-w-sm px-6 py-8 mx-auto text-white/95">
+
+                <Link
+                    to="/"
+                    className="absolute top-4 left-4 text-blue-200/80 hover:text-white transition-colors"
+                    aria-label="Go back to homepage"
+                >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </Link>
+
+                {/* <div className="text-xs text-blue-400 font-mono mb-3 text-center opacity-80">NETWORK_STATUS: ACTIVE</div> */}
+                <h2 className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-blue-300 via-cyan-300 to-indigo-300 bg-clip-text text-transparent font-mono">Admin Login</h2>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label htmlFor="username" className="block text-xs font-mono text-blue-200 mb-2">Username</label>
+                        <input
+                            type="text"
+                            id="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-white/60 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                            required
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="password" className="block text-xs font-mono text-blue-200 mb-2">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-white/60 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                            required
+                            disabled={loading}
+                        />
+                    </div>
+
+                    {error && (
+                        <p className="text-red-300 text-sm text-center animate-shake">{error}</p>
+                    )}
+
+                    <div>
+                        <button
+                            type="submit"
+                            className="w-full py-2 px-4 bg-gradient-to-r from-blue-500 to-cyan-400 text-white font-semibold rounded-md transition-transform transform-gpu hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="loader mr-2"></span>
+                                    Logging in...
+                                </>
+                            ) : (
+                                'Login'
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+        <style>{`.loader { border: 2px solid #f3f3f3; border-top: 2px solid #15a349; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .animate-shake { animation: shake 0.5s; } @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }`}</style>
+    </BlueParticleNetwork>
+    );
+};
+
+export default AdminLogin;
