@@ -314,6 +314,7 @@ class JointOwner(models.Model):
             return f"JointOwner (error: {e})"
 
 
+
 class Booking(models.Model):
     BOOKING_TYPE_CHOICES = [
         ('full_plot', 'Full Plot'),
