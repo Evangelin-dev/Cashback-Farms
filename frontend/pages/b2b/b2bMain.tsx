@@ -22,6 +22,7 @@ const pageTitles: Record<string, string> = {
   "/b2b/pricing": "Pricing & Offers",
   "/b2b/customers": "Customers",
   "/b2b/wallet": "Wallet / Settlement",
+  "/b2b/services": "Service Management",
 };
 
 // --- B2B Profile Section (Dropdown, attractive, fits in aside) ---

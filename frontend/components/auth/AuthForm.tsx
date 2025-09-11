@@ -26,17 +26,17 @@ const isMobile = (input: string) =>
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [input, setInput] = useState('');
-  const [otp, setOtp] = useState('');
+  const [, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpInput, setOtpInput] = useState('');
-  const [mobileVerified, setMobileVerified] = useState(false);
+  const [, setMobileVerified] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [countryOptions, setCountryOptions] = useState<{ code: string; label: string }[]>(DEFAULT_COUNTRY_OPTIONS);
   const [loading, setLoading] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [redirectLoading, setRedirectLoading] = useState(false);
+  const [, setRedirectLoading] = useState(false);
   const navigate = useNavigate();
 
   const [signupData, setSignupData] = useState({
