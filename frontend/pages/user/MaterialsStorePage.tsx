@@ -1,7 +1,7 @@
 import apiClient from "@/src/utils/api/apiClient";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext.tsx';
+import { useAuth } from '../../components/contexts/AuthContext.tsx';
 
 // UI Components
 import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
@@ -94,23 +94,18 @@ const MaterialsStorePage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const accessToken = localStorage.getItem("access_token");
-      if (!accessToken) {
-        setError("Authorization token not found.");
-        setIsLoading(false);
-        return;
-      }
-      const headers = { Authorization: `Bearer ${accessToken}` };
+      const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
 
       try {
-        const [materialsResponse, shortlistResponse] = await Promise.all([
-          apiClient.get('/materials/', { headers }),
-
-          apiClient.get('/cart/', { headers })
-        ]);
+        // Fetch public materials list (no auth required). If user is logged in, also fetch shortlist.
+        const materialsResponse = await apiClient.get('/materials/', headers ? { headers } : undefined);
+        let shortlistResponse: any[] = [];
+        if (currentUser && headers) {
+          shortlistResponse = await apiClient.get('/cart/', { headers });
+        }
 
         setMaterials(materialsResponse || []);
         setShortlistedItems(shortlistResponse || []);
-        console.log(materialsResponse, 'mats')
       } catch (err) {
         setError("Failed to fetch materials. Please try refreshing the page.");
         console.error("Error fetching materials:", err);
@@ -119,11 +114,8 @@ const MaterialsStorePage: React.FC = () => {
       }
     };
 
-    if (currentUser) {
-      fetchPageData();
-    } else {
-      setIsLoading(false);
-    }
+    // Always try to fetch public materials; shortlist only loads for authenticated users.
+    fetchPageData();
   }, [currentUser]);
 
   const handleAddToWishlist = async (materialId: number) => {
@@ -211,6 +203,13 @@ const MaterialsStorePage: React.FC = () => {
           <h1 className="text-3xl font-bold text-green-700">Construction Materials Store</h1>
           <p className="text-sm text-gray-600">Find all your building material needs in one place.</p>
         </div>
+
+        {/* If user is not logged in, show a gentle prompt that ordering requires login */}
+        {!currentUser && (
+          <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-center">
+            Please login to proceed order
+          </div>
+        )}
 
         <div className="mb-6 p-4 bg-white/80 rounded-xl shadow-md border border-green-50 backdrop-blur-sm">
           <div className="mb-4">

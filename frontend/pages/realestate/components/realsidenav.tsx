@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import apiClient from "@/src/utils/api/apiClient";
+import { LayoutDashboard, UploadCloud, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../../components/contexts/AuthContext.tsx";
 import {
-  generateUserCode,
   IconAlertCircle,
   IconCheck,
   IconCollection,
@@ -9,12 +11,8 @@ import {
   IconLogout,
   IconMapPin,
   IconPlus,
-  IconRupee,
-  IconUsers,
+  IconUsers
 } from "../../../constants.tsx";
-import { LayoutDashboard, UploadCloud, X } from "lucide-react";
-import { useAuth } from "../../../contexts/AuthContext";
-import apiClient from "@/src/utils/api/apiClient";
 import "../AgentProfileSection.css";
 
 interface IKycDocument {

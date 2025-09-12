@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { UserRole } from '../types';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { UserRole } from '../../types';
 
 interface CurrentUser {
   mobile: string;

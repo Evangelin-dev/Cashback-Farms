@@ -1,8 +1,9 @@
+import { Home } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../components/contexts/AuthContext';
 import {
   IconBuildingOffice,
-  IconCog,
   IconCollection,
   IconCreditCard,
   IconCubeTransparent,
@@ -13,8 +14,6 @@ import {
   IconTableCells,
   IconUsers
 } from '../../constants';
-import { useAuth } from '../../contexts/AuthContext';
-import { Home } from 'lucide-react';
 
 interface AdminNavItemProps {
   to: string;

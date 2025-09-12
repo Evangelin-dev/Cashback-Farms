@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PlotInfo } from '../types';
+import { PlotInfo } from '../../../types';
 
 interface PlotDetailsCardProps {
   plotInfo: PlotInfo;

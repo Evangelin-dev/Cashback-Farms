@@ -2,6 +2,7 @@ import DProfessionalCard from '@/components/defaultlandingpage/defaultlandingcom
 import apiClient from '@/src/utils/api/apiClient'; // Adjust path if needed
 import { ServiceType } from '@/types';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../../components/contexts/AuthContext.tsx';
 
 // This type definition correctly matches the data structure from your API
 type ApiService = {
@@ -40,27 +41,34 @@ const DServicesHubPage: React.FC = () => {
 
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchServices = async () => {
       setIsLoading(true);
       setError(null);
       try {
-        const accessToken = localStorage.getItem("access_token");
-        if (!accessToken) {
-          throw new Error("User authentication is required.");
+  // Build full URL with base, using params (avoid embedding query-string manually)
+  // Prefer the apiClient baseURL (set in apiClient.tsx). Fall back to VITE_API_URL.
+  const apiBase = ((apiClient as any)?.defaults?.baseURL) || (import.meta as any).env.VITE_API_URL || '';
+        const base = String(apiBase).replace(/\/$/, '');
+        if (!base) {
+          setError('API base URL is not configured. Please set VITE_API_URL or apiClient.defaults.baseURL');
+          setIsLoading(false);
+          return;
         }
+        const url = `${base}/ecommerce/services/?category=service`;
 
-        // --- THE FIX IS HERE ---
-        // The API endpoint is now updated to the correct one you provided.
-        const response = await apiClient.get<ApiService[]>('/ecommerce/services/?category=service', {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        // apiClient may return an array or an object; normalize safely
-        const data = Array.isArray(response) ? response : (response && Array.isArray((response as any).data) ? (response as any).data : []);
+  // Use native fetch to avoid axios interceptors (which trigger a global logout on 401).
+  // Important: do NOT send Authorization header for this public listing. If a stored token is expired
+  // sending it causes a 401; anonymous users must still see services. So fetch without auth.
+  const fetchOptions: RequestInit = {};
+  const resp = await fetch(url, fetchOptions);
+        if (!resp.ok) {
+          // Let the catch block handle non-2xx responses
+          throw new Error(`Failed to fetch services: ${resp.status} ${resp.statusText}`);
+        }
+        const data = await resp.json();
         if (data.length === 0) {
           // fallback to mock service so UI shows at least one item
           setServices([MOCK_SERVICE]);
@@ -134,6 +142,12 @@ const DServicesHubPage: React.FC = () => {
 
   return (
     <div className="relative min-h-screen py-8">
+      {/* If user is not logged in, show a gentle prompt that ordering requires login */}
+      {!currentUser && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-4">
+          <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-center">Please login to proceed order</div>
+        </div>
+      )}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute -left-20 top-0 w-60 h-60 bg-green-200 rounded-full opacity-20 blur-3xl animate-blob"></div>
         <div className="absolute right-0 top-10 w-72 h-72 bg-emerald-200 rounded-full opacity-20 blur-3xl animate-blob animation-delay-2000"></div>

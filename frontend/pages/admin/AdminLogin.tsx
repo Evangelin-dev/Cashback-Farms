@@ -1,7 +1,7 @@
 import BlueParticleNetwork from '@/components/Background/BlueParticleNetwork';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../components/contexts/AuthContext';
 import apiClient from '../../src/utils/api/apiClient';
 
 const AdminLogin = () => {
@@ -98,7 +98,7 @@ const AdminLogin = () => {
                             id="username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-white/60 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-blue-300 text-blue-900 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
                             required
                             disabled={loading}
                         />
@@ -111,7 +111,7 @@ const AdminLogin = () => {
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-white/60 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                            className="w-full px-4 py-2 bg-white/6 border border-white/20 placeholder-blue-300 text-blue-900 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-300"
                             required
                             disabled={loading}
                         />

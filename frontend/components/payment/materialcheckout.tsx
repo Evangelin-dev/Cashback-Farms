@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { IconCheck, IconCreditCard, IconShoppingCart } from "../../constants";
 import Button from "../Button";
-import Card from "../Card";
+import Card from "../common/Cards/Card";
 
 const MaterialCheckout: React.FC = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);

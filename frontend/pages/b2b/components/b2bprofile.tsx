@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { IconAlertCircle, IconCheck } from "../../../constants.tsx";
-import "../../realestate/AgentProfileSection.css";
-import apiClient from "../../../src/utils/api/apiClient";
-import { useAuth } from "../../../contexts/AuthContext";
 import { message } from 'antd';
+import React, { useEffect, useState } from "react";
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import { useAuth } from "../../../components/contexts/AuthContext.tsx";
+import { IconAlertCircle, IconCheck } from "../../../constants.tsx";
+import apiClient from "../../../src/utils/api/apiClient";
+import "../../realestate/AgentProfileSection.css";
 
 interface IKycDocument {
     id: number;

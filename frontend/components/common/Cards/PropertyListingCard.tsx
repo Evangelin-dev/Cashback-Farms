@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { PropertyListing, ListingType, PropertyCategory, ResidentialPropertyType, CommercialPropertyType } from '../types';
+import { IconMapPin } from '../../../constants'; // Assuming IconMapPin is available
+import { CommercialPropertyType, ListingType, PropertyCategory, PropertyListing, ResidentialPropertyType } from '../../../types';
+import Button from '../../Button';
 import Card from './Card'; // Assuming Card component can be reused or adapted
-import Button from './Button';
-import { IconMapPin } from '../constants'; // Assuming IconMapPin is available
 
 interface PropertyListingCardProps {
   listing: PropertyListing;

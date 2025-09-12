@@ -1,16 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext.tsx';
+import { useAuth } from '../../components/contexts/AuthContext.tsx';
 import apiClient from '../../src/utils/api/apiClient';
 import { Plot, PlotType } from '../../types';
 
 // UI Components
 import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
+import { SplinePointerIcon } from 'lucide-react';
 import Button from '../../components/common/Button.tsx';
 import CardShell from '../../components/common/CardShell.tsx';
 import { AreaIcon, CheckBadgeIcon, LocationMarkerIcon, RupeeIcon } from '../../constants';
-import { SplinePointerIcon } from 'lucide-react';
 
 // Interfaces
 interface ShortlistItem {

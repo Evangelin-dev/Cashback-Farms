@@ -1,9 +1,9 @@
 // src/components/auth/ProtectedRoute.tsx
 
+import { useAuth } from '@/components/contexts/AuthContext';
+import { SplinePointer } from 'lucide-react';
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { SplinePointer } from 'lucide-react';
 
 const ProtectedRoute: React.FC = () => {
   const { currentUser, isLoading } = useAuth();

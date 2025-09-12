@@ -1,8 +1,8 @@
 // filepath: d:\cashback-farm-plot-manager (3)\layouts\RealLayout.tsx
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import RealSideNav from "../pages/realestate/components/realsidenav"; // Adjust path if needed
-import Header from "../components/Header"; // Adjust path if needed
+import RealSideNav from "../../pages/realestate/components/realsidenav"; // Adjust path if needed
+import Header from "../common/Header"; // Adjust path if needed
 
 function getRealEstatePageTitle(pathname: string): string {
   if (pathname === "/realestate/post-plots") return "Post Your Plots";

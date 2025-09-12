@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import apiClient from "@/src/utils/api/apiClient";
-import { useAuth } from '../../contexts/AuthContext.tsx';
+import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from '../../components/contexts/AuthContext.tsx';
 
 // UI Components - Assuming these are in your project
-import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as OutlineHeartIcon } from '@heroicons/react/24/outline';
+import { HeartIcon as SolidHeartIcon } from '@heroicons/react/24/solid';
 
 // Type Definitions
 interface MicroPlot {

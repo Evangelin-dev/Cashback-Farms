@@ -1,38 +1,41 @@
+import createCache from '@emotion/cache';
+import { CacheProvider } from '@emotion/react';
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
+import { AuthProvider } from './components/contexts/AuthContext';
 
 // Optional: MUI ThemeProvider and CssBaseline
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { CssBaseline } from '@mui/material';
 // your custom MUI theme (optional)
 
 // Create a cache instance
 const emotionCache = createCache({ key: 'mui', prepend: true });
 
 // Layouts
-import AdminLayout from './layouts/AdminLayout';
-import UserLayout from './layouts/UserLayout';
+import AdminLayout from './components/layouts/AdminLayout';
+import UserLayout from './components/layouts/UserLayout';
 
 // Pages
 // import HomePage from './pages/HomePage';
-import PlotBookingDetailsPage from './pages/PlotBookingDetailsPage';
+import PlotBookingDetailsPage from './pages/user/PlotBookingDetailsPage';
 
+import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
+import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
+import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
+import BookConsultation from './components/detailpageandcart/bookconsultation';
+import Cart from './components/detailpageandcart/cart';
 import HelpAndSupport from './components/helpandsupport/helpandsupport';
 import KnowledgeBase from './components/knowledgebase/knowledgebase';
 import LandingPage from './components/landingpage/landingpage';
 import PlansPage from './components/landingpage/landingpagecomponents/assistedplans/plans';
 import PaymentVai from './components/landingpage/landingpagecomponents/payments/paymentVai';
+import B2BLayout from './components/layouts/B2BLayout';
+import DefaultLayout from './components/layouts/DefaultLayout';
+import RealLayout from './components/layouts/RealLayout';
 import MyBooking from './components/mybooking/mybooking';
-import Cart from './components/detailpageandcart/cart';
 import MyProfile from './components/myprofile/myprofile';
 import MaterialCheckout from "./components/payment/materialcheckout";
 import ReferAndEarn from './components/referandearn/referandearn';
-import DefaultLanding from './DefaultLanding';
-import B2BLayout from './layouts/B2BLayout';
-import DefaultLayout from './layouts/DefaultLayout';
-import RealLayout from './layouts/RealLayout';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
@@ -45,6 +48,7 @@ import ManageSitePage from './pages/admin/ManageSitePage';
 import ManageUsersPage from './pages/admin/ManageUsersPage';
 import B2BPanelRoutes from './pages/b2b';
 import B2BProfile from './pages/b2b/components/b2bprofile';
+import DefaultLanding from './pages/DefaultLanding';
 import RealEstateRoutes from './pages/realestate';
 import RealProfile from './pages/realestate/components/realprofile';
 import ReferAndEarnReal from './pages/realestate/components/referandearnreal/referandearnreal';
@@ -55,40 +59,30 @@ import MySqftListing from './pages/user/MySqftListing';
 import NotFoundPage from './pages/user/NotFoundPage';
 import PlotMarketplacePage from './pages/user/PlotMarketplacePage';
 import ServicesHubPage from './pages/user/ServicesHubPage';
-import DPaymentVai from './components/defaultlandingpage/defaultlandingcomponents/payments/paymentVai';
-import DPlansPage from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/plans';
-import DServicesHubPage from './components/defaultlandingpage/user/ServicesHubPage';
-import DPlotBookingDetailsPage from './components/defaultlandingpage/user/PlotBookingDetailsPage';
-import BookConsultation from './components/detailpageandcart/bookconsultation';
-import { DMaterialDetailPage, DProfessionalDetailPage } from './components/defaultlandingpage/user/DetailPagePlaceholders';
-import DMySqftListing from './components/defaultlandingpage/user/MySqftListing';
 
-import RealMySqft from './pages/realestate/components/realMysqft';
-import ManageMysqft from './pages/admin/ManageMysqft';
-import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
 import DCart from './components/detailpageandcart/cart';
+import LogBookConsultation from './components/detailpageandcart/logbookconsultation';
+import ManageMysqft from './pages/admin/ManageMysqft';
+import RealMySqft from './pages/realestate/components/realMysqft';
 
 import DBookMySqftPage from './components/defaultlandingpage/user/BookMySqftPage';
-import DMaterialsStorePage from './components/defaultlandingpage/user/MaterialsStorePage';
 import DPlotMarketplacePage from './components/defaultlandingpage/user/PlotMarketplacePage';
 
-import PostPlots from './pages/realestate/components/PostPlots';
-import BookPlotPayment from './pages/user/BookPlotPayment';
-import TermsAndConditions from './components/TermsAndConditions';
-import BookMySqftPayment from './pages/user/BookMySqftPayment';
-import RegistrationPage from './pages/registration/registration';
-import OTPPage from './pages/registration/OTP';
-import PrivacyPolicy from './components/PrivacyPolicy';
-import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
 import UserDashboard from './components/defaultlandingpage/user/UserDashboard';
-import ProtectedRoute from './components/ProtectedRoute';
-import RealEstateRoute from './components/ProtectedRealEstateRoute';
-import PlotDetailsPage from './pages/user/DetailMySqftListing';
-import RefundPolicyPage from './components/RefundPolicy';
-import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
-import B2bProtectedRoute from './components/ProtectedB2BRoute';
+import OTPPage from './components/registration/OTP';
+import RegistrationPage from './components/registration/registration';
+import ProtectedRoute from './components/Routes/ProtectedRoute';
+import PrivacyPolicy from './components/Terms/PrivacyPolicy';
+import RefundPolicyPage from './components/Terms/RefundPolicy';
+import TermsAndConditions from './components/Terms/TermsAndConditions';
 import AdminLogin from './pages/admin/AdminLogin';
 import ManageKYC from './pages/admin/ManageKYC';
+import ManageVerifiedPlots from './pages/admin/ManageVerifiedPlots';
+import PostPlots from './pages/realestate/components/PostPlots';
+import Mydashboard from './pages/realestate/components/realestate-section/Mydashboard';
+import BookMySqftPayment from './pages/user/BookMySqftPayment';
+import BookPlotPayment from './pages/user/BookPlotPayment';
+import PlotDetailsPage from './pages/user/DetailMySqftListing';
 import SyndicatePlot from './pages/user/SyndicatePlot';
 
 const AppRoutes: React.FC = () => {
@@ -100,20 +94,22 @@ const AppRoutes: React.FC = () => {
         <Route path="/D" element={<DefaultLanding />} />
         <Route path="/Dplots" element={<DPlotMarketplacePage />} />
         <Route path="/Dbook-my-sqft/:plotId" element={<PlotBookingDetailsPage />} />
-        <Route path="/Dmaterials" element={<DMaterialsStorePage />} />
-        <Route path="/Dservices" element={<DServicesHubPage />} />
+        <Route path="/Dmaterials" element={<MaterialsStorePage />} />
+        <Route path="/Dservices" element={<ServicesHubPage />} />
         <Route path="/micro-plots/:id" element={<DBookMySqftPage />} />
         <Route path="/Dpaymentvai" element={<DPaymentVai />} />
         <Route path="/Dplans" element={<DPlansPage />} />
-        <Route path="/Dservices/:id" element={<DProfessionalDetailPage />} />
+        <Route path="/Dservices/:id" element={<ProfessionalDetailPage />} />
         <Route path="bookconsultation" element={<BookConsultation />} />
-        <Route path="/Dmaterials/:id" element={<DMaterialDetailPage />} />
+        <Route path="/Dmaterials/:id" element={<MaterialDetailPage />} />
         <Route path="/Dcart" element={<DCart />} />
-        <Route path="/Dplans" element={<DPlansPage />} />
         <Route path="/Dmysqft-listing" element={<DMySqftListing />} />
         <Route path="/Terms_&_Conditions" element={<TermsAndConditions />} />
         <Route path="/Privacy_Policy" element={<PrivacyPolicy />} />
         <Route path="/cancellation-refunds" element={<RefundPolicyPage />} />
+        
+
+       
       </Route>
 
 

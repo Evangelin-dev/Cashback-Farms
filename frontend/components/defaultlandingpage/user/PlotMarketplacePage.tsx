@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '../../../contexts/AuthContext'; // Your Auth context
 import apiClient from '../../../src/utils/api/apiClient'; // Your API client
 import AuthForm from '../../auth/AuthForm'; // Adjust this import path if needed
+import { useAuth } from '../../contexts/AuthContext'; // Your Auth context
 // --- ICONS ---
 import { FaHeart, FaSpinner, FaUserCheck } from 'react-icons/fa';
 import { FiHeart } from 'react-icons/fi';

@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // IMPORT a new hook
-import Card from "../Card";
 import apiClient from "@/src/utils/api/apiClient";
 import { message } from "antd";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom"; // IMPORT a new hook
+import Card from "../common/Cards/Card";
 
 // --- IMPORTANT: You need to install this library ---
 // Run: npm install react-phone-number-input

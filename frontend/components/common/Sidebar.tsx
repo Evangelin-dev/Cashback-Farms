@@ -1,3 +1,4 @@
+import { Home, LayoutDashboard } from "lucide-react";
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +11,8 @@ import {
   IconUsers,
   IconWallet,
   generateUserCode
-} from '../constants';
+} from '../../constants';
 import { useAuth } from '../contexts/AuthContext';
-import { Home ,LayoutDashboard } from "lucide-react";
 interface NavItemProps {
   to: string;
   icon: React.ReactNode;

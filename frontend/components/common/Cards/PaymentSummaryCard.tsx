@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PaymentSummary } from '../types';
+import { PaymentSummary } from '../../../types';
 import Card from './Card';
 
 interface PaymentSummaryCardProps {

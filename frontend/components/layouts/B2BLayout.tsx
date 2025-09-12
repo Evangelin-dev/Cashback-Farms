@@ -1,20 +1,17 @@
+import "@/pages/realestate/AgentProfileSection.css";
 import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import Header from "../components/Header";
 import {
-  generateB2BCode,
-  IconAlertCircle,
-  IconCheck,
   IconCollection,
   IconEdit,
   IconLogout,
   IconMapPin,
   IconRupee,
   IconUsers,
-  IconWallet,
-} from "../constants.tsx";
-import { useAuth } from "../contexts/AuthContext";
-import "../pages/realestate/AgentProfileSection.css";
+  IconWallet
+} from "../../constants.tsx";
+import Header from "../common/Header.tsx";
+import { useAuth } from "../contexts/AuthContext.tsx";
 
 // --- B2B Profile Section (copied from b2bMain) ---
 const ProfileSection: React.FC = () => {

@@ -1,9 +1,10 @@
+import Sidebar from '@/components/common/Sidebar';
+import Footer from '@/components/defaultlandingpage/defaultlandingcomponents/layout/Footer';
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import Header from '../components/Header';
-import Sidebar from '../components/Sidebar';
-import { getExtendedBookingDetailsById } from '../constants'; 
-import Footer from '@/components/defaultlandingpage/defaultlandingcomponents/layout/Footer';
+
+import Header from '@/components/common/Header';
+import { getExtendedBookingDetailsById } from '../../constants';
 
 const UserLayout: React.FC = () => {
   const location = useLocation();

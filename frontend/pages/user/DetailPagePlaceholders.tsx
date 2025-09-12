@@ -1,9 +1,10 @@
+import apiClient from '@/src/utils/api/apiClient';
 import React, { useEffect, useState } from 'react';
+import { FaArrowLeft, FaClock, FaComments, FaMapMarkerAlt, FaPhone, FaRulerCombined, FaShoppingCart, FaSpinner, FaStar, FaTag, FaUser } from 'react-icons/fa';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Button from '../../components/common/Button';
-import apiClient from '@/src/utils/api/apiClient';
+import { useAuth } from '../../components/contexts/AuthContext';
 import { MOCK_PLOTS, MOCK_PROFESSIONALS } from '../../constants';
-import { FaSpinner, FaArrowLeft, FaMapMarkerAlt, FaRulerCombined, FaTag, FaStar, FaUser, FaClock, FaPhone, FaShoppingCart, FaComments } from 'react-icons/fa';
 
 // TYPE DEFINITION for the API data
 type Material = {
@@ -52,6 +53,7 @@ const DetailPageLayout: React.FC<{title: string; children: React.ReactNode; back
 // Enhanced PlotDetailPage with better visual hierarchy
 export const PlotDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const { currentUser } = useAuth();
     const plot = MOCK_PLOTS.find(p => p.id === id);
 
     if (!plot) {
@@ -67,6 +69,9 @@ export const PlotDetailPage: React.FC = () => {
 
     return (
         <DetailPageLayout title={plot.title} backLink="/plots" backLinkText="Back to Plot Marketplace">
+            {!currentUser && (
+                <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-center">Please login to proceed order</div>
+            )}
             {/* Hero Image Section */}
             <div className="relative mb-8 rounded-xl overflow-hidden shadow-lg">
                 <img 
@@ -143,28 +148,47 @@ export const PlotDetailPage: React.FC = () => {
                         ⭐ Amenities
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {plot.amenities.map((amenity, index) => (
-                            <div key={amenity} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span className="text-gray-700">{amenity}</span>
-                            </div>
-                        ))}
+                        {plot.amenities.map((amenity) => (
+                                <div key={amenity} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-gray-700">{amenity}</span>
+                                </div>
+                            ))}
                     </div>
                 </div>
             )}
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-4 pt-8 border-t border-gray-200">
-                <Button variant="primary" className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-shadow">
-                    <FaPhone className="mr-2" />
-                    Contact Owner/Agent
-                </Button>
-                {plot.sqftPrice && (
-                    <Link to={`/book-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`} className="flex-1 min-w-fit">
-                        <Button variant="secondary" className="w-full shadow-lg hover:shadow-xl transition-shadow">
-                            🎯 Book My SqFt
+                {currentUser ? (
+                    <>
+                        <Button variant="primary" className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-shadow">
+                            <FaPhone className="mr-2" />
+                            Contact Owner/Agent
                         </Button>
-                    </Link>
+                        {plot.sqftPrice && (
+                            <Link to={`/book-my-sqft/${plot.id.includes('bms') ? 'bms-plot-alpha' : plot.id}`} className="flex-1 min-w-fit">
+                                <Button variant="secondary" className="w-full shadow-lg hover:shadow-xl transition-shadow">
+                                    🎯 Book My SqFt
+                                </Button>
+                            </Link>
+                        )}
+                    </>
+                ) : (
+                    <div className="w-full">
+                        <div className="mb-4 text-sm text-red-600">Please login to proceed order</div>
+                        <div className="flex gap-4">
+                            <Button variant="primary" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                                <FaPhone className="mr-2" />
+                                Contact Owner/Agent
+                            </Button>
+                            {plot.sqftPrice && (
+                                <Button variant="secondary" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                                    🎯 Book My SqFt
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 )}
             </div>
         </DetailPageLayout>
@@ -191,17 +215,12 @@ export const MaterialDetailPage: React.FC = () => {
         setIsLoading(true);
         try {
             const accessToken = localStorage.getItem("access_token");
-            if (!accessToken) {
-                throw new Error("You must be logged in to view this page.");
-            }
+            const headers = accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined;
 
-            const response = await apiClient.get<Material>(`/materials/${id}/`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            
-            setMaterial(response);
+            // Allow public viewing of material details; if logged in, server may provide extra fields.
+            const response = await apiClient.get<Material>(`/materials/${id}/`, headers);
+            // apiClient returns an AxiosResponse; take .data for the payload
+            setMaterial((response as any).data ?? response as unknown as Material);
             setError(null);
         } catch (err: any) {
             if (err.response && err.response.status === 404) {
@@ -218,7 +237,9 @@ export const MaterialDetailPage: React.FC = () => {
     fetchMaterialDetails();
   }, [id]);
 
-  if (isLoading) {
+    const { currentUser } = useAuth();
+
+    if (isLoading) {
     return (
       <DetailPageLayout 
         title="Loading Material..." 
@@ -319,23 +340,41 @@ export const MaterialDetailPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-200">
-            <Button
-                variant="primary"
-                onClick={() => navigate(`/cart`)}
-                disabled={material.stock_quantity === 0}
-                className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <FaPhone className="mr-2" />
-                Request a Call to Order
-            </Button>
-            <Button
-                variant="outline"
-                onClick={() => navigate('/bookconsultation')}
-                className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-                <FaComments className="mr-2" />
-                Ask an Expert
-            </Button>
+            {currentUser ? (
+                <>
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate(`/cart`)}
+                        disabled={material.stock_quantity === 0}
+                        className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <FaPhone className="mr-2" />
+                        Request a Call to Order
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/bookconsultation')}
+                        className="flex-1 min-w-fit shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                        <FaComments className="mr-2" />
+                        Ask an Expert
+                    </Button>
+                </>
+            ) : (
+                <div className="w-full">
+                    <div className="mb-4 text-sm text-red-600">Please login to proceed order</div>
+                    <div className="flex gap-4">
+                        <Button variant="primary" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                            <FaPhone className="mr-2" />
+                            Request a Call to Order
+                        </Button>
+                        <Button variant="outline" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                            <FaComments className="mr-2" />
+                            Ask an Expert
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     </DetailPageLayout>
   );
@@ -346,6 +385,7 @@ export const ProfessionalDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const professional = MOCK_PROFESSIONALS.find(p => p.id === id);
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
 
     if (!professional) {
         return (
@@ -403,22 +443,36 @@ export const ProfessionalDetailPage: React.FC = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                            <Button
-                                variant="primary"
-                                className="shadow-xl hover:shadow-2xl transition-all duration-200"
-                                onClick={() => navigate('/logbookconsultation')}
-                            >
-                                📅 Book Consultation
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="shadow-xl hover:shadow-2xl transition-all duration-200"
-                                onClick={() => navigate('/logbookconsultation')}
-                            >
-                                📞 Request Callback
-                            </Button>
-                        </div>
+                        {currentUser ? (
+                            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+                                <Button
+                                    variant="primary"
+                                    className="shadow-xl hover:shadow-2xl transition-all duration-200"
+                                    onClick={() => navigate('/logbookconsultation')}
+                                >
+                                    📅 Book Consultation
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="shadow-xl hover:shadow-2xl transition-all duration-200"
+                                    onClick={() => navigate('/logbookconsultation')}
+                                >
+                                    📞 Request Callback
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="w-full">
+                                <div className="mb-4 text-sm text-red-600">Please login to proceed order</div>
+                                <div className="flex gap-4">
+                                    <Button variant="primary" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                                        📅 Book Consultation
+                                    </Button>
+                                    <Button variant="outline" disabled className="flex-1 min-w-fit bg-gray-100 text-gray-500 cursor-not-allowed">
+                                        📞 Request Callback
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

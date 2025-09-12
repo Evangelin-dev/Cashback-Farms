@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import Header from "../../../components/Header";
+import Header from "../../../components/common/Header.tsx";
+import { useAuth } from "../../../components/contexts/AuthContext.tsx";
 import {
   IconAlertCircle,
   IconCheck,
@@ -11,7 +12,6 @@ import {
   IconRupee,
   IconUsers,
 } from "../../../constants.tsx";
-import { useAuth } from "../../../contexts/AuthContext";
 import "../AgentProfileSection.css";
 
 const menuItems = [

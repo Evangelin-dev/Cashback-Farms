@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserRole } from '../../types';
 import { useAuth } from '../contexts/AuthContext';
-import { UserRole } from '../types';
 
 interface HeaderProps {
   pageTitle?: string;

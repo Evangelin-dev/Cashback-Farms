@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { PaymentInstallment, PaymentStatus } from '../types';
-import Card from './Card';
+import { PaymentInstallment, PaymentStatus } from '../../types';
+import Card from './Cards/Card';
 
 interface PaymentScheduleTableProps {
   installments: PaymentInstallment[];

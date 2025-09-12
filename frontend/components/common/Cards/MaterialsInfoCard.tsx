@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MaterialDetail } from '../types';
+import { MaterialDetail } from '../../../types';
 import Card from './Card';
 
 interface MaterialsInfoCardProps {

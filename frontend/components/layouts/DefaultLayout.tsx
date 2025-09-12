@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
-import Navbar from "../components/defaultlandingpage/defaultlandingcomponents/layout/Navbar";
+import Navbar from "../defaultlandingpage/defaultlandingcomponents/layout/Navbar";
 
 
-import DefaultFooter from "../components/defaultlandingpage/defaultlandingcomponents/layout/Footer";
+import DefaultFooter from "../defaultlandingpage/defaultlandingcomponents/layout/Footer";
 
 const DefaultLayout: React.FC = () => {
   const [showModal, setShowModal] = useState(false);

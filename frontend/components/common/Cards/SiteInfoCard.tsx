@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { SiteDetails } from '../types';
+import { IconMapPin } from '../../../constants';
+import { SiteDetails } from '../../../types';
 import Card from './Card';
-import { IconMapPin } from '../constants';
 
 interface SiteInfoCardProps {
   siteDetails: SiteDetails;

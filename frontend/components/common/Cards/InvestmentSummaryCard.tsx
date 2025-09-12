@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { InvestmentDetails } from '../types';
+import { InvestmentDetails } from '../../../types';
 import Card from './Card';
 
 interface InvestmentSummaryCardProps {

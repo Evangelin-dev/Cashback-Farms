@@ -1,10 +1,10 @@
+import { message } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '../../components/Button';
-import Card from '../../components/Card';
-import Modal from '../../components/Modal';
+import Card from '../../components/common/Cards/Card';
+import Modal from '../../components/common/Modal';
 import { IconPencil } from '../../constants';
 import apiClient from '../../src/utils/api/apiClient';
-import { message } from 'antd';
 
 const PAGE_SIZE = 10;
 

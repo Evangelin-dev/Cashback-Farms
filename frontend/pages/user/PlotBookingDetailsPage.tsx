@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import apiClient from '../src/utils/api/apiClient';
-import { Plot, PlotType } from '../types';
-import BookPlotPayment from './user/BookPlotPayment';
+import Button from '../../components/Button';
+import Card from '../../components/common/Cards/Card';
+import apiClient from '../../src/utils/api/apiClient';
+import { Plot, PlotType } from '../../types';
+import BookPlotPayment from './BookPlotPayment';
 
 declare global {
   interface Window {

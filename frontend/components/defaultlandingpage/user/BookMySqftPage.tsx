@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext"; // 1. IMPORT the useAuth hook
 import apiClient from "../../../src/utils/api/apiClient";
 import { BookMySqftPlotInfo, SqftUnit } from '../../../types';
 import Button from '../../common/Button';
+import { useAuth } from "../../contexts/AuthContext"; // 1. IMPORT the useAuth hook
 import SqftGrid from '../defaultlandingcomponents/plot/SqftGrid';
 
 // Helper function to generate a default grid since the API doesn't provide one
@@ -181,12 +181,131 @@ const ImageCarousel: React.FC<{ images: string[] }> = ({ images }) => {
     );
 };
 
+// Small donut chart component for booking status
+const BookingStatusGraph: React.FC<{ grid: SqftUnit[][] }> = ({ grid }) => {
+    // compute counts
+    const flat = grid ? grid.flat() : [];
+    const total = flat.length || 0;
+    const booked = flat.filter(u => u.isBooked).length;
+    const selected = flat.filter(u => u.isSelected).length; // treat selected as 'reserved' for UI
+    const available = total - booked - selected;
+
+    const bookedPct = total ? Math.round((booked / total) * 100) : 0;
+    const availablePct = total ? Math.round((available / total) * 100) : 0;
+    const reservedPct = total ? Math.max(0, 100 - bookedPct - availablePct) : 0;
+
+    // donut drawing
+    const size = 160;
+    const stroke = 20;
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+
+    // compute stroke-dasharray for segments (booked, available, reserved)
+    const bookedLen = (bookedPct / 100) * circumference;
+    const availableLen = (availablePct / 100) * circumference;
+    const reservedLen = Math.max(0, circumference - bookedLen - availableLen);
+
+    return (
+        <div className="w-full flex flex-col items-center">
+            <div className="flex items-center gap-6">
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    <g transform={`translate(${size / 2}, ${size / 2})`}>
+                        {/* background ring */}
+                        <circle r={radius} fill="none" stroke="#F3F4F6" strokeWidth={stroke} />
+
+                        {/* booked segment (starts at top) */}
+                        <circle
+                            r={radius}
+                            fill="none"
+                            stroke="#f97316"
+                            strokeWidth={stroke}
+                            strokeDasharray={`${bookedLen} ${circumference - bookedLen}`}
+                            strokeDashoffset={-circumference * 0.25}
+                            strokeLinecap="round"
+                            transform="rotate(-90)"
+                        />
+
+                        {/* available segment */}
+                        <circle
+                            r={radius}
+                            fill="none"
+                            stroke="#34d399"
+                            strokeWidth={stroke}
+                            strokeDasharray={`${availableLen} ${circumference - availableLen}`}
+                            strokeDashoffset={-circumference * 0.25 - bookedLen}
+                            strokeLinecap="round"
+                            transform="rotate(-90)"
+                        />
+
+                        {/* reserved segment */}
+                        <circle
+                            r={radius}
+                            fill="none"
+                            stroke="#065f46"
+                            strokeWidth={stroke}
+                            strokeDasharray={`${reservedLen} ${circumference - reservedLen}`}
+                            strokeDashoffset={-circumference * 0.25 - bookedLen - availableLen}
+                            strokeLinecap="round"
+                            transform="rotate(-90)"
+                        />
+
+                        {/* center label */}
+                        <text x="0" y="-6" textAnchor="middle" className="text-sm font-semibold" style={{ fontSize: 14, fill: '#065f46' }}>{bookedPct}%</text>
+                        <text x="0" y="12" textAnchor="middle" className="text-xs text-gray-600" style={{ fontSize: 12, fill: '#374151' }}>{booked} / {total}</text>
+                    </g>
+                </svg>
+
+                <div className="flex flex-col text-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="w-3 h-3 bg-orange-500 rounded-full inline-block" />
+                        <div>
+                            <div className="text-xs text-gray-600">Booked</div>
+                            <div className="font-medium text-sm text-gray-800">{booked} ({bookedPct}%)</div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="w-3 h-3 bg-green-400 rounded-full inline-block" />
+                        <div>
+                            <div className="text-xs text-gray-600">Available</div>
+                            <div className="font-medium text-sm text-gray-800">{available} ({availablePct}%)</div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <span className="w-3 h-3 bg-green-800 rounded-full inline-block" />
+                        <div>
+                            <div className="text-xs text-gray-600">Reserved</div>
+                            <div className="font-medium text-sm text-gray-800">{selected} ({reservedPct}%)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {/* small legend for mobile under chart */}
+            <div className="mt-4 w-full flex flex-wrap justify-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-orange-500 rounded" />
+                    <span className="text-gray-700">Booked ({bookedPct}%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-400 rounded" />
+                    <span className="text-gray-700">Available ({availablePct}%)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-800 rounded" />
+                    <span className="text-gray-700">Reserved ({reservedPct}%)</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const DBookMySqftPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { currentUser } = useAuth(); // 2. GET THE CURRENT USER
 
-    const [plotInfo, setPlotInfo] = useState<(BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string }) | null>(null);
+    const [plotInfo, setPlotInfo] = useState<(BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string | null; owner_name?: string; description?: string }) | null>(null);
     const [grid, setGrid] = useState<SqftUnit[][]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -242,7 +361,7 @@ const DBookMySqftPage: React.FC = () => {
                 // filter falsy and unique, limit to 5
                 const uniqueImages = Array.from(new Set(collectedImages.filter(Boolean))).slice(0, 5);
 
-                const mappedPlotInfo: BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string | null; } = {
+                const mappedPlotInfo: BookMySqftPlotInfo & { imageUrl?: string; images?: string[]; google_maps_link?: string | null; owner_name?: string; description?: string } = {
                     id: apiPlot.id,
                     name: apiPlot.project_name || apiPlot.title || apiPlot.name,
                     location: apiPlot.location || apiPlot.address || '',
@@ -257,6 +376,9 @@ const DBookMySqftPage: React.FC = () => {
                     total_area: Number(apiPlot.total_area || apiPlot.total_area_sqft || apiPlot.totalArea || 0),
                     area_unit: apiPlot.area_unit || apiPlot.areaUnit || 'sqft',
                     price_per_unit: Number(apiPlot.price_per_unit || apiPlot.price || apiPlot.sqft_price_per_unit || 0),
+                    // Extra fields
+                    owner_name: apiPlot.owner_name || apiPlot.owner || apiPlot.agent_name || apiPlot.developer || '',
+                    description: apiPlot.description || apiPlot.details || '',
                     emiOptions: [], // Default empty array
                     initialGrid: generateInitialGrid(10, 10),
                     imageUrl: uniqueImages[0] || `https://picsum.photos/seed/${apiPlot.id}/600/400`,
@@ -368,12 +490,12 @@ const DBookMySqftPage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        <div className="bg-white rounded-xl shadow p-2 border border-green-100 h-64 overflow-hidden">
+                                        <div className="bg-white rounded-xl shadow p-2 border border-green-100 min-h-[20rem] overflow-hidden flex flex-col">
                                             <h4 className="text-sm font-semibold text-green-700 mb-2">Map</h4>
                                             {plotInfo.google_maps_link ? (
-                                                <div className="w-full h-56 rounded-md overflow-hidden border border-gray-100">
+                                                <div className="w-full flex-1 rounded-md overflow-hidden border border-gray-100">
                                                     <iframe
-                                                        src={plotInfo.google_maps_link}
+                                                        src={plotInfo.google_maps_link || undefined}
                                                         title="Plot Map"
                                                         className="w-full h-full border-0"
                                                         loading="lazy"
@@ -381,7 +503,7 @@ const DBookMySqftPage: React.FC = () => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="w-full h-32  rounded-md overflow-hidden border border-gray-100">
+                                                <div className="w-full flex-1 rounded-md overflow-hidden border border-gray-100">
                                                     {/* Demo OpenStreetMap embed centered on an example location */}
                                                     <iframe
                                                         src={`https://www.openstreetmap.org/export/embed.html?bbox=77.5945%2C12.9708%2C77.5975%2C12.9738&layer=mapnik`}
@@ -394,7 +516,16 @@ const DBookMySqftPage: React.FC = () => {
                                             )}
                                             <div className="mt-2 flex items-center gap-2">
                                                 {plotInfo.google_maps_link ? (
-                                                    <a href={plotInfo.google_maps_link} target="_blank" rel="noreferrer" className="inline-block text-xs bg-green-600 text-white px-3 py-1 rounded">Open in Maps</a>
+                                                    <>
+                                                        <a href={plotInfo.google_maps_link} target="_blank" rel="noreferrer" className="inline-block text-xs bg-green-600 text-white px-3 py-1 rounded">Open in Maps</a>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => window.open(plotInfo.google_maps_link || undefined, '_blank')}
+                                                            className="inline-block text-xs bg-white border border-gray-200 text-gray-800 px-3 py-1 rounded"
+                                                        >
+                                                            View Map
+                                                        </button>
+                                                    </>
                                                 ) : (
                                                     <a href={`https://www.openstreetmap.org/`} target="_blank" rel="noreferrer" className="inline-block text-xs bg-gray-100 text-gray-800 px-3 py-1 rounded">Open Demo Map</a>
                                                 )}
@@ -405,64 +536,29 @@ const DBookMySqftPage: React.FC = () => {
 
                                     {/* Right column: 60% */}
                                     <div className="md:col-span-6 space-y-4">
-                                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-green-200">
+                                        {/* Booking status overview - dynamic donut chart */}
+                                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-green-200 min-h-[20rem] flex flex-col items-center">
                                             <h2 className="text-lg sm:text-xl font-bold text-green-700 mb-4 text-center">Booking Status Overview</h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                                <div className="bg-orange-100 border-2 border-orange-300 rounded-xl p-4 text-center">
-                                                    <div className="w-16 h-16 mx-auto mb-3 bg-orange-500 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-bold text-lg">52%</span>
-                                                    </div>
-                                                    <h3 className="font-semibold text-orange-800 mb-2">Already Booked</h3>
-                                                    <p className="text-sm text-orange-700">Units that have been purchased</p>
-                                                </div>
-
-                                                <div className="bg-green-100 border-2 border-green-300 rounded-xl p-4 text-center">
-                                                    <div className="w-16 h-16 mx-auto mb-3 bg-green-400 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-bold text-lg">48%</span>
-                                                    </div>
-                                                    <h3 className="font-semibold text-green-800 mb-2">Available</h3>
-                                                    <p className="text-sm text-green-700">Units ready for booking</p>
-                                                </div>
-
-                                                <div className="bg-green-600 border-2 border-green-700 rounded-xl p-4 text-center">
-                                                    <div className="w-16 h-16 mx-auto mb-3 bg-green-800 rounded-full flex items-center justify-center">
-                                                        <span className="text-white font-bold text-lg">0%</span>
-                                                    </div>
-                                                    <h3 className="font-semibold text-white mb-2">Reserved</h3>
-                                                    <p className="text-sm text-green-100">Units in high demand</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-                                                <div className="flex h-4 rounded-full overflow-hidden">
-                                                    <div className="bg-orange-500 h-full" style={{ width: '52%' }}></div>
-                                                    <div className="bg-green-400 h-full" style={{ width: '48%' }}></div>
-                                                    <div className="bg-green-800 h-full" style={{ width: '0%' }}></div>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-wrap justify-center gap-4 text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                                                    <span className="text-gray-700">Booked (52%)</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 bg-green-400 rounded"></div>
-                                                    <span className="text-gray-700">Available (48%)</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-4 h-4 bg-green-800 rounded"></div>
-                                                    <span className="text-gray-700">Reserved (0%)</span>
-                                                </div>
-                                            </div>
+                                            {/* BookingStatusGraph will compute counts from the live grid */}
+                                            <BookingStatusGraph grid={grid} />
                                         </div>
 
-                                        <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col border border-green-200">
+                    <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 flex flex-col border border-green-200">
                                             <h1 className="text-xl sm:text-2xl font-extrabold text-green-800 mb-2 tracking-tight">{plotInfo.name}</h1>
                                             <div className="space-y-1 sm:space-y-2 text-sm sm:text-base text-gray-700">
-                                                <p><strong>Location:</strong> {plotInfo.location}</p>
-                                                <p><strong>Price per SqFt Unit:</strong> ₹{plotInfo.sqftPricePerUnit.toLocaleString('en-IN')}</p>
-                                                <p className="text-sm text-gray-600">{plotInfo.description || ''}</p>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                    <div><span className="text-gray-600">Location:</span> <span className="font-medium text-gray-800">{plotInfo.location || 'N/A'}</span></div>
+                                                    <div><span className="text-gray-600">Facing:</span> <span className="font-medium text-gray-800">{plotInfo.facing || 'N/A'}</span></div>
+                                                    <div><span className="text-gray-600">Survey #:</span> <span className="font-medium text-gray-800">{plotInfo.survey_number || '—'}</span></div>
+                                                    <div><span className="text-gray-600">Plot Type:</span> <span className="font-medium text-gray-800">{plotInfo.plot_type || 'residential'}</span></div>
+                                                    <div><span className="text-gray-600">Total Area:</span> <span className="font-medium text-gray-800">{Number(plotInfo.total_area || 0).toLocaleString('en-IN')} {plotInfo.area_unit || 'sqft'}</span></div>
+                                                    <div><span className="text-gray-600">Price / Unit:</span> <span className="font-medium text-gray-800">₹{Number(plotInfo.price_per_unit || plotInfo.sqftPricePerUnit || 0).toLocaleString('en-IN')}</span></div>
+                                                    <div><span className="text-gray-600">Owner:</span> <span className="font-medium text-gray-800">{plotInfo.owner_name || 'N/A'}</span></div>
+                                                </div>
+
+                                                {plotInfo.description && (
+                                                    <p className="text-sm text-gray-600 mt-2">{plotInfo.description}</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

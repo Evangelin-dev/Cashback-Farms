@@ -1,6 +1,6 @@
+import { useAuth } from '@/components/contexts/AuthContext';
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-screen">

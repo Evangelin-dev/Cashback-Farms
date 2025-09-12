@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import Card from '../../components/Card';
-import apiClient from '../../src/utils/api/apiClient'; 
+import { ArchiveBoxIcon, CheckCircleIcon, CircleStackIcon, CurrencyRupeeIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { CircularProgress } from '@mui/material';
-import { ArchiveBoxIcon, CheckCircleIcon, CircleStackIcon, CurrencyRupeeIcon, UsersIcon } from '@heroicons/react/24/outline'; 
+import React, { useEffect, useMemo, useState } from 'react';
+import Card from '../../components/common/Cards/Card';
+import apiClient from '../../src/utils/api/apiClient';
 
 interface PlotStats {
   total: number;

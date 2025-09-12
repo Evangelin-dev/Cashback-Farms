@@ -1,14 +1,14 @@
 // This is a simplified version of your component, focused on fetching and displaying a single plot.
 // Helper components like PlotImageVideo and PlotOverviewDocs are assumed to be in the same file or imported.
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import apiClient from '../../../src/utils/api/apiClient';
-import Button from '../../../components/common/Button';
-import Card from '../../../components/Card';
-import { Plot, PlotType } from '../../../types'; // Ensure Plot and PlotType are correctly defined
-import { FaSpinner } from 'react-icons/fa'; // Example for loading spinner
-import { useAuth } from '../../../contexts/AuthContext'; // 1. IMPORT a custom hook
 import { BsFillCheckCircleFill } from 'react-icons/bs'; // NEW: Import a checkmark icon
+import { FaSpinner } from 'react-icons/fa'; // Example for loading spinner
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import Button from '../../../components/common/Button';
+import apiClient from '../../../src/utils/api/apiClient';
+import { Plot, PlotType } from '../../../types'; // Ensure Plot and PlotType are correctly defined
+import Card from '../../common/Cards/Card';
+import { useAuth } from '../../contexts/AuthContext'; // 1. IMPORT a custom hook
 
 // --- Helper Components (Full Code Included) ---
 

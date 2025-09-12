@@ -1,18 +1,12 @@
 import React, { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../components/contexts/AuthContext.tsx";
 import {
   generateB2BCode,
   IconAlertCircle,
   IconCheck,
-  IconCollection,
-  IconEdit,
-  IconLogout,
-  IconMapPin,
-  IconRupee,
-  IconUsers,
-  IconWallet,
+  IconEdit
 } from "../../constants.tsx";
-import { useAuth } from "../../contexts/AuthContext";
 import "../realestate/AgentProfileSection.css"; // Reuse the same CSS for styling
 
 

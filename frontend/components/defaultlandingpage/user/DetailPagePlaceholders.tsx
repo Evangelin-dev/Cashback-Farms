@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { FaSpinner } from 'react-icons/fa';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Button from '../../../components/common/Button';
 import apiClient from '../../../src/utils/api/apiClient';
-import { Plot, Material, Professional } from '../../../types';
-import { FaSpinner } from 'react-icons/fa';
-import { useAuth } from '../../../contexts/AuthContext'; // 1. IMPORT a custom hook
+import { Material, Professional } from '../../../types';
+import { useAuth } from '../../contexts/AuthContext'; // 1. IMPORT a custom hook
 
 // --- Layout Component (Unchanged) ---
 const DDetailPageLayout: React.FC<{title: string; children: React.ReactNode; backLink: string; backLinkText: string}> = ({ title, children, backLink, backLinkText }) => (

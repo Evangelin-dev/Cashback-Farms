@@ -5,11 +5,10 @@ import apiClient from '@/src/utils/api/apiClient';
 import { Plot, Professional } from '@/types';
 
 // --- Reusable Components ---
-import Button from './components/Button';
-import DAssistedPlans from './components/defaultlandingpage/defaultlandingcomponents/assistedplans/assistedplans';
-import DPlotCard from './components/defaultlandingpage/defaultlandingcomponents/plot/PlotCard';
-import DProfessionalCard from './components/defaultlandingpage/defaultlandingcomponents/service/ProfessionalCard';
 import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react';
+import Button from '../components/Button';
+import DPlotCard from '../components/defaultlandingpage/defaultlandingcomponents/plot/PlotCard';
+import DProfessionalCard from '../components/defaultlandingpage/defaultlandingcomponents/service/ProfessionalCard';
 
 // --- Slider Data ---
 const slides = [
@@ -668,7 +667,7 @@ const DefaultLanding: React.FC = () => {
                   
                   {/* Enhanced button */}
                   <div className="hidden sm:block">
-                    <Link to="/assisted-plans">
+                    <Link to="/Dplans">
                       <Button 
                         size="md" 
                         variant="secondary" 
@@ -683,7 +682,7 @@ const DefaultLanding: React.FC = () => {
                 
                 {/* Mobile button */}
                 <div className="sm:hidden mt-6">
-                  <Link to="/assisted-plans">
+                  <Link to="/Dplans">
                     <Button 
                       size="md" 
                       variant="secondary" 
